@@ -45,5 +45,8 @@ public final class ClientModEvents {
         event.registerAboveAll(
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, "scene_hud"),
                 SceneHud::render);
+        event.registerAboveAll(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, "flight_hud"),
+                FlightHud::render);
     }
 }

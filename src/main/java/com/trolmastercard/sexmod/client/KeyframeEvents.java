@@ -62,6 +62,21 @@ public final class KeyframeEvents {
             SceneHud.apply(entry);
         }
 
+        if (entry.has("flap") && local != null && girl.getFirstPassenger() == local) {
+            // Original flapControlled: each wing beat pushes her along the rider's input direction.
+            FlightHud.show();
+            float forward = local.input.forwardImpulse;
+            float strafe = local.input.leftImpulse;
+            if (forward != 0.0F || strafe != 0.0F) {
+                net.minecraft.world.phys.Vec3 impulse = new net.minecraft.world.phys.Vec3(strafe, 0.0D, forward)
+                        .xRot(-local.getXRot() * ((float) Math.PI / 180.0F))
+                        .yRot(-local.getYRot() * ((float) Math.PI / 180.0F));
+                net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                        new com.trolmastercard.sexmod.network.GalathFlightPayload(
+                                girl.getId(), 0, (float) impulse.x, (float) impulse.y, (float) impulse.z));
+            }
+        }
+
         if (entry.has("chat") || entry.has("text")) {
             Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.player != null && minecraft.player.distanceToSqr(girl) < 30.0D * 30.0D) {

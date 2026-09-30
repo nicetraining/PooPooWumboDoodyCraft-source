@@ -123,6 +123,22 @@ public final class ClientGameplayEvents {
         if (minecraft.level == null || minecraft.player == null) {
             return;
         }
+        if (minecraft.player.getVehicle() instanceof CompanionEntity mount
+                && mount.kind() == com.trolmastercard.sexmod.entity.CompanionKind.GALATH) {
+            FlightHud.show();
+            boolean jump = event.getInput().jumping;
+            if (jump && !lastRideJump && FlightHud.canBoost()) {
+                FlightHud.consume();
+                net.neoforged.neoforge.network.PacketDistributor.sendToServer(
+                        new com.trolmastercard.sexmod.network.GalathFlightPayload(mount.getId(), 1, 0.0F, 0.0F, 0.0F));
+            }
+            lastRideJump = jump;
+        } else {
+            lastRideJump = false;
+            if (FlightHud.isActive()) {
+                FlightHud.hide();
+            }
+        }
         boolean locked = TransitionOverlay.isActive();
         CompanionEntity interactive = null;
         UUID id = minecraft.player.getUUID();
@@ -160,6 +176,7 @@ public final class ClientGameplayEvents {
         }
     }
 
+    private static boolean lastRideJump;
     private static boolean lastShift;
     private static boolean lastJump;
 

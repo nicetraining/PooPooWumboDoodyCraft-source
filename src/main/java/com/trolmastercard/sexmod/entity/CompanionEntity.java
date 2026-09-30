@@ -120,6 +120,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<UUID>> DATA_SCENE_PARTNER =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Integer> DATA_GALATH_BOOST =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_FLYING =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
 
@@ -304,6 +306,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_SCENE_PHASE, 0);
         builder.define(DATA_SCENE_PARTNER, Optional.empty());
         builder.define(DATA_FLYING, false);
+        builder.define(DATA_GALATH_BOOST, 0);
     }
 
     public Optional<UUID> masterId() {
@@ -393,6 +396,71 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     private int galathDespawnTicks = -1;
+    private int galathBoostTicks;
+    private double galathBoostSpeed;
+
+    /** Original bk "RequestRiding": she is mounted and flies by the rider's wing-flap impulses. */
+    private boolean startRide(Player player) {
+        if (!player.startRiding(this, true)) {
+            return false;
+        }
+        this.getNavigation().stop();
+        this.setNoGravity(true);
+        this.setDeltaMovement(0.0D, 0.25D, 0.0D);
+        return true;
+    }
+
+    public Player galathRider() {
+        return this.kind == CompanionKind.GALATH && this.getFirstPassenger() instanceof Player rider ? rider : null;
+    }
+
+    /** Original d(vec) from packet ct: adds horizontal speed, vertical is half the y component. */
+    public void applyFlapImpulse(Player sender, Vec3 impulse) {
+        if (this.galathRider() != sender || impulse.lengthSqr() > 9.0D) {
+            return;
+        }
+        Vec3 motion = this.getDeltaMovement();
+        this.setDeltaMovement(motion.x + impulse.x, impulse.y / 2.0D, motion.z + impulse.z);
+    }
+
+    /** BOOST: 43 ticks; from tick 13 a fast dash along the rider's look that decays by 0.94 per tick. */
+    public void startBoost(Player sender) {
+        if (this.galathRider() == sender && this.galathBoostTicks <= 0) {
+            this.galathBoostTicks = 43;
+            this.galathBoostSpeed = 0.0D;
+            this.entityData.set(DATA_GALATH_BOOST, 1);
+        }
+    }
+
+    private void tickGalathRide() {
+        Player rider = this.galathRider();
+        if (rider == null) {
+            if (this.galathBoostTicks > 0) {
+                this.galathBoostTicks = 0;
+                this.entityData.set(DATA_GALATH_BOOST, 0);
+            }
+            return;
+        }
+        this.getNavigation().stop();
+        this.setNoGravity(true);
+        float yaw = rider.getYHeadRot();
+        this.setYRot(yaw);
+        this.yBodyRot = yaw;
+        this.yHeadRot = yaw;
+        if (this.galathBoostTicks > 0) {
+            int elapsed = 43 - this.galathBoostTicks;
+            if (elapsed == 13) {
+                this.galathBoostSpeed = 1.5D; // tune: the original uses 6.0 in its own unit
+            }
+            if (elapsed >= 13) {
+                this.setDeltaMovement(rider.getLookAngle().scale(this.galathBoostSpeed));
+                this.galathBoostSpeed *= 0.94D;
+            }
+            if (--this.galathBoostTicks <= 0) {
+                this.entityData.set(DATA_GALATH_BOOST, 0);
+            }
+        }
+    }
 
     @Override
     public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
@@ -709,6 +777,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     public boolean startScene(Player player, CompanionScene scene) {
+        if (scene == CompanionScene.GALATH_RIDE) {
+            return this.kind == CompanionKind.GALATH
+                    && !this.isInScene()
+                    && this.isMaster(player)
+                    && player.distanceToSqr(this) <= 64.0D
+                    && this.startRide(player);
+        }
         if (!(this.level() instanceof ServerLevel serverLevel)
                 || scene == null
                 || scene.kind() != this.kind
@@ -1091,6 +1166,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 this.startScene(pendingPlayer, pending);
                 this.skipDelay = false;
             }
+        }
+        if (this.kind == CompanionKind.GALATH) {
+            this.tickGalathRide();
         }
         if (this.galathDespawnTicks >= 0 && --this.galathDespawnTicks < 0) {
             this.discard();
@@ -1851,6 +1929,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     private void tickFlight() {
+        if (this.galathRider() != null) {
+            this.entityData.set(DATA_FLYING, false);
+            return; // controlled flight: only the rider's flaps move her
+        }
         if (!this.kind.canFly() || this.isInScene()) {
             this.entityData.set(DATA_FLYING, false);
             this.setNoGravity(false);
@@ -2098,6 +2180,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return state.setAndContinue(sceneAnimation.rawAnimation());
         }
 
+        if (this.kind == CompanionKind.GALATH && this.getFirstPassenger() instanceof Player) {
+            return state.setAndContinue(this.entityData.get(DATA_GALATH_BOOST) > 0
+                    ? software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.galath.boost")
+                    : software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.galath.controlled_flight"));
+        }
         if (this.kind.hasMasterAI()) {
             CompanionAction action = this.action();
             if (action != CompanionAction.NONE) {

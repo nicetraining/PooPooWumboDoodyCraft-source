@@ -41,6 +41,10 @@ public final class CompanionActions {
             if (scene == CompanionScene.KOBOLD_MATING_PRESS && !companion.isMaster(player)) {
                 continue;
             }
+            if (companion.kind() == CompanionKind.GALATH && scene != CompanionScene.GALATH_RIDE
+                    && !companion.onGround()) {
+                continue; // in the air she only offers "ride"
+            }
             result.add(scene);
         }
         return result;

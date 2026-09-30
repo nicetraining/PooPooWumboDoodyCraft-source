@@ -264,6 +264,11 @@ public enum CompanionScene {
             phase("animation.goblin.nelson_cum", 35)
     ),
 
+    /** Not a real scene: the "ride" entry of Galath's menu (mounts her and starts controlled flight). */
+    GALATH_RIDE(
+            CompanionKind.GALATH, "ride", false,
+            loop("animation.galath.controlled_flight", 29)
+    ),
     /** Tamed "cowgirl": original RAPE_INTRO -> RAPE_ON_GOING -> RAPE_CUM (no damage, no minigame when tamed). */
     GALATH_COWGIRL(
             CompanionKind.GALATH, "cowgirl", true,
@@ -421,6 +426,7 @@ public enum CompanionScene {
             case ELLIE_CARRY -> "action.names.facefuck";
             case ELLIE_COWGIRL, GALATH_COWGIRL -> "action.names.cowgirl";
             case GALATH_ANAL -> "action.names.anal";
+            case GALATH_RIDE -> "action.names.ride";
             case ELLIE_MISSIONARY -> "action.names.missionary";
             default -> this.translationKey();
         };

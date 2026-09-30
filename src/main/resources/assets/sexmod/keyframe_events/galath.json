@@ -259,7 +259,8 @@
    "misc.flap.flap2",
    "misc.flap.flap3"
   ],
-  "volume": 1.0
+  "volume": 1.0,
+  "flap": true
  },
  "creampieGalath": {
   "sounds": [
