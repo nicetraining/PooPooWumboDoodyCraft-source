@@ -660,7 +660,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return false;
         }
 
-        if (this.kind == CompanionKind.BIA && scene.requiresBed() && this.bedSpotPosition == null) {
+        if (this.walksToBed() && scene.requiresBed() && this.bedSpotPosition == null) {
             // Like the original: find a bed, walk to it, wait for the player there, then start.
             return this.beginBedWalk(serverLevel, player, scene);
         }
@@ -1062,7 +1062,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return false;
         }
 
-        if (scene.requiresBed() && this.kind != CompanionKind.BIA && !this.hasNearbyBed(serverLevel)) {
+        if (scene.requiresBed() && !this.walksToBed() && !this.hasNearbyBed(serverLevel)) {
             if (notify) {
                 controller.displayClientMessage(Component.translatable("message.sexmod.scene_bed_required"), true);
             }
@@ -1141,6 +1141,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private static final float[] BED_SIDE_YAW = {0.0F, 180.0F, -90.0F, 90.0F};
     private static final int BED_SEARCH_RADIUS = 10;
 
+    /** Bia and Jenny find a bed and walk to it before a bed scene (original flow); the others keep the old rule. */
+    private boolean walksToBed() {
+        return this.kind == CompanionKind.BIA || this.kind == CompanionKind.JENNY;
+    }
+
     public boolean isBedWalking() {
         return this.bedWalk != null;
     }
@@ -1156,10 +1161,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         BedWalk best = null;
         double bestDistance = Double.MAX_VALUE;
         boolean doggy = scene == CompanionScene.BIA_PRONE;
+        boolean jenny = this.kind == CompanionKind.JENNY;
+        int radius = jenny ? 22 : BED_SEARCH_RADIUS;
+        int vertical = jenny ? 3 : 4;
 
         for (BlockPos bed : BlockPos.betweenClosed(
-                center.offset(-BED_SEARCH_RADIUS, -4, -BED_SEARCH_RADIUS),
-                center.offset(BED_SEARCH_RADIUS, 4, BED_SEARCH_RADIUS))) {
+                center.offset(-radius, -vertical, -radius),
+                center.offset(radius, vertical, radius))) {
             if (!serverLevel.getBlockState(bed).is(BlockTags.BEDS)) {
                 continue;
             }
@@ -1168,7 +1176,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 int dx = BED_SIDES[side][0];
                 int dz = BED_SIDES[side][1];
                 BlockPos stand = bed.offset(dx, 0, dz);
-                if (!serverLevel.getBlockState(stand).isAir() || !serverLevel.getBlockState(stand.above()).isAir()) {
+                if (!serverLevel.getBlockState(stand).isAir() || (!jenny && !serverLevel.getBlockState(stand.above()).isAir())) {
                     continue;
                 }
                 if (doggy && !serverLevel.getBlockState(bed.offset(-dx, 0, -dz)).is(BlockTags.BEDS)) {
@@ -1195,7 +1203,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     private void refuseBed(ServerLevel serverLevel, String dialogueKey) {
-        com.trolmastercard.sexmod.registry.ModSounds.find("girls.bia.breath.breath2")
+        com.trolmastercard.sexmod.registry.ModSounds.find(
+                        this.kind == CompanionKind.JENNY ? "girls.jenny.hmph.hmph2" : "girls.bia.breath.breath2")
                 .ifPresent(sound -> this.playSound(sound.get(), 1.0F, 1.0F));
         this.sayNearby(serverLevel, Component.translatable(dialogueKey));
     }
@@ -1346,10 +1355,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return;
         }
         if (this.attachCountdown < 0) {
-            if (controller.distanceToSqr(this) <= 1.0D) {
-                this.attachCountdown = 22;
-                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
-                        controller, new com.trolmastercard.sexmod.network.TransitionPayload());
+            boolean jenny = this.kind == CompanionKind.JENNY;
+            if (controller.distanceToSqr(this) <= (jenny ? 0.25D : 1.0D)) {
+                this.attachCountdown = jenny ? 1 : 22;
+                if (!jenny) {
+                    net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+                            controller, new com.trolmastercard.sexmod.network.TransitionPayload());
+                }
             }
         } else if (--this.attachCountdown <= 0) {
             this.attachCountdown = -1;

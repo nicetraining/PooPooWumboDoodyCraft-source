@@ -38,9 +38,14 @@ public enum CompanionScene {
             loop("animation.jenny.paizuri_fast", 66),
             phase("animation.jenny.paizuri_cum", 230)
     ),
+    /** She has reached the bed and waits for the player (original STARTDOGGY / WAITDOGGY). */
+    JENNY_DOGGY_WAIT(
+            CompanionKind.JENNY, "doggy_wait", false,
+            phase("animation.jenny.doggygoonbed", 131),
+            loop("animation.jenny.doggywait", 129)
+    ),
     JENNY_DOGGY(
             CompanionKind.JENNY, "doggy", true,
-            phase("animation.jenny.doggygoonbed", 131),
             phase("animation.jenny.doggystart", 199),
             loop("animation.jenny.doggyslow", 93),
             loop("animation.jenny.doggyfast_hard", 65),
@@ -345,7 +350,7 @@ public enum CompanionScene {
 
     /** Scenes that only wait beside the bed until the player steps up, then hand over to the chosen scene. */
     public boolean isWaitScene() {
-        return this == BIA_ANAL_WAIT || this == BIA_SIT_WAIT;
+        return this == BIA_ANAL_WAIT || this == BIA_SIT_WAIT || this == JENNY_DOGGY_WAIT;
     }
 
     /** The wait scene played on arrival at the bed for a bed scene, or null. */
@@ -353,6 +358,7 @@ public enum CompanionScene {
         return switch (this) {
             case BIA_ANAL -> BIA_ANAL_WAIT;
             case BIA_PRONE -> BIA_SIT_WAIT;
+            case JENNY_DOGGY -> JENNY_DOGGY_WAIT;
             default -> null;
         };
     }

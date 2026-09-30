@@ -509,4 +509,29 @@ public final class FapCraftGameTests {
         bia.discard();
         helper.succeed();
     }
+
+    @GameTest(template = "empty")
+    public static void jennyWalksToABedForDoggy(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        CompanionEntity jenny = spawnKind(helper, CompanionKind.JENNY);
+
+        if (jenny.beginBedWalk(helper.getLevel(), player, CompanionScene.JENNY_DOGGY) || jenny.isBedWalking()) {
+            helper.fail("with no bed Jenny refuses and does not walk");
+        }
+        net.minecraft.world.level.block.state.BlockState bed = net.minecraft.world.level.block.Blocks.RED_BED.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.BedBlock.FACING, net.minecraft.core.Direction.SOUTH);
+        helper.setBlock(new net.minecraft.core.BlockPos(3, 1, 2), bed.setValue(net.minecraft.world.level.block.BedBlock.PART,
+                net.minecraft.world.level.block.state.properties.BedPart.FOOT));
+        helper.setBlock(new net.minecraft.core.BlockPos(3, 1, 3), bed.setValue(net.minecraft.world.level.block.BedBlock.PART,
+                net.minecraft.world.level.block.state.properties.BedPart.HEAD));
+        if (!jenny.beginBedWalk(helper.getLevel(), player, CompanionScene.JENNY_DOGGY) || !jenny.isBedWalking()) {
+            helper.fail("with a bed Jenny walks to it first");
+        }
+        if (CompanionScene.JENNY_DOGGY.waitScene() != CompanionScene.JENNY_DOGGY_WAIT
+                || !CompanionScene.JENNY_DOGGY_WAIT.isWaitScene()) {
+            helper.fail("Jenny's doggy has a wait scene");
+        }
+        jenny.discard();
+        helper.succeed();
+    }
 }
