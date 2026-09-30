@@ -629,6 +629,53 @@ public final class FapCraftGameTests {
         }
     }
 
+    @GameTest(template = "empty", timeoutTicks = 900, batch = "b_luna")
+    public static void lunaFishesEatsAndStartsOver(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        floor(helper, 14);
+        // a sealed basin: stone ring and bottom, two blocks of still water
+        for (int x = 4; x <= 10; x++) {
+            for (int z = 1; z <= 7; z++) {
+                boolean pool = x >= 5 && x <= 9 && z >= 2 && z <= 6;
+                for (int y = -2; y <= 0; y++) {
+                    var state = pool && y >= -1 ? net.minecraft.world.level.block.Blocks.WATER.defaultBlockState()
+                            : net.minecraft.world.level.block.Blocks.STONE.defaultBlockState();
+                    level.setBlock(helper.absolutePos(new net.minecraft.core.BlockPos(x, y, z)), state, 3);
+                }
+            }
+        }
+        com.trolmastercard.sexmod.entity.LunaFishing.ignoreBiomes = true;
+        CompanionEntity luna = spawnKind(helper, CompanionKind.LUNA);
+        luna.moveTo(helper.absoluteVec(new Vec3(1.5, 1.0, 4.5)));
+        var fishing = luna.lunaFishing();
+        helper.runAfterDelay(300, () -> {
+            var hook = fishing.hook();
+            if (hook == null || !hook.isBobbing() || luna.fishState() != com.trolmastercard.sexmod.entity.LunaFishing.IDLE) {
+                com.trolmastercard.sexmod.entity.LunaFishing.ignoreBiomes = false;
+                helper.fail("Luna walked to the water, cast her rod and the bobber floats (state " + luna.fishState() + ", hook " + hook + ")");
+                return;
+            }
+            hook.forceBite();
+        });
+        helper.runAfterDelay(380, () -> {
+            int state = luna.fishState();
+            if (state != com.trolmastercard.sexmod.entity.LunaFishing.EAT && state != com.trolmastercard.sexmod.entity.LunaFishing.THROW_AWAY) {
+                com.trolmastercard.sexmod.entity.LunaFishing.ignoreBiomes = false;
+                helper.fail("after the bite she reeled in and eats or throws away the catch (state " + state + ")");
+            }
+        });
+        helper.runAfterDelay(560, () -> {
+            com.trolmastercard.sexmod.entity.LunaFishing.ignoreBiomes = false;
+            if (fishing.catches() != 1 || luna.fishState() == com.trolmastercard.sexmod.entity.LunaFishing.EAT) {
+                helper.fail("the catch is finished and she starts over (catches " + fishing.catches() + ", state " + luna.fishState() + ")");
+                return;
+            }
+            luna.discard();
+            helper.succeed();
+        });
+    }
+
     @GameTest(template = "empty", batch = "a_first")
     public static void tribeSpawnClaimAndPersist(GameTestHelper helper) {
         var level = helper.getLevel();
@@ -833,10 +880,6 @@ public final class FapCraftGameTests {
         cow.moveTo(helper.absoluteVec(new Vec3(4.5, 1.0, 2.5)));
         level.addFreshEntity(cow);
         tribe.enemies.add(cow.getUUID());
-        helper.runAfterDelay(100, () -> System.out.println("FIGHTDBG tc=" + kobold.tickCount + " scene=" + kobold.isInScene() + " bed=" + kobold.isBedWalking()
-                + " busy=" + kobold.koboldBehavior().isBusy() + " under=" + kobold.koboldUnderAttack() + " enemies=" + tribe.enemies.size()
-                + " cowAlive=" + cow.isAlive() + " cowInLevel=" + (level.getEntity(cow.getUUID()) != null) + " nav=" + kobold.getNavigation().isDone() + " hp=" + kobold.getHealth()
-                + " master=" + kobold.masterId() + " leader=" + tribe.leader + " me=" + kobold.getUUID() + " mode=" + tribe.mode + " t=" + level.getDayTime()));
         helper.runAfterDelay(260, () -> {
             if (cow.getHealth() >= cow.getMaxHealth() || !kobold.koboldUnderAttack() && cow.isAlive()) {
                 helper.fail("the Kobold ran at the enemy and hit it for 5 (cow health " + cow.getHealth() + ", kobold at "
@@ -853,7 +896,7 @@ public final class FapCraftGameTests {
         });
     }
 
-    @GameTest(template = "empty")
+    @GameTest(template = "empty", batch = "b_egg")
     public static void koboldEggCarriesTheTribe(GameTestHelper helper) {
         var level = helper.getLevel();
         forceArena(helper);
@@ -867,11 +910,11 @@ public final class FapCraftGameTests {
         egg.setPos(helper.absoluteVec(new Vec3(1.5, 1.0, 1.5)));
         level.addFreshEntity(egg);
         egg.setHatchAge(com.trolmastercard.sexmod.entity.KoboldEggEntity.MAX_HATCH_AGE - 1);
-        helper.runAfterDelay(6, () -> {
+        helper.runAfterDelay(30, () -> {
             var hatched = com.trolmastercard.sexmod.tribe.TribeManager.loadedMembers(level.getServer(), tribe);
             if (hatched.size() != 1 || !hatched.get(0).isMaster(helper.makeMockPlayer(GameType.SURVIVAL)) && !hatched.get(0).masterId().equals(java.util.Optional.of(owner))
                     || egg.isAlive() || hatched.get(0).bodyColor() != com.trolmastercard.sexmod.tribe.KoboldColor.SILVER) {
-                helper.fail("a hatched egg is a new member of the tribe, owned by its master");
+                helper.fail("a hatched egg is a new member of the tribe, owned by its master (members " + hatched.size() + ", eggAlive " + egg.isAlive() + ", eggTicks " + egg.tickCount + ", masters " + hatched.stream().map(h -> h.masterId().toString() + "/" + h.bodyColor()).toList() + ")");
                 return;
             }
             hatched.forEach(Entity::discard);

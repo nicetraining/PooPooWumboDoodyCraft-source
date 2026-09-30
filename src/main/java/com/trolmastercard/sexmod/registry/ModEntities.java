@@ -11,7 +11,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.SpawnPlacementTypes;
-import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
@@ -89,13 +88,14 @@ public final class ModEntities {
     public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PYROCINICAL =
             registerCompatibility("pyrocinical", CompanionKind.MANGLELIE, false);
 
-    public static final DeferredHolder<EntityType<?>, EntityType<FishingHook>> LUNA_HOOK =
+    public static final DeferredHolder<EntityType<?>, EntityType<com.trolmastercard.sexmod.entity.LunaHookEntity>> LUNA_HOOK =
             ENTITY_TYPES.register(
                     "luna_hook",
-                    () -> EntityType.Builder.<FishingHook>of(FishingHook::new, MobCategory.MISC)
+                    () -> EntityType.Builder.<com.trolmastercard.sexmod.entity.LunaHookEntity>of(com.trolmastercard.sexmod.entity.LunaHookEntity::new, MobCategory.MISC)
                             .sized(0.25F, 0.25F)
                             .clientTrackingRange(4)
-                            .updateInterval(5)
+                            .updateInterval(2)
+                            .noSave()
                             .build(FapCraft.MOD_ID + ":luna_hook")
             );
     public static final DeferredHolder<EntityType<?>, EntityType<EnergyBallEntity>> ENERGY_BALL =

@@ -191,6 +191,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_K_ATTACKED =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_FISH_STATE =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_FISH_CAST =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<ItemStack> DATA_FISH_ITEM =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.ITEM_STACK);
     private static final EntityDataAccessor<Integer> DATA_K_STATE =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_K_CHOP =
@@ -204,6 +210,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private SlimeBehavior slimeBehavior;
     private BeeBehavior beeBehavior;
     private com.trolmastercard.sexmod.tribe.KoboldBehavior koboldBehavior;
+    private LunaFishing lunaFishing;
     private CompanionScene queuedScene;
     /** A scene to queue after {@link #queuedScene} has started (Allie: prepare, then the chosen scene). */
     private CompanionScene chainedScene;
@@ -236,6 +243,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (kind == CompanionKind.KOBOLD && !technicalProxy) {
             this.koboldBehavior = new com.trolmastercard.sexmod.tribe.KoboldBehavior(this);
             this.configureKobold();
+        }
+        if (kind == CompanionKind.LUNA && !technicalProxy) {
+            this.lunaFishing = new LunaFishing(this);
         }
         if (this.getNavigation() instanceof GroundPathNavigation ground) {
             ground.setCanOpenDoors(true);
@@ -322,7 +332,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 this, 0.4D, Ingredient.of(Items.EMERALD, Items.DIAMOND, Items.GOLD_INGOT, Items.ENDER_PEARL), false));
         this.goalSelector.addGoal(3, new OpenDoorGoal(this, true));
         this.goalSelector.addGoal(5, new IdleLookGoal());
-        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.35D));
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.35D) {
+            @Override
+            public boolean canUse() {
+                return !CompanionEntity.this.fishingHoldsHer() && super.canUse();
+            }
+        });
 
         // Kinds without the master/combat logic keep the old generic fighting until each one is ported.
         this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.15D, true) {
@@ -379,6 +394,49 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_K_ATTACKED, false);
         builder.define(DATA_K_CHOP, false);
         builder.define(DATA_K_STATE, 0);
+        builder.define(DATA_FISH_STATE, 0);
+        builder.define(DATA_FISH_CAST, false);
+        builder.define(DATA_FISH_ITEM, ItemStack.EMPTY);
+    }
+
+    public int fishState() {
+        return this.entityData.get(DATA_FISH_STATE);
+    }
+
+    public void setFishState(int state) {
+        this.entityData.set(DATA_FISH_STATE, state);
+    }
+
+    /** Original af: the rod is cast (drives the rod's "cast" model). */
+    public boolean fishCast() {
+        return this.entityData.get(DATA_FISH_CAST);
+    }
+
+    public void setFishCast(boolean cast) {
+        this.entityData.set(DATA_FISH_CAST, cast);
+    }
+
+    /** Original ag: the item on the hook. */
+    public ItemStack fishCaught() {
+        return this.entityData.get(DATA_FISH_ITEM);
+    }
+
+    public void setFishCaught(ItemStack stack) {
+        this.entityData.set(DATA_FISH_ITEM, stack.copy());
+    }
+
+    private boolean fishingHoldsHer() {
+        return this.lunaFishing != null && this.lunaFishing.isActive();
+    }
+
+    public LunaFishing lunaFishing() {
+        return this.lunaFishing;
+    }
+
+    /** Original ae() != null and friends: a scene, a queued scene or a walk to a bed stops the fishing routine. */
+    public boolean isFishingBlocked() {
+        return this.isInScene() || this.queuedScene != null || this.chainedScene != null || this.delayedScene != null
+                || this.bedWalk != null || this.isDowned();
     }
 
     public Optional<UUID> masterId() {
@@ -1610,6 +1668,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.koboldBehavior != null) {
             this.koboldBehavior.tick(serverLevel);
         }
+        if (this.lunaFishing != null) {
+            this.lunaFishing.tick(serverLevel);
+        }
         this.tickEllieHorny(serverLevel);
         this.tickTargetSanity();
         this.tickGoHome(serverLevel);
@@ -1928,6 +1989,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
         this.bedWalk = best;
         this.bedWalkTicks = 0;
+        if (this.lunaFishing != null) {
+            this.lunaFishing.markDone(); // original ar: she stops fishing after walking to a bed
+        }
         this.setTarget(null);
         return true;
     }
@@ -2638,6 +2702,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 default -> software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.slime.idle");
             });
         }
+        if (this.kind == CompanionKind.LUNA && this.fishState() != LunaFishing.NONE) {
+            var raw = software.bernie.geckolib.animation.RawAnimation.begin();
+            return state.setAndContinue(switch (this.fishState()) {
+                case LunaFishing.START -> raw.thenPlayAndHold("animation.cat.start_fishing");
+                case LunaFishing.IDLE -> raw.thenLoop("animation.cat.idle_fishing");
+                case LunaFishing.EAT -> raw.thenPlayAndHold("animation.cat.eat_fishing");
+                default -> raw.thenPlayAndHold("animation.cat.throw_away");
+            });
+        }
         if (this.kind == CompanionKind.GALATH && this.getFirstPassenger() instanceof Player) {
             return state.setAndContinue(this.entityData.get(DATA_GALATH_BOOST) > 0
                     ? software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.galath.boost")
@@ -2717,7 +2790,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         @Override
         public boolean canUse() {
             return (!CompanionEntity.this.hasMaster() || CompanionEntity.this.followState == FollowState.IDLE)
-                    && super.canUse();
+                    && !CompanionEntity.this.fishingHoldsHer() && super.canUse();
         }
     }
 

@@ -26,6 +26,7 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
     public CompanionRenderer(EntityRendererProvider.Context context) {
         super(context, new CompanionModel());
         this.shadowRadius = 0.2F;
+        this.addRenderLayer(new FishingItemLayer(this));
     }
 
     @Override
@@ -166,5 +167,35 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
         var connection = Minecraft.getInstance().getConnection();
         PlayerInfo playerInfo = connection == null ? null : connection.getPlayerInfo(partnerId);
         return playerInfo == null ? DefaultPlayerSkin.get(partnerId) : playerInfo.getSkin();
+    }
+
+    /**
+     * Original d_ item rendering on the "weapon" bone, for now only Luna's fishing items: her rod while she starts /
+     * idles at the water (cast or not) and the caught item while she eats or throws it away.
+     */
+    private static final class FishingItemLayer extends software.bernie.geckolib.renderer.layer.BlockAndItemGeoLayer<CompanionEntity> {
+        FishingItemLayer(software.bernie.geckolib.renderer.GeoRenderer<CompanionEntity> renderer) {
+            super(renderer);
+        }
+
+        @Override
+        protected net.minecraft.world.item.ItemStack getStackForBone(GeoBone bone, CompanionEntity entity) {
+            if (entity.kind() != CompanionKind.LUNA || !"weapon".equals(bone.getName())) {
+                return net.minecraft.world.item.ItemStack.EMPTY;
+            }
+            return switch (entity.fishState()) {
+                case com.trolmastercard.sexmod.entity.LunaFishing.START, com.trolmastercard.sexmod.entity.LunaFishing.IDLE ->
+                        new net.minecraft.world.item.ItemStack(com.trolmastercard.sexmod.registry.ModItems.LUNA_ROD.get());
+                case com.trolmastercard.sexmod.entity.LunaFishing.EAT, com.trolmastercard.sexmod.entity.LunaFishing.THROW_AWAY ->
+                        entity.fishCaught();
+                default -> net.minecraft.world.item.ItemStack.EMPTY;
+            };
+        }
+
+        @Override
+        protected net.minecraft.world.item.ItemDisplayContext getTransformTypeForStack(
+                GeoBone bone, net.minecraft.world.item.ItemStack stack, CompanionEntity entity) {
+            return net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
+        }
     }
 }

@@ -4,7 +4,6 @@ import com.trolmastercard.sexmod.FapCraft;
 import com.trolmastercard.sexmod.entity.CompanionKind;
 import com.trolmastercard.sexmod.registry.ModEntities;
 import com.trolmastercard.sexmod.registry.ModMenus;
-import net.minecraft.client.renderer.entity.FishingHookRenderer;
 import net.minecraft.client.renderer.entity.ThrownItemRenderer;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -28,8 +27,17 @@ public final class ClientModEvents {
         }
         event.registerEntityRenderer(ModEntities.KOBOLD_EGG.get(), KoboldEggRenderer::new);
         event.registerEntityRenderer(ModEntities.FRIENDLY_SLIME.get(), net.minecraft.client.renderer.entity.SlimeRenderer::new);
-        event.registerEntityRenderer(ModEntities.LUNA_HOOK.get(), FishingHookRenderer::new);
+        event.registerEntityRenderer(ModEntities.LUNA_HOOK.get(), LunaHookRenderer::new);
         event.registerEntityRenderer(ModEntities.ENERGY_BALL.get(), ThrownItemRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void clientSetup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
+        event.enqueueWork(() -> net.minecraft.client.renderer.item.ItemProperties.register(
+                com.trolmastercard.sexmod.registry.ModItems.LUNA_ROD.get(),
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, "cast"),
+                (stack, level, entity, seed) -> entity instanceof com.trolmastercard.sexmod.entity.CompanionEntity companion
+                        && companion.fishCast() ? 1.0F : 0.0F));
     }
 
     @SubscribeEvent

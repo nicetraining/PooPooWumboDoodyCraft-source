@@ -514,6 +514,12 @@
   ],
   "meter": 0.04
  },
+ "burp": {
+  "sounds": [
+   "minecraft:entity.player.burp"
+  ],
+  "volume": 0.5
+ },
  "eat": {
   "layers": [
    {
