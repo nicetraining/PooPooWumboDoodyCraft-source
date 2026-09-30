@@ -82,6 +82,7 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
                     && entity.currentScene().hasPartner()
                     && entity.scenePartnerId().filter(minecraft.player.getUUID()::equals).isPresent();
             bone.setHidden(localPartner && minecraft.options.getCameraType().isFirstPerson());
+            bone.setChildrenHidden(false); // setHidden also hides children, which would freeze the camera bone
         }
         if (bone.getName().equals("boyCam")) {
             bone.setTrackingMatrices(true);
