@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "KEK",
+    "ETE",
+    "KEK"
+  ],
+  "key": {
+    "K": { "item": "sexmod:kobold_egg_item" },
+    "E": { "item": "minecraft:emerald_block" },
+    "T": { "item": "minecraft:turtle_egg" }
+  },
+  "result": {
+    "id": "sexmod:tribe_egg",
+    "count": 1
+  }
+}

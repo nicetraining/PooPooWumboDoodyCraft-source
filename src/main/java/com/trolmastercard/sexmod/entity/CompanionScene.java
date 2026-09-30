@@ -1,0 +1,414 @@
+package com.trolmastercard.sexmod.entity;
+
+import net.minecraft.resources.ResourceLocation;
+import software.bernie.geckolib.animation.RawAnimation;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+
+/**
+ * Compact scene catalogue reconstructed from the original animation state
+ * enum. Each phase has a server-side duration so transitions remain identical
+ * for every tracking client.
+ */
+public enum CompanionScene {
+    JENNY_WAVE(
+            CompanionKind.JENNY, "wave", false,
+            phase("animation.jenny.wave", 72),
+            loop("animation.jenny.wave_idle", 80)
+    ),
+    JENNY_BLOWJOB(
+            CompanionKind.JENNY, "blowjob", true,
+            phase("animation.jenny.blowjobintro", 986),
+            loop("animation.jenny.blowjobsuck", 121),
+            loop("animation.jenny.blowjobthrust", 70),
+            phase("animation.jenny.blowjobcum", 236)
+    ),
+    JENNY_BOOBJOB(
+            CompanionKind.JENNY, "boobjob", true,
+            phase("animation.jenny.paizuri_start", 174),
+            loop("animation.jenny.paizuri_slow", 108),
+            loop("animation.jenny.paizuri_fast", 66),
+            phase("animation.jenny.paizuri_cum", 230)
+    ),
+    JENNY_DOGGY(
+            CompanionKind.JENNY, "doggy", true,
+            phase("animation.jenny.doggygoonbed", 131),
+            phase("animation.jenny.doggystart", 199),
+            loop("animation.jenny.doggyslow", 93),
+            loop("animation.jenny.doggyfast_hard", 65),
+            phase("animation.jenny.doggycum", 134)
+    ),
+
+    ELLIE_HUG(
+            CompanionKind.ELLIE, "hug", true,
+            phase("animation.ellie.hug", 152),
+            loop("animation.ellie.hugidle", 100),
+            phase("animation.ellie.hugselected", 81)
+    ),
+    ELLIE_COWGIRL(
+            CompanionKind.ELLIE, "cowgirl", true,
+            phase("animation.ellie.cowgirlstart", 316),
+            loop("animation.ellie.cowgirlslow2", 128),
+            loop("animation.ellie.cowgirlfast", 102),
+            phase("animation.ellie.cowgirlcum", 308)
+    ),
+    ELLIE_MISSIONARY(
+            CompanionKind.ELLIE, "missionary", true,
+            phase("animation.ellie.missionary_start", 65),
+            loop("animation.ellie.missionary_slow", 117),
+            loop("animation.ellie.missionary_fast", 75),
+            phase("animation.ellie.missionary_cum", 289)
+    ),
+    ELLIE_CARRY(
+            CompanionKind.ELLIE, "carry", true,
+            phase("animation.ellie.carry_intro", 191),
+            loop("animation.ellie.carry_slow2", 100),
+            loop("animation.ellie.carry_fast", 80),
+            phase("animation.ellie.carry_cum", 150)
+    ),
+
+    SLIME_BLOWJOB(
+            CompanionKind.SLIME, "blowjob", true,
+            loop("animation.slime.blowjobsuck", 120),
+            loop("animation.slime.blowjobthrust", 85),
+            phase("animation.slime.blowjobcum", 232)
+    ),
+    SLIME_DOGGY(
+            CompanionKind.SLIME, "doggy", true,
+            phase("animation.slime.doggygoonbed", 34),
+            phase("animation.slime.doggystart", 196),
+            loop("animation.slime.doggyslow", 91),
+            loop("animation.slime.doggyfast", 65),
+            phase("animation.slime.doggycum", 112)
+    ),
+
+    BIA_WAVE(
+            CompanionKind.BIA, "wave", false,
+            phase("animation.bia.wave", 76),
+            loop("animation.bia.wave_idle", 80)
+    ),
+    BIA_HEADPAT(
+            CompanionKind.BIA, "headpat", true,
+            phase("animation.bia.headpat", 155)
+    ),
+    BIA_ANAL(
+            CompanionKind.BIA, "anal", true,
+            phase("animation.bia.anal_prepare", 111),
+            phase("animation.bia.anal_start", 57),
+            loop("animation.bia.anal_slow", 90),
+            loop("animation.bia.anal_fast", 74),
+            phase("animation.bia.anal_cum", 76)
+    ),
+    BIA_PRONE(
+            CompanionKind.BIA, "prone", true,
+            phase("animation.bia.prone_doggy_intro", 38),
+            phase("animation.bia.prone_doggy_insert", 43),
+            loop("animation.bia.prone_doggy_soft", 88),
+            loop("animation.bia.prone_doggy_hard1", 82),
+            phase("animation.bia.prone_doggy_cum", 58)
+    ),
+
+    BEE_SEX(
+            CompanionKind.BEE, "sex", true,
+            phase("animation.bee.sex_start", 165),
+            loop("animation.bee.sex_slow", 120),
+            loop("animation.bee.sex_fast", 68),
+            phase("animation.bee.sex_cum", 51)
+    ),
+
+    LUNA_HEADPAT(
+            CompanionKind.LUNA, "headpat", true,
+            phase("animation.cat.head_pat", 163)
+    ),
+    LUNA_TOUCH(
+            CompanionKind.LUNA, "touchboobs", true,
+            phase("animation.cat.touch_boobs_intro", 215),
+            loop("animation.cat.touch_boobs_slow", 170),
+            loop("animation.cat.touch_boobs_fast", 85),
+            phase("animation.cat.touch_boobs_cum", 106)
+    ),
+    LUNA_SITTING(
+            CompanionKind.LUNA, "sitting", true,
+            phase("animation.cat.sitting_intro", 119),
+            loop("animation.cat.sitting_slow", 100),
+            loop("animation.cat.sitting_fast", 70),
+            phase("animation.cat.sitting_cum", 105)
+    ),
+
+    ALLIE_RICH(
+            CompanionKind.ALLIE, "rich", false,
+            phase("animation.allie.rich", 100)
+    ),
+    ALLIE_DEEPTHROAT(
+            CompanionKind.ALLIE, "deepthroat", true,
+            phase("animation.allie.deepthroat_prepare", 69),
+            phase("animation.allie.deepthroat_start", 64),
+            loop("animation.allie.deepthroat_slow", 119),
+            loop("animation.allie.deepthroat_fast", 72),
+            phase("animation.allie.deepthroat_cum", 46)
+    ),
+    ALLIE_REVERSE_COWGIRL(
+            CompanionKind.ALLIE, "reverse_cowgirl", true,
+            phase("animation.allie.reverse_cowgirl_start", 89),
+            loop("animation.allie.reverse_cowgirl_slow1", 95),
+            loop("animation.allie.reverse_cowgirl_fasts", 67),
+            phase("animation.allie.reverse_cowgirl_cum", 49)
+    ),
+
+    KOBOLD_ANAL(
+            CompanionKind.KOBOLD, "anal", true,
+            phase("animation.kobold.analStart", 43),
+            loop("animation.kobold.analSoft", 85),
+            loop("animation.kobold.analHard", 70),
+            phase("animation.kobold.analCum", 102)
+    ),
+    KOBOLD_BLOWJOB(
+            CompanionKind.KOBOLD, "blowjob", true,
+            phase("animation.kobold.blowjobStart", 226),
+            loop("animation.kobold.blowjobSlowR", 100),
+            loop("animation.kobold.blowjobFast", 60),
+            phase("animation.kobold.blowjobCum", 84)
+    ),
+    KOBOLD_MATING_PRESS(
+            CompanionKind.KOBOLD, "mating_press", true,
+            phase("animation.kobold.mating_press_start", 55),
+            loop("animation.kobold.mating_press_soft", 100),
+            loop("animation.kobold.mating_press_hard", 75),
+            phase("animation.kobold.mating_press_cum", 145)
+    ),
+
+    GOBLIN_PAIZURI(
+            CompanionKind.GOBLIN, "paizuri", true,
+            phase("animation.goblin.paizuri_start", 100),
+            loop("animation.goblin.paizuri_slow", 134),
+            loop("animation.goblin.paizuri_fast", 75),
+            phase("animation.goblin.paizuri_cum", 50)
+    ),
+    GOBLIN_BREEDING(
+            CompanionKind.GOBLIN, "breeding", true,
+            phase("animation.goblin.breeding_intro_1", 245),
+            loop("animation.goblin.breeding_slow_1l", 90),
+            loop("animation.goblin.breeding_fast_1s", 65),
+            phase("animation.goblin.breeding_cum_1", 170)
+    ),
+    GOBLIN_NELSON(
+            CompanionKind.GOBLIN, "nelson", true,
+            phase("animation.goblin.nelson_intro", 41),
+            loop("animation.goblin.nelson_slow", 93),
+            loop("animation.goblin.nelson_fasts", 75),
+            phase("animation.goblin.nelson_cum", 35)
+    ),
+
+    GALATH_CORRUPT(
+            CompanionKind.GALATH, "corrupt", true,
+            phase("animation.galath.corrupt_intro", 30),
+            loop("animation.galath.corrupt_slow", 88),
+            loop("animation.galath.corrupt_hard", 75),
+            phase("animation.galath.corrupt_cum", 57)
+    ),
+
+    /**
+     * The bed animations are authored for the combined Galath and Manglelie
+     * model, which is the only geometry that contains both skeletons. Played on
+     * Manglelie's own model the keyframes that exist there are static, so the
+     * scene looked frozen. The scene therefore renders with that combined model
+     * and Galath's animation file, where all four phases exist.
+     */
+    MANGLELIE_BED(
+            CompanionKind.MANGLELIE, "bed", true,
+            phase("animation.shared.bed_back", 15),
+            loop("animation.shared.bed_slow", 100),
+            loop("animation.shared.bed_fast", 60),
+            phase("animation.shared.bed_cum", 78)
+    );
+
+    private final CompanionKind kind;
+    private final String path;
+    private final boolean hasPartner;
+    private final List<Phase> phases;
+
+    CompanionScene(
+            CompanionKind kind,
+            String path,
+            boolean hasPartner,
+            Phase... phases
+    ) {
+        this.kind = kind;
+        this.path = path;
+        this.hasPartner = hasPartner;
+        this.phases = Collections.unmodifiableList(Arrays.asList(phases));
+    }
+
+    public CompanionKind kind() {
+        return this.kind;
+    }
+
+    public String path() {
+        return this.path;
+    }
+
+    public String serializedName() {
+        return this.name().toLowerCase(Locale.ROOT);
+    }
+
+    public String translationKey() {
+        return "scene.sexmod." + this.serializedName();
+    }
+
+    public boolean hasPartner() {
+        return this.hasPartner;
+    }
+
+    /**
+     * Kind whose texture, animation file and cosmetic bone rules this scene
+     * borrows, or {@code null} when the companion's own assets are used.
+     */
+    public CompanionKind renderAsKind() {
+        return this == MANGLELIE_BED ? CompanionKind.GALATH : null;
+    }
+
+    /** Model used instead of the companion's own one, or {@code null}. */
+    public ResourceLocation modelOverride() {
+        return this == MANGLELIE_BED
+                ? ResourceLocation.fromNamespaceAndPath("sexmod", "geo/galath/galath_con_mang.geo.json")
+                : null;
+    }
+
+    /**
+     * True when the pose is authored as already lying on the mattress, so the
+     * scene has to be anchored onto the bed. The doggy scenes instead open with
+     * their own "go on bed" animation and keep their own starting position.
+     */
+    public boolean anchorsOnBed() {
+        return this == MANGLELIE_BED;
+    }
+
+    public boolean requiresBed() {
+        return this == JENNY_DOGGY || this == SLIME_DOGGY || this == MANGLELIE_BED;
+    }
+
+    public PhaseRole phaseRole(int index) {
+        Phase phase = this.phase(index);
+        if (phase == null || !this.hasInteractivePhases()) {
+            return PhaseRole.AUTO;
+        }
+        if (phase.loop()) {
+            return PhaseRole.INTENSITY;
+        }
+        return index > this.lastLoopPhase() ? PhaseRole.FINALE : PhaseRole.AUTO;
+    }
+
+    public boolean hasInteractivePhases() {
+        return this.hasPartner && this.firstLoopPhase() >= 0;
+    }
+
+    public int firstLoopPhase() {
+        for (int index = 0; index < this.phases.size(); index++) {
+            if (this.phases.get(index).loop()) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    public int lastLoopPhase() {
+        for (int index = this.phases.size() - 1; index >= 0; index--) {
+            if (this.phases.get(index).loop()) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    public int previousLoopPhase(int current) {
+        for (int index = Math.min(current - 1, this.phases.size() - 1); index >= 0; index--) {
+            if (this.phases.get(index).loop()) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    public int nextLoopPhase(int current) {
+        for (int index = Math.max(0, current + 1); index < this.phases.size(); index++) {
+            if (this.phases.get(index).loop()) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    public int finalePhase() {
+        int lastLoop = this.lastLoopPhase();
+        if (lastLoop < 0) {
+            return -1;
+        }
+        for (int index = lastLoop + 1; index < this.phases.size(); index++) {
+            if (!this.phases.get(index).loop()) {
+                return index;
+            }
+        }
+        return -1;
+    }
+
+    public List<Phase> phases() {
+        return this.phases;
+    }
+
+    public Phase phase(int index) {
+        if (index < 0 || index >= this.phases.size()) {
+            return null;
+        }
+
+        return this.phases.get(index);
+    }
+
+    public static CompanionScene byName(String value) {
+        if (value != null) {
+            for (CompanionScene scene : values()) {
+                if (scene.name().equalsIgnoreCase(value)
+                        || scene.serializedName().equalsIgnoreCase(value)) {
+                    return scene;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    public static List<CompanionScene> forKind(CompanionKind kind) {
+        List<CompanionScene> result = new ArrayList<>();
+        for (CompanionScene scene : values()) {
+            if (scene.kind == kind) {
+                result.add(scene);
+            }
+        }
+        return Collections.unmodifiableList(result);
+    }
+
+    private static Phase phase(String animation, int ticks) {
+        return new Phase(animation, Math.max(1, ticks), false);
+    }
+
+    private static Phase loop(String animation, int ticks) {
+        return new Phase(animation, Math.max(1, ticks), true);
+    }
+
+    public enum PhaseRole {
+        AUTO,
+        INTENSITY,
+        FINALE
+    }
+
+    public record Phase(String animation, int durationTicks, boolean loop) {
+        public RawAnimation rawAnimation() {
+            return this.loop
+                    ? RawAnimation.begin().thenLoop(this.animation)
+                    : RawAnimation.begin().thenPlay(this.animation);
+        }
+    }
+}

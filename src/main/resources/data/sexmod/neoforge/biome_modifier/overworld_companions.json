@@ -1,0 +1,17 @@
+{
+  "type": "neoforge:add_spawns",
+  "biomes": [
+    "minecraft:plains",
+    "minecraft:sunflower_plains",
+    "minecraft:forest",
+    "minecraft:birch_forest",
+    "minecraft:meadow",
+    "minecraft:taiga"
+  ],
+  "spawners": [
+    { "type": "sexmod:jenny", "weight": 1, "minCount": 1, "maxCount": 1 },
+    { "type": "sexmod:ellie", "weight": 1, "minCount": 1, "maxCount": 1 },
+    { "type": "sexmod:bia", "weight": 1, "minCount": 1, "maxCount": 1 },
+    { "type": "sexmod:luna", "weight": 1, "minCount": 1, "maxCount": 1 }
+  ]
+}

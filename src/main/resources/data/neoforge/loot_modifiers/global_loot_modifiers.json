@@ -1,0 +1,13 @@
+{
+  "replace": false,
+  "entries": [
+    "sexmod:kobold_egg_simple_dungeon",
+    "sexmod:kobold_egg_abandoned_mineshaft",
+    "sexmod:tribe_egg_woodland_mansion",
+    "sexmod:tribe_egg_bastion_treasure",
+    "sexmod:allies_lamp_desert_pyramid",
+    "sexmod:allies_lamp_end_city_treasure",
+    "sexmod:galath_coin_ancient_city",
+    "sexmod:galath_coin_bastion_treasure"
+  ]
+}

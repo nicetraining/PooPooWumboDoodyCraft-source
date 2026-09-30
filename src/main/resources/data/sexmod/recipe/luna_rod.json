@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " G ",
+    "ARA",
+    " G "
+  ],
+  "key": {
+    "G": { "item": "minecraft:gold_ingot" },
+    "A": { "item": "minecraft:amethyst_shard" },
+    "R": { "item": "minecraft:fishing_rod" }
+  },
+  "result": {
+    "id": "sexmod:luna_rod",
+    "count": 1
+  }
+}

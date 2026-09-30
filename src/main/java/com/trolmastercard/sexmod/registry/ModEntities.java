@@ -1,0 +1,184 @@
+package com.trolmastercard.sexmod.registry;
+
+import com.trolmastercard.sexmod.FapCraft;
+import com.trolmastercard.sexmod.entity.CompanionEntity;
+import com.trolmastercard.sexmod.entity.CompanionKind;
+import com.trolmastercard.sexmod.entity.EnergyBallEntity;
+import com.trolmastercard.sexmod.entity.KoboldEggEntity;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.entity.projectile.FishingHook;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
+import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
+
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
+
+public final class ModEntities {
+    public static final DeferredRegister<EntityType<?>> ENTITY_TYPES =
+            DeferredRegister.create(Registries.ENTITY_TYPE, FapCraft.MOD_ID);
+
+    private static final Map<CompanionKind, DeferredHolder<EntityType<?>, EntityType<CompanionEntity>>> COMPANIONS =
+            new EnumMap<>(CompanionKind.class);
+    private static final List<CompatibilityType> COMPATIBILITY_TYPES = new ArrayList<>();
+
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> JENNY = register(CompanionKind.JENNY);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> ELLIE = register(CompanionKind.ELLIE);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> SLIME = register(CompanionKind.SLIME);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> BIA = register(CompanionKind.BIA);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> BEE = register(CompanionKind.BEE);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> LUNA = register(CompanionKind.LUNA);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> ALLIE = register(CompanionKind.ALLIE);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> KOBOLD = register(CompanionKind.KOBOLD);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> GOBLIN = register(CompanionKind.GOBLIN);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> GALATH = register(CompanionKind.GALATH);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> MANGLELIE =
+            register(CompanionKind.MANGLELIE);
+
+    public static final DeferredHolder<EntityType<?>, EntityType<KoboldEggEntity>> KOBOLD_EGG =
+            ENTITY_TYPES.register(
+                    "kobold_egg",
+                    () -> EntityType.Builder.<KoboldEggEntity>of(KoboldEggEntity::new, MobCategory.CREATURE)
+                            .sized(0.5F, 0.5F)
+                            .clientTrackingRange(10)
+                            .updateInterval(3)
+                            .build(FapCraft.MOD_ID + ":kobold_egg")
+            );
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> CUSTOM_MODEL =
+            registerCompatibility("custom_model", CompanionKind.JENNY, false);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_JENNY =
+            registerCompatibility("player_jenny", CompanionKind.JENNY, true);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_ELLIE =
+            registerCompatibility("player_ellie", CompanionKind.ELLIE, true);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_SLIME =
+            registerCompatibility("player_slime", CompanionKind.SLIME, true);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_BIA =
+            registerCompatibility("player_bia", CompanionKind.BIA, true);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_BEE =
+            registerCompatibility("player_bee", CompanionKind.BEE, true);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_ALLIE =
+            registerCompatibility("player_allie", CompanionKind.ALLIE, true);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_KOBOLD =
+            registerCompatibility("player_kobold", CompanionKind.KOBOLD, true);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_GOBLIN =
+            registerCompatibility("player_goblin", CompanionKind.GOBLIN, true);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_LUNA =
+            registerCompatibility("player_luna", CompanionKind.LUNA, true);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_GALATH =
+            registerCompatibility("player_galath", CompanionKind.GALATH, true);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> FRIENDLY_SLIME =
+            registerCompatibility("friendly_slime", CompanionKind.SLIME, false);
+    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PYROCINICAL =
+            registerCompatibility("pyrocinical", CompanionKind.MANGLELIE, false);
+
+    public static final DeferredHolder<EntityType<?>, EntityType<FishingHook>> LUNA_HOOK =
+            ENTITY_TYPES.register(
+                    "luna_hook",
+                    () -> EntityType.Builder.<FishingHook>of(FishingHook::new, MobCategory.MISC)
+                            .sized(0.25F, 0.25F)
+                            .clientTrackingRange(4)
+                            .updateInterval(5)
+                            .build(FapCraft.MOD_ID + ":luna_hook")
+            );
+    public static final DeferredHolder<EntityType<?>, EntityType<EnergyBallEntity>> ENERGY_BALL =
+            ENTITY_TYPES.register(
+                    "energy_ball",
+                    () -> EntityType.Builder.<EnergyBallEntity>of(EnergyBallEntity::new, MobCategory.MISC)
+                            .sized(0.3125F, 0.3125F)
+                            .clientTrackingRange(8)
+                            .updateInterval(2)
+                            .build(FapCraft.MOD_ID + ":energy_ball")
+            );
+
+    private ModEntities() {
+    }
+
+    private static DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> register(CompanionKind kind) {
+        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, kind.registryPath());
+        DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> holder = ENTITY_TYPES.register(
+                kind.registryPath(),
+                () -> EntityType.Builder.<CompanionEntity>of(
+                                (entityType, level) -> new CompanionEntity(entityType, level, kind),
+                                MobCategory.CREATURE
+                        )
+                        .sized(kind.width(), kind.height())
+                        .clientTrackingRange(10)
+                        .updateInterval(3)
+                        .build(id.toString())
+        );
+        COMPANIONS.put(kind, holder);
+        return holder;
+    }
+
+    private static DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> registerCompatibility(
+            String path,
+            CompanionKind kind,
+            boolean technicalProxy
+    ) {
+        DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> holder = ENTITY_TYPES.register(
+                path,
+                () -> EntityType.Builder.<CompanionEntity>of(
+                                (entityType, level) -> new CompanionEntity(
+                                        entityType,
+                                        level,
+                                        kind,
+                                        technicalProxy
+                                ),
+                                MobCategory.MISC
+                        )
+                        .sized(kind.width(), kind.height())
+                        .clientTrackingRange(10)
+                        .updateInterval(3)
+                        .build(FapCraft.MOD_ID + ":" + path)
+        );
+        COMPATIBILITY_TYPES.add(new CompatibilityType(holder, kind));
+        return holder;
+    }
+
+    public static EntityType<CompanionEntity> get(CompanionKind kind) {
+        return COMPANIONS.get(kind).get();
+    }
+
+    public static List<EntityType<CompanionEntity>> compatibilityTypes() {
+        return COMPATIBILITY_TYPES.stream().map(entry -> entry.holder().get()).toList();
+    }
+
+    public static void register(IEventBus modEventBus) {
+        ENTITY_TYPES.register(modEventBus);
+    }
+
+    public static void registerSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+        COMPANIONS.values().forEach(holder -> event.register(
+                holder.get(),
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                CompanionEntity::checkNaturalSpawnRules,
+                RegisterSpawnPlacementsEvent.Operation.REPLACE
+        ));
+    }
+
+    public static void createAttributes(EntityAttributeCreationEvent event) {
+        COMPANIONS.forEach((kind, holder) ->
+                event.put(holder.get(), CompanionEntity.createAttributes(kind).build()));
+        COMPATIBILITY_TYPES.forEach(entry -> event.put(
+                entry.holder().get(),
+                CompanionEntity.createAttributes(entry.kind()).build()
+        ));
+        event.put(KOBOLD_EGG.get(), KoboldEggEntity.createAttributes().build());
+    }
+
+    private record CompatibilityType(
+            DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> holder,
+            CompanionKind kind
+    ) {
+    }
+}

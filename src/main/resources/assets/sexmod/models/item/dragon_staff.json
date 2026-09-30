@@ -1,0 +1,107 @@
+{
+  "credit": "Converted from the original GeckoLib dragon staff geometry",
+  "ambientocclusion": false,
+  "gui_light": "front",
+  "textures": {
+    "wood": "sexmod:item/model_palette/dragon_staff_wood",
+    "gold": "sexmod:item/model_palette/dragon_staff_gold",
+    "steel": "sexmod:item/model_palette/dragon_staff_steel",
+    "particle": "sexmod:item/model_palette/dragon_staff_wood"
+  },
+  "elements": [
+    {
+      "from": [7.25, 0.5, 7.25],
+      "to": [8.75, 13.5, 8.75],
+      "faces": {
+        "north": {"texture": "#wood"},
+        "east": {"texture": "#wood"},
+        "south": {"texture": "#wood"},
+        "west": {"texture": "#wood"},
+        "up": {"texture": "#wood"},
+        "down": {"texture": "#wood"}
+      }
+    },
+    {
+      "from": [6.5, 0, 6.5],
+      "to": [9.5, 1, 9.5],
+      "faces": {
+        "north": {"texture": "#gold"},
+        "east": {"texture": "#gold"},
+        "south": {"texture": "#gold"},
+        "west": {"texture": "#gold"},
+        "up": {"texture": "#gold"},
+        "down": {"texture": "#gold"}
+      }
+    },
+    {
+      "from": [6.5, 12.5, 6.5],
+      "to": [9.5, 13.75, 9.5],
+      "faces": {
+        "north": {"texture": "#gold"},
+        "east": {"texture": "#gold"},
+        "south": {"texture": "#gold"},
+        "west": {"texture": "#gold"},
+        "up": {"texture": "#gold"},
+        "down": {"texture": "#gold"}
+      }
+    },
+    {
+      "from": [6.75, 13.5, 6.75],
+      "to": [9.25, 15.75, 9.25],
+      "faces": {
+        "north": {"texture": "#gold"},
+        "east": {"texture": "#gold"},
+        "south": {"texture": "#gold"},
+        "west": {"texture": "#gold"},
+        "up": {"texture": "#gold"},
+        "down": {"texture": "#gold"}
+      }
+    },
+    {
+      "from": [7.25, 14, 7.25],
+      "to": [8.75, 16, 8.75],
+      "faces": {
+        "north": {"texture": "#steel"},
+        "east": {"texture": "#steel"},
+        "south": {"texture": "#steel"},
+        "west": {"texture": "#steel"},
+        "up": {"texture": "#steel"},
+        "down": {"texture": "#steel"}
+      }
+    }
+  ],
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [0, 0, 0],
+      "translation": [0, -2, 1],
+      "scale": [0.7, 0.7, 0.7]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [0, 0, 0],
+      "translation": [0, -2, 1],
+      "scale": [0.7, 0.7, 0.7]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 0, 0],
+      "translation": [0, -2, 0],
+      "scale": [0.75, 0.75, 0.75]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 0, 0],
+      "translation": [0, -2, 0],
+      "scale": [0.75, 0.75, 0.75]
+    },
+    "ground": {
+      "translation": [0, 2, 0],
+      "scale": [0.45, 0.45, 0.45]
+    },
+    "gui": {
+      "rotation": [20, -35, -45],
+      "translation": [0, 0, 0],
+      "scale": [0.9, 0.9, 0.9]
+    },
+    "fixed": {
+      "scale": [0.75, 0.75, 0.75]
+    }
+  }
+}

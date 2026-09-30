@@ -1,0 +1,152 @@
+{
+  "credit": "Converted from the original GeckoLib kobold egg geometry",
+  "ambientocclusion": false,
+  "gui_light": "front",
+  "textures": {
+    "shell": "sexmod:item/model_palette/kobold_egg_shell",
+    "spots": "sexmod:item/model_palette/kobold_egg_spots",
+    "particle": "sexmod:item/model_palette/kobold_egg_shell"
+  },
+  "elements": [
+    {
+      "from": [4, 4, 4],
+      "to": [12, 10, 12],
+      "faces": {
+        "north": {"texture": "#shell"},
+        "east": {"texture": "#shell"},
+        "south": {"texture": "#shell"},
+        "west": {"texture": "#shell"},
+        "up": {"texture": "#shell"},
+        "down": {"texture": "#shell"}
+      }
+    },
+    {
+      "from": [5, 3, 5],
+      "to": [11, 4, 11],
+      "faces": {
+        "north": {"texture": "#shell"},
+        "east": {"texture": "#shell"},
+        "south": {"texture": "#shell"},
+        "west": {"texture": "#shell"},
+        "up": {"texture": "#shell"},
+        "down": {"texture": "#shell"}
+      }
+    },
+    {
+      "from": [5, 10, 5],
+      "to": [11, 12, 11],
+      "faces": {
+        "north": {"texture": "#shell"},
+        "east": {"texture": "#shell"},
+        "south": {"texture": "#shell"},
+        "west": {"texture": "#shell"},
+        "up": {"texture": "#shell"},
+        "down": {"texture": "#shell"}
+      }
+    },
+    {
+      "from": [6, 12, 6],
+      "to": [10, 13, 10],
+      "faces": {
+        "north": {"texture": "#shell"},
+        "east": {"texture": "#shell"},
+        "south": {"texture": "#shell"},
+        "west": {"texture": "#shell"},
+        "up": {"texture": "#shell"},
+        "down": {"texture": "#shell"}
+      }
+    },
+    {
+      "from": [7, 13, 7],
+      "to": [9, 14, 9],
+      "faces": {
+        "north": {"texture": "#shell"},
+        "east": {"texture": "#shell"},
+        "south": {"texture": "#shell"},
+        "west": {"texture": "#shell"},
+        "up": {"texture": "#shell"},
+        "down": {"texture": "#shell"}
+      }
+    },
+    {
+      "from": [4.75, 6.5, 3.75],
+      "to": [6.75, 8.5, 4.25],
+      "faces": {
+        "north": {"texture": "#spots"},
+        "east": {"texture": "#spots"},
+        "south": {"texture": "#spots"},
+        "west": {"texture": "#spots"},
+        "up": {"texture": "#spots"},
+        "down": {"texture": "#spots"}
+      }
+    },
+    {
+      "from": [8.75, 4.75, 3.75],
+      "to": [10.75, 6.75, 4.25],
+      "faces": {
+        "north": {"texture": "#spots"},
+        "east": {"texture": "#spots"},
+        "south": {"texture": "#spots"},
+        "west": {"texture": "#spots"},
+        "up": {"texture": "#spots"},
+        "down": {"texture": "#spots"}
+      }
+    },
+    {
+      "from": [7.5, 9.5, 4.75],
+      "to": [9.5, 11.5, 5.25],
+      "faces": {
+        "north": {"texture": "#spots"},
+        "east": {"texture": "#spots"},
+        "south": {"texture": "#spots"},
+        "west": {"texture": "#spots"},
+        "up": {"texture": "#spots"},
+        "down": {"texture": "#spots"}
+      }
+    },
+    {
+      "from": [11.75, 6.75, 7],
+      "to": [12.25, 8.75, 9],
+      "faces": {
+        "north": {"texture": "#spots"},
+        "east": {"texture": "#spots"},
+        "south": {"texture": "#spots"},
+        "west": {"texture": "#spots"},
+        "up": {"texture": "#spots"},
+        "down": {"texture": "#spots"}
+      }
+    }
+  ],
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [75, 45, 0],
+      "translation": [0, 2.5, 0],
+      "scale": [0.5, 0.5, 0.5]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [75, 45, 0],
+      "translation": [0, 2.5, 0],
+      "scale": [0.5, 0.5, 0.5]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 115, 0],
+      "scale": [0.55, 0.55, 0.55]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 225, 0],
+      "scale": [0.55, 0.55, 0.55]
+    },
+    "ground": {
+      "translation": [0, 3, 0],
+      "scale": [0.45, 0.45, 0.45]
+    },
+    "gui": {
+      "rotation": [30, 137, 0],
+      "translation": [0, 0, 0],
+      "scale": [0.9, 0.9, 0.9]
+    },
+    "fixed": {
+      "scale": [0.7, 0.7, 0.7]
+    }
+  }
+}
