@@ -184,6 +184,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.getNavigation() instanceof GroundPathNavigation ground) {
             ground.setCanOpenDoors(true);
         }
+        if (!technicalProxy && (kind == CompanionKind.JENNY || kind == CompanionKind.ELLIE
+                || kind == CompanionKind.BIA || kind == CompanionKind.LUNA)) {
+            // Original e2 constructor: iron sword in slot 0, bow in slot 1 (Luna also a fishing rod in slot 6).
+            this.equipment.setItem(0, new ItemStack(Items.IRON_SWORD));
+            this.equipment.setItem(1, new ItemStack(Items.BOW));
+            if (kind == CompanionKind.LUNA) {
+                this.equipment.setItem(6, new ItemStack(Items.FISHING_ROD));
+            }
+        }
         this.equipment.addListener(ignored -> this.syncEquipmentSlots());
         for (EquipmentSlot slot : new EquipmentSlot[]{
                 EquipmentSlot.MAINHAND,
@@ -1670,6 +1679,37 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
     }
 
+    /** Drawn-bow counter: counts to 32 then fires; -20 is the cooldown after a shot (original p). */
+    private int bowCharge;
+
+    /** Original g.e(): a tipped arrow with Power and Flame from the bow, speed 1.6, inaccuracy 2.0, base damage 4.5. */
+    private void fireBow(LivingEntity target, ItemStack bow) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        net.minecraft.world.entity.projectile.Arrow arrow =
+                new net.minecraft.world.entity.projectile.Arrow(EntityType.ARROW, serverLevel);
+        arrow.setOwner(this);
+        arrow.setPos(this.getX(), this.getEyeY() - 0.1D, this.getZ());
+        arrow.pickup = net.minecraft.world.entity.projectile.AbstractArrow.Pickup.DISALLOWED;
+        var enchantments = serverLevel.registryAccess()
+                .lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
+        int power = net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(
+                enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.POWER), bow);
+        int flame = net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(
+                enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.FLAME), bow);
+        arrow.setBaseDamage(4.5D + (power > 0 ? power * 0.5D + 0.5D : 0.0D));
+        if (flame > 0) {
+            arrow.setRemainingFireTicks(100);
+        }
+        double dx = target.getX() - this.getX();
+        double dy = target.getY(0.3333333333333333D) - arrow.getY();
+        double dz = target.getZ() - this.getZ();
+        arrow.shoot(dx, dy + Math.sqrt(dx * dx + dz * dz) * 0.2D, dz, 1.6F, 2.0F);
+        serverLevel.addFreshEntity(arrow);
+        this.playSound(SoundEvents.SKELETON_SHOOT, 1.0F, 1.0F / (this.random.nextFloat() * 0.4F + 0.8F));
+    }
+
     private void tickRangedCombat(ServerLevel serverLevel) {
         LivingEntity target = this.getTarget();
         if (!this.kind.usesRangedMagic()
@@ -2155,6 +2195,25 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             } else {
                 self.getNavigation().setSpeedModifier(speed);
             }
+            ItemStack bow = self.equipment.getItem(1);
+            if (bow.getItem() instanceof net.minecraft.world.item.BowItem
+                    && distance > 6.0D && self.hasLineOfSight(target)) {
+                // Original: stand and draw for 32 ticks, shoot, then a 20 tick cooldown.
+                self.getNavigation().stop();
+                if (self.bowCharge >= 0) {
+                    self.setAction(CompanionAction.BOW);
+                }
+                if (++self.bowCharge >= 32) {
+                    self.fireBow(target, bow);
+                    self.bowCharge = -20;
+                    self.setAction(CompanionAction.NONE);
+                }
+                return;
+            }
+            if (self.action() == CompanionAction.BOW) {
+                self.setAction(CompanionAction.NONE);
+            }
+            self.bowCharge = 0;
             if (distance < 1.9D && self.swingCooldown <= 0) {
                 self.entityData.set(DATA_ATTACK_VARIANT, self.random.nextInt(3));
                 self.setAction(CompanionAction.ATTACK);
