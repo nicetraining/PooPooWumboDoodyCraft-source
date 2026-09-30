@@ -280,6 +280,7 @@
   "weoweo": "Magic pulses",
   "yep": "Voice",
   "message.sexmod.editor_use_on_companion": "Use the wand on a companion you own to open the control panel",
+  "message.sexmod.cannot_afford": "<%s> you cannot afford that...",
   "message.sexmod.home_set": "This position is now the companion's home",
   "message.sexmod.scene_control_wait": "Wait a moment before changing the scene again",
   "message.sexmod.scene_environment_lost": "The scene stopped because its environmental requirements are no longer met",

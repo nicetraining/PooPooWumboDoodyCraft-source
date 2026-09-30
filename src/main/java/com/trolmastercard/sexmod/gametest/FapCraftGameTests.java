@@ -2,7 +2,9 @@ package com.trolmastercard.sexmod.gametest;
 
 import com.trolmastercard.sexmod.FapCraft;
 import com.trolmastercard.sexmod.data.CompanionOwnershipData;
+import com.trolmastercard.sexmod.entity.CompanionActions;
 import com.trolmastercard.sexmod.entity.CompanionEntity;
+import com.trolmastercard.sexmod.entity.CompanionScene;
 import com.trolmastercard.sexmod.entity.CompanionKind;
 import com.trolmastercard.sexmod.entity.CompanionMode;
 import com.trolmastercard.sexmod.menu.CompanionInventoryMenu;
@@ -277,6 +279,36 @@ public final class FapCraftGameTests {
         equipCopy.discard();
         kobold.discard();
         copy.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void actionCostsAreChargedLikeTheOriginal(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        ItemStack cost = CompanionActions.costOf(CompanionScene.LUNA_SITTING);
+        if (!cost.is(Items.COD) || cost.getCount() != 3) {
+            helper.fail("Luna's first paid action should cost 3 raw cod, got " + cost);
+        }
+        if (!CompanionActions.costOf(CompanionScene.JENNY_WAVE).isEmpty()) {
+            helper.fail("actions without an entry must be free");
+        }
+        if (CompanionActions.canAfford(player, CompanionScene.LUNA_SITTING)) {
+            helper.fail("an empty inventory cannot afford a paid action");
+        }
+        player.getInventory().add(new ItemStack(Items.COD, 5));
+        if (!CompanionActions.canAfford(player, CompanionScene.LUNA_SITTING)) {
+            helper.fail("5 cod should afford a 3 cod action");
+        }
+        CompanionActions.pay(player, CompanionScene.LUNA_SITTING);
+        int left = 0;
+        for (ItemStack stack : player.getInventory().items) {
+            if (stack.is(Items.COD)) {
+                left += stack.getCount();
+            }
+        }
+        if (left != 2) {
+            helper.fail("paying should leave 2 cod, left " + left);
+        }
         helper.succeed();
     }
 }

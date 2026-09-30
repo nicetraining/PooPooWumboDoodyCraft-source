@@ -414,6 +414,49 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return true;
     }
 
+    /** Handles an entry of the right-click action panel; every check is repeated here because the client is not trusted. */
+    public void performAction(ServerPlayer player, String action) {
+        if (this.isInScene()) {
+            return;
+        }
+        switch (action) {
+            case "followme" -> {
+                this.setFollowing(true);
+                player.displayClientMessage(
+                        Component.translatable("message.sexmod.following", this.getDisplayName()), true);
+            }
+            case "stopfollowme" -> {
+                this.setFollowing(false);
+                player.displayClientMessage(
+                        Component.translatable("message.sexmod.staying", this.getDisplayName()), true);
+            }
+            case "gohome" -> {
+                if (this.homePos().isPresent()) {
+                    this.setMode(CompanionMode.HOME);
+                }
+            }
+            case "setnewhome" -> {
+                this.setHome(this.blockPosition());
+                player.displayClientMessage(Component.translatable("message.sexmod.home_set"), true);
+            }
+            case "equipment" -> this.openControlMenu(player);
+            default -> {
+                CompanionScene scene = CompanionScene.byName(action);
+                if (scene == null || scene.kind() != this.kind) {
+                    return;
+                }
+                if (!CompanionActions.canAfford(player, scene)) {
+                    player.displayClientMessage(
+                            Component.translatable("message.sexmod.cannot_afford", this.getDisplayName()), false);
+                    return;
+                }
+                if (this.startScene(player, scene)) {
+                    CompanionActions.pay(player, scene);
+                }
+            }
+        }
+    }
+
     public boolean openStorageMenu(ServerPlayer player) {
         if (!this.kind.hasStorage()
                 || !this.mayBeCommandedBy(player)
@@ -1249,23 +1292,17 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 return InteractionResult.sidedSuccess(this.level().isClientSide);
             }
 
-            if (!this.level().isClientSide) {
+            if (this.level().isClientSide) {
+                if (this.mayBeCommandedBy(player)) {
+                    com.trolmastercard.sexmod.client.ClientHooks.openActionPanel(this);
+                }
+            } else {
                 if (this.ownerId().isEmpty() && !player.hasPermissions(2)) {
                     player.displayClientMessage(
                             Component.translatable("message.sexmod.gift_required", this.getDisplayName()),
                             true
                     );
-                } else if (this.isOwnedBy(player) || player.hasPermissions(2)) {
-                    boolean following = !this.isFollowing();
-                    this.setFollowing(following);
-                    player.displayClientMessage(
-                            Component.translatable(
-                                    following ? "message.sexmod.following" : "message.sexmod.staying",
-                                    this.getDisplayName()
-                            ),
-                            true
-                    );
-                } else {
+                } else if (!this.mayBeCommandedBy(player)) {
                     player.displayClientMessage(
                             Component.translatable("message.sexmod.already_bonded", this.getDisplayName()),
                             true

@@ -1,0 +1,5 @@
+{
+  "_comment": "Item cost per scene action, keyed by CompanionScene enum name. Reconstructed from the original 1.12.2 menu (Luna only; every other action was free).",
+  "LUNA_SITTING": { "item": "minecraft:cod", "count": 3 },
+  "LUNA_TOUCH": { "item": "minecraft:salmon", "count": 2 }
+}
