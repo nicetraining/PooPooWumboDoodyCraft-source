@@ -556,4 +556,33 @@ public final class FapCraftGameTests {
             helper.succeed();
         });
     }
+
+    @GameTest(template = "empty")
+    public static void slimeGirlStateAndBaby(GameTestHelper helper) {
+        CompanionEntity slime = spawnKind(helper, CompanionKind.SLIME);
+        CompoundTag tag = new CompoundTag();
+        tag.putInt("hornyLevel", 3);
+        tag.putInt("ticksUntilBirth", 100);
+        slime.readAdditionalSaveData(tag);
+        if (slime.slimeHornyLevel() != 3 || !slime.isPregnant() || !slime.isNude()) {
+            helper.fail("the slime's horny level, pregnancy and nudity are read from the save");
+        }
+        CompoundTag saved = new CompoundTag();
+        slime.addAdditionalSaveData(saved);
+        if (saved.getInt("hornyLevel") != 3 || saved.getInt("ticksUntilBirth") != 100) {
+            helper.fail("the slime's horny level and birth timer are saved");
+        }
+        com.trolmastercard.sexmod.entity.FriendlySlimeEntity baby =
+                com.trolmastercard.sexmod.registry.ModEntities.FRIENDLY_SLIME.get().create(helper.getLevel());
+        if (baby == null) {
+            helper.fail("the friendly slime entity can be created");
+            return;
+        }
+        baby.setSize(1, true);
+        if (baby.ageInTicks() != 0 || baby.getSize() != 1 || CompanionScene.SLIME_DOGGY.requiresBed()) {
+            helper.fail("a new baby slime is size 1 and age 0; the slime's doggy needs no bed");
+        }
+        slime.discard();
+        helper.succeed();
+    }
 }

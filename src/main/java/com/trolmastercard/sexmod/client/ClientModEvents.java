@@ -27,6 +27,7 @@ public final class ClientModEvents {
             event.registerEntityRenderer(type, CompanionRenderer::new);
         }
         event.registerEntityRenderer(ModEntities.KOBOLD_EGG.get(), KoboldEggRenderer::new);
+        event.registerEntityRenderer(ModEntities.FRIENDLY_SLIME.get(), net.minecraft.client.renderer.entity.SlimeRenderer::new);
         event.registerEntityRenderer(ModEntities.LUNA_HOOK.get(), FishingHookRenderer::new);
         event.registerEntityRenderer(ModEntities.ENERGY_BALL.get(), ThrownItemRenderer::new);
     }

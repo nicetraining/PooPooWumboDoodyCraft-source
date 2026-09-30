@@ -117,6 +117,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<UUID>> DATA_SCENE_PARTNER =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Integer> DATA_SLIME_STATE =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_SLIME_HORNY =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_SLIME_BIRTH =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_ALLIE_USES =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_GALATH_BOOST =
@@ -169,6 +175,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private float pinYaw;
     private int goHomeTicks = -1;
     /** Scene the player asked for while she was still dressed; it starts once the strip has finished. */
+    private SlimeBehavior slimeBehavior;
     private CompanionScene queuedScene;
     /** A scene to queue after {@link #queuedScene} has started (Allie: prepare, then the chosen scene). */
     private CompanionScene chainedScene;
@@ -187,6 +194,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.kind = kind;
         this.technicalProxy = technicalProxy;
         this.xpReward = 0;
+        if (kind == CompanionKind.SLIME && !technicalProxy) {
+            this.slimeBehavior = new SlimeBehavior(this);
+        }
         if (this.getNavigation() instanceof GroundPathNavigation ground) {
             ground.setCanOpenDoors(true);
         }
@@ -260,6 +270,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     protected void registerGoals() {
+        if (this.slimeBehavior != null) {
+            return; // original Slime: empty goal set, everything is scripted in SlimeBehavior
+        }
         // Same priorities as the original base entity.
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(0, new BedWalkGoal());
@@ -308,6 +321,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_FLYING, false);
         builder.define(DATA_GALATH_BOOST, 0);
         builder.define(DATA_ALLIE_USES, 0);
+        builder.define(DATA_SLIME_STATE, 0);
+        builder.define(DATA_SLIME_HORNY, 0);
+        builder.define(DATA_SLIME_BIRTH, -1);
     }
 
     public Optional<UUID> masterId() {
@@ -730,6 +746,38 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 }
             }
         }
+    }
+
+    int slimeState() {
+        return this.entityData.get(DATA_SLIME_STATE);
+    }
+
+    void setSlimeState(int state) {
+        this.entityData.set(DATA_SLIME_STATE, state);
+    }
+
+    int slimeHorny() {
+        return this.entityData.get(DATA_SLIME_HORNY);
+    }
+
+    void setSlimeHorny(int level) {
+        this.entityData.set(DATA_SLIME_HORNY, level);
+    }
+
+    int slimeBirth() {
+        return this.entityData.get(DATA_SLIME_BIRTH);
+    }
+
+    void setSlimeBirth(int ticks) {
+        this.entityData.set(DATA_SLIME_BIRTH, ticks);
+    }
+
+    public int slimeHornyLevel() {
+        return this.slimeHorny();
+    }
+
+    public boolean isPregnant() {
+        return this.slimeBirth() != -1;
     }
 
     /** How many wishes this lamp has granted including this one (1 = the first-time speech). */
@@ -1200,6 +1248,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     @Override
+    public boolean causeFallDamage(float fallDistance, float multiplier, net.minecraft.world.damagesource.DamageSource source) {
+        return this.slimeBehavior == null && super.causeFallDamage(fallDistance, multiplier, source); // original Slime: no fall damage
+    }
+
+    @Override
     public boolean isAlliedTo(Entity other) {
         if (super.isAlliedTo(other)) {
             return true;
@@ -1262,6 +1315,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.kind == CompanionKind.ALLIE && !this.isInScene() && this.tickCount > 5) {
             this.discard(); // original ev: she vanishes once her state is NULL (also after a reload)
             return;
+        }
+        if (this.slimeBehavior != null) {
+            this.slimeBehavior.tick(serverLevel);
         }
         this.tickEllieHorny(serverLevel);
         this.tickTargetSanity();
@@ -1796,6 +1852,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 controller.displayClientMessage(Component.translatable("message.sexmod.scene_stopped"), true);
             }
         }
+        if (completed && this.slimeBehavior != null
+                && (scene == CompanionScene.SLIME_BLOWJOB || scene == CompanionScene.SLIME_DOGGY)) {
+            this.setSlimeBirth(SlimeBehavior.BIRTH_TICKS); // original: bjcDone / doggyCumDone send "pregnant" 2400
+        }
         CompanionScene next = completed ? this.queuedScene : null;
         CompanionScene after = completed ? this.chainedScene : null;
         this.queuedScene = null;
@@ -2040,6 +2100,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
 
+        if (this.slimeBehavior != null) {
+            return InteractionResult.PASS; // original Slime: no menu, scenes start when you walk into her
+        }
         // Like the original, whatever the player holds, right-click opens the panel.
         if (this.level().isClientSide) {
             if (!this.isInScene() && this.mayUseSceneActions(player)) {
@@ -2082,6 +2145,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         tag.put("FapCraftEquipment", SlotNbt.save(this.equipment, this.registryAccess()));
         tag.put("FapCraftStorage", SlotNbt.save(this.storage, this.registryAccess()));
         tag.putBoolean("FapCraftGalathCoinSummon", this.summonedByGalathCoin);
+        if (this.kind == CompanionKind.SLIME) {
+            tag.putInt("hornyLevel", this.slimeHorny());
+            tag.putInt("ticksUntilBirth", this.slimeBirth());
+        }
         tag.putBoolean("FapCraftTechnicalProxy", this.technicalProxy);
     }
 
@@ -2103,6 +2170,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.setOutfit(this.kind.hasClothingToggle()
                 ? OutfitMode.DEFAULT
                 : OutfitMode.byName(tag.getString("FapCraftOutfit")));
+        if (this.kind == CompanionKind.SLIME) {
+            this.setSlimeHorny(tag.getInt("hornyLevel"));
+            this.setSlimeBirth(tag.contains("ticksUntilBirth", Tag.TAG_ANY_NUMERIC) ? tag.getInt("ticksUntilBirth") : -1);
+            if (this.slimeHorny() != 0) {
+                this.setOutfit(OutfitMode.ALTERNATE); // original: hornyLevel != 0 means nude
+            }
+        }
         this.setAppearanceVariant(tag.getInt("FapCraftVariant"));
         if (tag.contains("FapCraftScale", Tag.TAG_FLOAT)) {
             this.setAppearanceScale(tag.getFloat("FapCraftScale"));
@@ -2176,6 +2250,17 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return state.setAndContinue(sceneAnimation.rawAnimation());
         }
 
+        if (this.slimeBehavior != null) {
+            return state.setAndContinue(switch (this.slimeState()) {
+                case SlimeBehavior.JUMP_START -> software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.slime.jumpstart");
+                case SlimeBehavior.JUMP_AIR -> software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.slime.jumpair");
+                case SlimeBehavior.JUMP_END -> software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.slime.jumpend");
+                case SlimeBehavior.UNDRESS -> software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.slime.undress");
+                case SlimeBehavior.GO_ON_BED -> software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.slime.doggygoonbed");
+                case SlimeBehavior.WAIT -> software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.slime.doggywait");
+                default -> software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.slime.idle");
+            });
+        }
         if (this.kind == CompanionKind.GALATH && this.getFirstPassenger() instanceof Player) {
             return state.setAndContinue(this.entityData.get(DATA_GALATH_BOOST) > 0
                     ? software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.galath.boost")

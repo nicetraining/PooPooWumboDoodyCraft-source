@@ -169,7 +169,12 @@ public final class KeyframeEvents {
         String path = sounds.get(girl.getRandom().nextInt(sounds.size())).getAsString();
         float volume = layer.has("volume") ? layer.get("volume").getAsFloat() : 1.0F;
         float pitch = layer.has("pitch") ? layer.get("pitch").getAsFloat() : 1.0F;
-        if (ModSounds.find(path).isPresent()) {
+        if (path.contains(":")) {
+            // A vanilla sound (the slime girl's squishes): "minecraft:entity.slime.squish".
+            SoundEvent event = SoundEvent.createVariableRangeEvent(ResourceLocation.parse(path));
+            girl.level().playLocalSound(girl.getX(), girl.getY(), girl.getZ(), event,
+                    SoundSource.NEUTRAL, volume, pitch, false);
+        } else if (ModSounds.find(path).isPresent()) {
             SoundEvent event = SoundEvent.createVariableRangeEvent(
                     ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, path));
             girl.level().playLocalSound(girl.getX(), girl.getY(), girl.getZ(), event,

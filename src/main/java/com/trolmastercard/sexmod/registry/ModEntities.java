@@ -4,6 +4,7 @@ import com.trolmastercard.sexmod.FapCraft;
 import com.trolmastercard.sexmod.entity.CompanionEntity;
 import com.trolmastercard.sexmod.entity.CompanionKind;
 import com.trolmastercard.sexmod.entity.EnergyBallEntity;
+import com.trolmastercard.sexmod.entity.FriendlySlimeEntity;
 import com.trolmastercard.sexmod.entity.KoboldEggEntity;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -75,8 +76,16 @@ public final class ModEntities {
             registerCompatibility("player_luna", CompanionKind.LUNA, true);
     public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_GALATH =
             registerCompatibility("player_galath", CompanionKind.GALATH, true);
-    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> FRIENDLY_SLIME =
-            registerCompatibility("friendly_slime", CompanionKind.SLIME, false);
+    public static final DeferredHolder<EntityType<?>, EntityType<FriendlySlimeEntity>> FRIENDLY_SLIME =
+            ENTITY_TYPES.register(
+                    "friendly_slime",
+                    () -> EntityType.Builder.<FriendlySlimeEntity>of(FriendlySlimeEntity::new, MobCategory.CREATURE)
+                            .sized(0.52F, 0.52F)
+                            .eyeHeight(0.325F)
+                            .spawnDimensionsScale(4.0F)
+                            .clientTrackingRange(10)
+                            .build(FapCraft.MOD_ID + ":friendly_slime")
+            );
     public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PYROCINICAL =
             registerCompatibility("pyrocinical", CompanionKind.MANGLELIE, false);
 
@@ -174,6 +183,7 @@ public final class ModEntities {
                 CompanionEntity.createAttributes(entry.kind()).build()
         ));
         event.put(KOBOLD_EGG.get(), KoboldEggEntity.createAttributes().build());
+        event.put(FRIENDLY_SLIME.get(), net.minecraft.world.entity.monster.Monster.createMonsterAttributes().build());
     }
 
     private record CompatibilityType(

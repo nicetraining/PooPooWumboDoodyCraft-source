@@ -109,7 +109,6 @@ public enum CompanionScene {
     ),
     SLIME_DOGGY(
             CompanionKind.SLIME, "doggy", true,
-            phase("animation.slime.doggygoonbed", 34),
             phase("animation.slime.doggystart", 196),
             loop("animation.slime.doggyslow", 91),
             loop("animation.slime.doggyfast", 65),
@@ -416,7 +415,7 @@ public enum CompanionScene {
     }
 
     public boolean requiresBed() {
-        return this == JENNY_DOGGY || this == SLIME_DOGGY || this == MANGLELIE_BED
+        return this == JENNY_DOGGY || this == MANGLELIE_BED
                 || this == BIA_ANAL || this == BIA_PRONE || this == ELLIE_COWGIRL || this == ELLIE_MISSIONARY || this == LUNA_SITTING;
     }
 
