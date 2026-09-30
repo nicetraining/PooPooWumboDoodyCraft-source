@@ -61,11 +61,23 @@ public enum CompanionScene {
             CompanionKind.ELLIE, "strip", false,
             phase("animation.ellie.strip", 101)
     ),
+    /** Horny Ellie dashes at the nearby player (original DASH, 16 ticks). */
+    ELLIE_DASH(
+            CompanionKind.ELLIE, "dash", false,
+            phase("animation.ellie.dash", 16)
+    ),
+    /** Hug, then wait in the hug idle while the cowgirl / missionary menu is open, then "hug selected". */
     ELLIE_HUG(
             CompanionKind.ELLIE, "hug", true,
-            phase("animation.ellie.hug", 152),
+            phase("animation.ellie.hug", 150),
             loop("animation.ellie.hugidle", 100),
-            phase("animation.ellie.hugselected", 81)
+            phase("animation.ellie.hugselected", 79)
+    ),
+    /** She has reached the bed and sits down, then waits for the player (original SITDOWN / SITDOWNIDLE). */
+    ELLIE_SIT_WAIT(
+            CompanionKind.ELLIE, "sit_wait", false,
+            phase("animation.ellie.sitdown", 109),
+            loop("animation.ellie.sitdownidle", 141)
     ),
     ELLIE_COWGIRL(
             CompanionKind.ELLIE, "cowgirl", true,
@@ -345,17 +357,17 @@ public enum CompanionScene {
 
     public boolean requiresBed() {
         return this == JENNY_DOGGY || this == SLIME_DOGGY || this == MANGLELIE_BED
-                || this == BIA_ANAL || this == BIA_PRONE;
+                || this == BIA_ANAL || this == BIA_PRONE || this == ELLIE_COWGIRL || this == ELLIE_MISSIONARY;
     }
 
     /** Scenes that only lead into something else: no reward, no afterglow, no completion message. */
     public boolean isPrelude() {
-        return this.isClothingToggle() || this == BIA_TALK || this == JENNY_PAYMENT || this.isWaitScene();
+        return this.isClothingToggle() || this == BIA_TALK || this == JENNY_PAYMENT || this == ELLIE_DASH || this == ELLIE_HUG || this.isWaitScene();
     }
 
     /** Scenes that only wait beside the bed until the player steps up, then hand over to the chosen scene. */
     public boolean isWaitScene() {
-        return this == BIA_ANAL_WAIT || this == BIA_SIT_WAIT || this == JENNY_DOGGY_WAIT;
+        return this == BIA_ANAL_WAIT || this == BIA_SIT_WAIT || this == JENNY_DOGGY_WAIT || this == ELLIE_SIT_WAIT;
     }
 
     /** The wait scene played on arrival at the bed for a bed scene, or null. */
@@ -364,13 +376,14 @@ public enum CompanionScene {
             case BIA_ANAL -> BIA_ANAL_WAIT;
             case BIA_PRONE -> BIA_SIT_WAIT;
             case JENNY_DOGGY -> JENNY_DOGGY_WAIT;
+            case ELLIE_COWGIRL, ELLIE_MISSIONARY -> ELLIE_SIT_WAIT;
             default -> null;
         };
     }
 
     /** Scenes during which the local player's movement keys are locked without attaching them (original d3.a(false)). */
     public boolean locksControls() {
-        return this == BIA_TALK;
+        return this == BIA_TALK || this == ELLIE_DASH || this == ELLIE_HUG;
     }
 
     /** Label on the action panel; Bia's second menu uses the original's plain "Anal" / "Doggy". */
@@ -380,6 +393,8 @@ public enum CompanionScene {
             case BIA_PRONE -> "action.names.doggy";
             case BIA_TALK -> "action.names.talk";
             case ELLIE_CARRY -> "action.names.facefuck";
+            case ELLIE_COWGIRL -> "action.names.cowgirl";
+            case ELLIE_MISSIONARY -> "action.names.missionary";
             default -> this.translationKey();
         };
     }

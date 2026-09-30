@@ -618,6 +618,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     /** Bia's second menu (Anal / Doggy) after Talk: she answers, then walks the chosen scene. */
     private boolean pickTalkFollowUp(ServerPlayer player, String action) {
         CompanionScene chosen = CompanionScene.byName(action);
+        if (this.currentScene() == CompanionScene.ELLIE_HUG
+                && this.currentScenePhase() == 1
+                && (chosen == CompanionScene.ELLIE_COWGIRL || chosen == CompanionScene.ELLIE_MISSIONARY)
+                && this.scenePartnerId().filter(player.getUUID()::equals).isPresent()) {
+            // Original HUGSELECTED: a short animation, then she looks for a bed and walks to it.
+            this.queuedScene = chosen;
+            this.enterScenePhase(2);
+            return true;
+        }
         if (this.currentScene() != CompanionScene.BIA_TALK
                 || this.currentScenePhase() != 1
                 || chosen == null
@@ -686,7 +695,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             scene = CompanionScene.JENNY_STRIP;
         }
 
-        SceneAnchor anchor = this.bedSpotPosition != null
+        SceneAnchor anchor = scene == CompanionScene.ELLIE_HUG
+                ? new SceneAnchor(player.position(), Mth.wrapDegrees(player.getYRot() + 180.0F))
+                : this.bedSpotPosition != null
                 ? new SceneAnchor(this.bedSpotPosition, this.bedSpotYaw)
                 : scene.anchorsOnBed() ? this.bedSceneAnchor(serverLevel).orElse(null) : null;
         if (anchor == null) {
@@ -723,6 +734,22 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.enterScenePhase(0);
         this.playSound(SoundEvents.ENCHANTMENT_TABLE_USE, 0.45F, 1.35F);
         return true;
+    }
+
+    /** Original d(): a horny Ellie dashes at the nearest player within 10 blocks, hugs them and offers the bed scenes. */
+    private void tickEllieHorny(ServerLevel serverLevel) {
+        if (this.kind != CompanionKind.ELLIE || this.isInScene() || this.isDowned()
+                || !this.hasEffect(com.trolmastercard.sexmod.registry.ModPotions.HORNY_EFFECT)) {
+            return;
+        }
+        Player nearest = serverLevel.getNearestPlayer(this, 10.0D);
+        if (nearest == null || nearest.isSpectator()) {
+            return;
+        }
+        this.removeEffect(com.trolmastercard.sexmod.registry.ModPotions.HORNY_EFFECT);
+        if (this.startScene(nearest, CompanionScene.ELLIE_DASH)) {
+            this.queuedScene = CompanionScene.ELLIE_HUG;
+        }
     }
 
     private boolean needsPaymentStep(CompanionScene scene) {
@@ -946,6 +973,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         this.tickScene(serverLevel);
+        this.tickEllieHorny(serverLevel);
         this.tickTargetSanity();
         this.tickGoHome(serverLevel);
         this.tickHealing(serverLevel);
@@ -1021,6 +1049,18 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.tickWaitForPartner(controller, scene);
             return;
         }
+        if (scene == CompanionScene.ELLIE_DASH && this.sceneAnchorPosition != null) {
+            // She dashes onto the player over the 16 ticks.
+            Vec3 goal = controller.position();
+            this.sceneAnchorPosition = this.sceneAnchorPosition.lerp(goal, 0.3D);
+            this.sceneAnchorYaw = (float) (Mth.atan2(goal.z - this.getZ(), goal.x - this.getX()) * 57.29578D) - 90.0F;
+        }
+        if (scene == CompanionScene.ELLIE_HUG && this.currentScenePhase() == 1) {
+            if (this.scenePhaseTicks > 1200) {
+                this.finishScene(false); // nobody chose anything
+            }
+            return; // stays in the hug idle until the menu answer arrives
+        }
         if (scene.isClothingToggle() && this.scenePhaseTicks == 60) {
             this.toggleClothing();
         }
@@ -1055,6 +1095,18 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return;
         }
 
+        if (scene == CompanionScene.ELLIE_HUG && phaseIndex == 1) {
+            ServerPlayer controller = this.scenePartnerId()
+                    .map(serverLevel.getServer().getPlayerList()::getPlayer)
+                    .orElse(null);
+            if (controller != null) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+                        controller,
+                        new com.trolmastercard.sexmod.network.OpenSceneMenuPayload(
+                                this.getId(),
+                                List.of(CompanionScene.ELLIE_COWGIRL.serializedName(), CompanionScene.ELLIE_MISSIONARY.serializedName())));
+            }
+        }
         if (scene == CompanionScene.BIA_TALK && phaseIndex == 1) {
             ServerPlayer controller = this.scenePartnerId()
                     .map(serverLevel.getServer().getPlayerList()::getPlayer)
@@ -1185,10 +1237,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private static final int[][] BED_SIDES = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
     private static final float[] BED_SIDE_YAW = {0.0F, 180.0F, -90.0F, 90.0F};
     private static final int BED_SEARCH_RADIUS = 10;
+    private static final double[] ELLIE_STAND_X = {0.5D, 0.5D, -0.18D, 1.18D};
+    private static final double[] ELLIE_STAND_Z = {-0.18D, 1.18D, 0.5D, 0.5D};
 
     /** Bia and Jenny find a bed and walk to it before a bed scene (original flow); the others keep the old rule. */
     private boolean walksToBed() {
-        return this.kind == CompanionKind.BIA || this.kind == CompanionKind.JENNY;
+        return this.kind == CompanionKind.BIA || this.kind == CompanionKind.JENNY || this.kind == CompanionKind.ELLIE;
     }
 
     public boolean isBedWalking() {
@@ -1227,7 +1281,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 if (doggy && !serverLevel.getBlockState(bed.offset(-dx, 0, -dz)).is(BlockTags.BEDS)) {
                     continue;
                 }
-                Vec3 target = new Vec3(stand.getX() + 0.5D, stand.getY(), stand.getZ() + 0.5D);
+                Vec3 target = this.kind == CompanionKind.ELLIE
+                        ? new Vec3(bed.getX() + ELLIE_STAND_X[side], stand.getY(), bed.getZ() + ELLIE_STAND_Z[side])
+                        : new Vec3(stand.getX() + 0.5D, stand.getY(), stand.getZ() + 0.5D);
                 double distance = this.position().distanceToSqr(target);
                 if (distance < bestDistance) {
                     bestDistance = distance;
@@ -1248,6 +1304,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     private void refuseBed(ServerLevel serverLevel, String dialogueKey) {
+        if (this.kind == CompanionKind.ELLIE) {
+            this.sayNearby(serverLevel, Component.literal("no bed in sight..."));
+            this.playCue("girls.ellie.sigh.sigh0", 6.0F);
+            return;
+        }
         com.trolmastercard.sexmod.registry.ModSounds.find(
                         this.kind == CompanionKind.JENNY ? "girls.jenny.hmph.hmph2" : "girls.bia.breath.breath2")
                 .ifPresent(sound -> this.playSound(sound.get(), 1.0F, 1.0F));
@@ -1401,8 +1462,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if (this.attachCountdown < 0) {
             boolean jenny = this.kind == CompanionKind.JENNY;
-            if (controller.distanceToSqr(this) <= (jenny ? 0.25D : 1.0D)) {
-                this.attachCountdown = jenny ? 1 : 22;
+            boolean ellie = this.kind == CompanionKind.ELLIE;
+            if (controller.distanceToSqr(this) <= (jenny ? 0.25D : ellie ? 2.25D : 1.0D)) {
+                this.attachCountdown = jenny ? 1 : ellie ? 20 : 22;
                 if (!jenny) {
                     net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
                             controller, new com.trolmastercard.sexmod.network.TransitionPayload());
