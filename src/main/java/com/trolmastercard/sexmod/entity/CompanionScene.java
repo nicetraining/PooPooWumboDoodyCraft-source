@@ -171,6 +171,16 @@ public enum CompanionScene {
             phase("animation.bee.sex_cum", 51)
     ),
 
+    /** Luna takes the fish before touch boobs / sex (original PAYMENT). */
+    LUNA_PAYMENT(
+            CompanionKind.LUNA, "payment", false,
+            phase("animation.cat.payment", 186)
+    ),
+    /** She waits beside the bed (original WAIT_CAT). */
+    LUNA_SIT_WAIT(
+            CompanionKind.LUNA, "sit_wait", false,
+            loop("animation.cat.wait", 399)
+    ),
     LUNA_HEADPAT(
             CompanionKind.LUNA, "headpat", true,
             phase("animation.cat.head_pat", 163)
@@ -357,17 +367,17 @@ public enum CompanionScene {
 
     public boolean requiresBed() {
         return this == JENNY_DOGGY || this == SLIME_DOGGY || this == MANGLELIE_BED
-                || this == BIA_ANAL || this == BIA_PRONE || this == ELLIE_COWGIRL || this == ELLIE_MISSIONARY;
+                || this == BIA_ANAL || this == BIA_PRONE || this == ELLIE_COWGIRL || this == ELLIE_MISSIONARY || this == LUNA_SITTING;
     }
 
     /** Scenes that only lead into something else: no reward, no afterglow, no completion message. */
     public boolean isPrelude() {
-        return this.isClothingToggle() || this == BIA_TALK || this == JENNY_PAYMENT || this == ELLIE_DASH || this == ELLIE_HUG || this.isWaitScene();
+        return this.isClothingToggle() || this == BIA_TALK || this == JENNY_PAYMENT || this == LUNA_PAYMENT || this == ELLIE_DASH || this == ELLIE_HUG || this.isWaitScene();
     }
 
     /** Scenes that only wait beside the bed until the player steps up, then hand over to the chosen scene. */
     public boolean isWaitScene() {
-        return this == BIA_ANAL_WAIT || this == BIA_SIT_WAIT || this == JENNY_DOGGY_WAIT || this == ELLIE_SIT_WAIT;
+        return this == BIA_ANAL_WAIT || this == BIA_SIT_WAIT || this == JENNY_DOGGY_WAIT || this == ELLIE_SIT_WAIT || this == LUNA_SIT_WAIT;
     }
 
     /** The wait scene played on arrival at the bed for a bed scene, or null. */
@@ -377,6 +387,7 @@ public enum CompanionScene {
             case BIA_PRONE -> BIA_SIT_WAIT;
             case JENNY_DOGGY -> JENNY_DOGGY_WAIT;
             case ELLIE_COWGIRL, ELLIE_MISSIONARY -> ELLIE_SIT_WAIT;
+            case LUNA_SITTING -> LUNA_SIT_WAIT;
             default -> null;
         };
     }

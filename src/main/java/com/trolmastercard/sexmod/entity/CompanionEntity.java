@@ -672,9 +672,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
 
-        if (this.kind == CompanionKind.JENNY && !this.skipPayment && this.needsPaymentStep(scene)) {
-            // Original: every paid Jenny action starts with her payment animation, then U() runs the chosen scene.
-            if (!this.startScene(player, CompanionScene.JENNY_PAYMENT)) {
+        if ((this.kind == CompanionKind.JENNY || this.kind == CompanionKind.LUNA)
+                && !this.skipPayment && this.needsPaymentStep(scene)) {
+            // Original: every paid Jenny/Luna action starts with her payment animation, then U() runs the chosen scene.
+            if (!this.startScene(player, this.kind == CompanionKind.JENNY
+                    ? CompanionScene.JENNY_PAYMENT : CompanionScene.LUNA_PAYMENT)) {
                 return false;
             }
             this.queuedScene = scene;
@@ -753,6 +755,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     private boolean needsPaymentStep(CompanionScene scene) {
+        if (this.kind == CompanionKind.LUNA) {
+            return scene == CompanionScene.LUNA_SITTING || scene == CompanionScene.LUNA_TOUCH;
+        }
         boolean paid = scene == CompanionScene.JENNY_BLOWJOB || scene == CompanionScene.JENNY_BOOBJOB
                 || scene == CompanionScene.JENNY_DOGGY || (scene == CompanionScene.JENNY_STRIP && !this.isNude());
         return paid && !this.hasEffect(com.trolmastercard.sexmod.registry.ModPotions.HORNY_EFFECT);
@@ -1242,7 +1247,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     /** Bia and Jenny find a bed and walk to it before a bed scene (original flow); the others keep the old rule. */
     private boolean walksToBed() {
-        return this.kind == CompanionKind.BIA || this.kind == CompanionKind.JENNY || this.kind == CompanionKind.ELLIE;
+        return this.kind == CompanionKind.BIA || this.kind == CompanionKind.JENNY || this.kind == CompanionKind.ELLIE
+                || this.kind == CompanionKind.LUNA;
     }
 
     public boolean isBedWalking() {
@@ -1304,6 +1310,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     private void refuseBed(ServerLevel serverLevel, String dialogueKey) {
+        if (this.kind == CompanionKind.LUNA) {
+            this.sayNearby(serverLevel, Component.literal(dialogueKey.endsWith("bedobscured")
+                    ? "Heh.. the bed is obscured.. but I already ate the fish so nya~ hehe"
+                    : "Heh.. there is no bed nearby.. but I already ate the fish so nya~ hehe"));
+            this.playCue("girls.luna.giggle.giggle" + this.random.nextInt(3), 1.0F);
+            return;
+        }
         if (this.kind == CompanionKind.ELLIE) {
             this.sayNearby(serverLevel, Component.literal("no bed in sight..."));
             this.playCue("girls.ellie.sigh.sigh0", 6.0F);
@@ -1393,7 +1406,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         private void navigate() {
             Vec3 target = CompanionEntity.this.bedWalk.target();
             // The original asks for 0.35 on a base speed of 0.5 (absolute 0.175); keep the same pace here.
-            double modifier = 0.175D / Math.max(0.05D, CompanionEntity.this.getAttributeValue(Attributes.MOVEMENT_SPEED));
+            double pace = CompanionEntity.this.kind == CompanionKind.LUNA ? 0.1D : 0.175D;
+            double modifier = pace / Math.max(0.05D, CompanionEntity.this.getAttributeValue(Attributes.MOVEMENT_SPEED));
             CompanionEntity.this.getNavigation().moveTo(target.x, target.y, target.z, modifier);
         }
 
@@ -1457,14 +1471,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.finishScene(false);
             return;
         }
-        if (this.currentScenePhase() < 1) {
+        if (scene.phases().size() > 1 && this.currentScenePhase() < 1) {
             return;
         }
         if (this.attachCountdown < 0) {
             boolean jenny = this.kind == CompanionKind.JENNY;
             boolean ellie = this.kind == CompanionKind.ELLIE;
-            if (controller.distanceToSqr(this) <= (jenny ? 0.25D : ellie ? 2.25D : 1.0D)) {
-                this.attachCountdown = jenny ? 1 : ellie ? 20 : 22;
+            boolean luna = this.kind == CompanionKind.LUNA;
+            if (controller.distanceToSqr(this) <= (jenny ? 0.25D : ellie ? 2.25D : luna ? 1.5625D : 1.0D)) {
+                this.attachCountdown = jenny ? 1 : ellie ? 20 : luna ? 25 : 22;
                 if (!jenny) {
                     net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
                             controller, new com.trolmastercard.sexmod.network.TransitionPayload());
