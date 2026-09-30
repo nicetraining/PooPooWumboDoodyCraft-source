@@ -365,6 +365,16 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     /** Called by the damage event: lethal damage while following leaves her downed at 1 HP; downed she takes no damage. */
     public float adjustIncomingDamage(float amount) {
+        if (this.kind == CompanionKind.GALATH && this.hasMaster() && !this.technicalProxy) {
+            if (this.galathDespawnTicks >= 0) {
+                return 0.0F;
+            }
+            if (this.getHealth() - amount <= 0.0F) {
+                // Original: a tamed Galath never dies, she is called back into the coin after 900 ms.
+                this.galathDespawnTicks = 18;
+                return 0.0F;
+            }
+        }
         if (!this.kind.hasMasterAI() || this.technicalProxy) {
             return amount;
         }
@@ -376,6 +386,31 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return Math.max(0.0F, this.getHealth() - 1.0F);
         }
         return amount;
+    }
+
+    private int galathDespawnTicks = -1;
+
+    @Override
+    public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
+        if (this.kind == CompanionKind.GALATH
+                && (source.is(net.minecraft.tags.DamageTypeTags.IS_FIRE)
+                || source.is(net.minecraft.tags.DamageTypeTags.IS_FALL)
+                || source.is(net.minecraft.tags.DamageTypeTags.IS_DROWNING)
+                || source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)
+                || source.is(net.minecraft.world.damagesource.DamageTypes.CRAMMING))) {
+            return true; // original: fire, wall, drowning, fall and cramming do nothing to her
+        }
+        return super.isInvulnerableTo(source);
+    }
+
+    @Override
+    public boolean canBeAffected(net.minecraft.world.effect.MobEffectInstance effect) {
+        return this.kind != CompanionKind.GALATH && super.canBeAffected(effect);
+    }
+
+    @Override
+    public boolean fireImmune() {
+        return this.kind == CompanionKind.GALATH || super.fireImmune();
     }
 
     @Override
@@ -1030,6 +1065,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.sceneControlCooldown--;
         }
 
+        if (this.galathDespawnTicks >= 0 && --this.galathDespawnTicks < 0) {
+            this.discard();
+            return;
+        }
         this.tickScene(serverLevel);
         this.tickEllieHorny(serverLevel);
         this.tickTargetSanity();

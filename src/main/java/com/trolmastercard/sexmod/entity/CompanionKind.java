@@ -89,7 +89,7 @@ public enum CompanionKind {
             "textures/entity/galath/galath.png",
             "animations/galath/galath.animation.json",
             "animation.galath.idle", "animation.galath.walk",
-            1.20F, 2.40F, 60.0D, 0.30D, 0xFF0000, 0xFF0000
+            1.20F, 2.40F, 110.0D, 0.30D, 0xFF0000, 0xFF0000
     ),
     MANGLELIE(
             "manglelie", "Manglelie",
