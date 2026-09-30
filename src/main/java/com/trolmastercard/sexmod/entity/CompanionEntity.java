@@ -570,26 +570,25 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             case "followme" -> {
                 if (commander) {
                     this.setMaster(player.getUUID());
-                    player.displayClientMessage(
-                            Component.translatable("message.sexmod.following", this.getDisplayName()), true);
                 }
             }
             case "stopfollowme" -> {
                 if (commander) {
                     this.clearMaster();
-                    player.displayClientMessage(
-                            Component.translatable("message.sexmod.staying", this.getDisplayName()), true);
+                    this.sayStopLine();
                 }
             }
             case "gohome" -> {
                 if (commander) {
+                    this.clearMaster();
+                    this.sayStopLine();
                     this.startGoHome();
                 }
             }
             case "setnewhome" -> {
                 if (commander) {
                     this.setHome(this.blockPosition());
-                    player.displayClientMessage(Component.translatable("message.sexmod.home_set"), true);
+                    this.saySetHomeLine();
                 }
             }
             case "equipment" -> {
@@ -1201,6 +1200,45 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.sayNearby(serverLevel, Component.translatable(dialogueKey));
     }
 
+    /** The original's x() hook: only Ellie says something when she stops following (or goes home). */
+    private void sayStopLine() {
+        if (this.kind() == CompanionKind.ELLIE && this.level() instanceof ServerLevel serverLevel) {
+            this.sayNearby(serverLevel, Component.literal("stay safe darling~"));
+            this.playCue("girls.ellie.sigh.sigh1", 6.0F);
+        }
+    }
+
+    /** The original's c() hook: each girl's line + sound when a new home is set. */
+    private void saySetHomeLine() {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        switch (this.kind()) {
+            case JENNY -> {
+                this.sayNearby(serverLevel, Component.literal("Alright, this is my new Home~"));
+                this.playCue("girls.jenny.happyoh.happyoh1", 1.0F);
+            }
+            case ELLIE -> {
+                this.sayNearby(serverLevel, Component.literal("Okay, I will be residing here then.."));
+                this.playCue("girls.ellie.huh.huh0", 6.0F);
+            }
+            case BIA -> {
+                this.sayNearby(serverLevel, Component.literal("I am living here now nya~"));
+                this.playCue("girls.bia.breath.breath" + this.random.nextInt(4), 1.0F);
+            }
+            case LUNA -> {
+                this.sayNearby(serverLevel, Component.literal("Love it here owo"));
+                this.playCue("girls.luna.owo.owo" + this.random.nextInt(3), 1.0F);
+            }
+            default -> { }
+        }
+    }
+
+    private void playCue(String path, float volume) {
+        com.trolmastercard.sexmod.registry.ModSounds.find(path)
+                .ifPresent(sound -> this.playSound(sound.get(), volume, 1.0F));
+    }
+
     /** A line she "says": local chat for players within 40 blocks, like the original's chat broadcast. */
     private void sayNearby(ServerLevel serverLevel, Component line) {
         Component message = Component.literal("<").append(this.getDisplayName()).append("> ").append(line);
@@ -1594,6 +1632,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             }
         }
         this.syncEquipmentSlots();
+        if (this.kind() == CompanionKind.BIA) {
+            // Original e0 death: 0..3 brown wool on top of the loot table.
+            int wool = this.random.nextInt(4);
+            if (wool > 0) {
+                this.spawnAtLocation(new ItemStack(net.minecraft.world.item.Items.BROWN_WOOL, wool));
+            }
+        }
     }
 
     @Override
