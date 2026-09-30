@@ -173,6 +173,28 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private int idleTimer;
     private int swingCooldown;
     private int reaggroCooldown;
+    private static final EntityDataAccessor<Optional<UUID>> DATA_TRIBE =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<String> DATA_TRIBE_NAME =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Float> DATA_KOBOLD_SIZE =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<String> DATA_BODY_COLOR =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> DATA_EYE_COLOR =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> DATA_KOBOLD_NAME =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Boolean> DATA_K_LEADER =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_K_FOLLOW =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_K_ATTACKED =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_K_STATE =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_K_CHOP =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private int attackAnimTicks;
     private boolean pinned;
     private Vec3 pinPosition;
@@ -181,6 +203,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     /** Scene the player asked for while she was still dressed; it starts once the strip has finished. */
     private SlimeBehavior slimeBehavior;
     private BeeBehavior beeBehavior;
+    private com.trolmastercard.sexmod.tribe.KoboldBehavior koboldBehavior;
     private CompanionScene queuedScene;
     /** A scene to queue after {@link #queuedScene} has started (Allie: prepare, then the chosen scene). */
     private CompanionScene chainedScene;
@@ -209,6 +232,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (kind == CompanionKind.BEE && !technicalProxy) {
             this.beeBehavior = new BeeBehavior(this);
             this.configureBee();
+        }
+        if (kind == CompanionKind.KOBOLD && !technicalProxy) {
+            this.koboldBehavior = new com.trolmastercard.sexmod.tribe.KoboldBehavior(this);
+            this.configureKobold();
         }
         if (this.getNavigation() instanceof GroundPathNavigation ground) {
             ground.setCanOpenDoors(true);
@@ -340,6 +367,18 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_SLIME_STATE, 0);
         builder.define(DATA_SLIME_HORNY, 0);
         builder.define(DATA_SLIME_BIRTH, -1);
+        builder.define(DATA_TRIBE, Optional.empty());
+        builder.define(DATA_TRIBE_NAME, "null");
+        builder.define(DATA_KOBOLD_SIZE, 0.0F);
+        builder.define(DATA_BODY_COLOR, "PURPLE");
+        builder.define(DATA_EYE_COLOR, com.trolmastercard.sexmod.tribe.KoboldColor.values()[
+                this.random.nextInt(com.trolmastercard.sexmod.tribe.KoboldColor.values().length)].name());
+        builder.define(DATA_KOBOLD_NAME, com.trolmastercard.sexmod.tribe.KoboldBehavior.randomName(this.random));
+        builder.define(DATA_K_LEADER, false);
+        builder.define(DATA_K_FOLLOW, false);
+        builder.define(DATA_K_ATTACKED, false);
+        builder.define(DATA_K_CHOP, false);
+        builder.define(DATA_K_STATE, 0);
     }
 
     public Optional<UUID> masterId() {
@@ -571,6 +610,161 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     public void setAppearanceScale(float scale) {
         this.entityData.set(DATA_SCALE, Math.clamp(scale, 0.75F, 1.25F));
+    }
+
+    // ---- Kobold tribe state (original ff data parameters 122-129) ----
+
+    public com.trolmastercard.sexmod.tribe.KoboldBehavior koboldBehavior() {
+        return this.koboldBehavior;
+    }
+
+    public Optional<UUID> tribeId() {
+        return this.entityData.get(DATA_TRIBE);
+    }
+
+    public void setTribeId(UUID tribe) {
+        this.entityData.set(DATA_TRIBE, Optional.ofNullable(tribe));
+    }
+
+    public String tribeName() {
+        return this.entityData.get(DATA_TRIBE_NAME);
+    }
+
+    public void setTribeName(String name) {
+        this.entityData.set(DATA_TRIBE_NAME, name == null ? "null" : name);
+    }
+
+    /** 0 .. 0.25; render scale is 0.75 + size, max health 10 - 25 * size. */
+    public float koboldSize() {
+        return this.entityData.get(DATA_KOBOLD_SIZE);
+    }
+
+    public void setKoboldSize(float size) {
+        this.entityData.set(DATA_KOBOLD_SIZE, Math.clamp(size, 0.0F, 0.25F));
+    }
+
+    public com.trolmastercard.sexmod.tribe.KoboldColor bodyColor() {
+        return com.trolmastercard.sexmod.tribe.KoboldColor.byName(this.entityData.get(DATA_BODY_COLOR));
+    }
+
+    public void setBodyColor(com.trolmastercard.sexmod.tribe.KoboldColor color) {
+        this.entityData.set(DATA_BODY_COLOR, color.name());
+    }
+
+    public com.trolmastercard.sexmod.tribe.KoboldColor eyeColor() {
+        return com.trolmastercard.sexmod.tribe.KoboldColor.byName(this.entityData.get(DATA_EYE_COLOR));
+    }
+
+    public void setEyeColor(com.trolmastercard.sexmod.tribe.KoboldColor color) {
+        this.entityData.set(DATA_EYE_COLOR, color.name());
+    }
+
+    public String koboldName() {
+        return this.entityData.get(DATA_KOBOLD_NAME);
+    }
+
+    public void setKoboldName(String name) {
+        this.entityData.set(DATA_KOBOLD_NAME, name);
+    }
+
+    public boolean isTribeLeader() {
+        return this.entityData.get(DATA_K_LEADER);
+    }
+
+    public void setTribeLeader(boolean leader) {
+        this.entityData.set(DATA_K_LEADER, leader);
+    }
+
+    public boolean tribeFollow() {
+        return this.entityData.get(DATA_K_FOLLOW);
+    }
+
+    public void setTribeFollow(boolean follow) {
+        this.entityData.set(DATA_K_FOLLOW, follow);
+    }
+
+    public boolean koboldUnderAttack() {
+        return this.entityData.get(DATA_K_ATTACKED);
+    }
+
+    public void setKoboldUnderAttack(boolean attacked) {
+        this.entityData.set(DATA_K_ATTACKED, attacked);
+    }
+
+    /** 0 none, 1 attack, 2 sleep, 3 work (the original fp states ATTACK, SLEEP, MINE). */
+    public int koboldState() {
+        return this.entityData.get(DATA_K_STATE);
+    }
+
+    public void setKoboldState(int state) {
+        this.entityData.set(DATA_K_STATE, state);
+    }
+
+    public boolean koboldChopping() {
+        return this.entityData.get(DATA_K_CHOP);
+    }
+
+    public void setKoboldChopping(boolean chopping) {
+        this.entityData.set(DATA_K_CHOP, chopping);
+    }
+
+    /** Wild tribes are unowned; the owner is the tribe master. */
+    public boolean isOwnedKobold() {
+        return this.hasMaster();
+    }
+
+    /** Original ff.func_184645_a before the action menu; null = continue with the menu. */
+    private InteractionResult koboldInteract(Player player, ItemStack held) {
+        boolean client = this.level().isClientSide;
+        if (this.koboldBehavior.isBusy() || this.isInScene()) {
+            return InteractionResult.PASS;
+        }
+        if (this.isMaster(player) && held.is(Items.NAME_TAG) && held.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME)
+                && !this.koboldUnderAttack() && this.koboldState() != com.trolmastercard.sexmod.tribe.KoboldBehavior.ST_SLEEP) {
+            if (!client) {
+                this.setKoboldName(held.getHoverName().getString());
+                held.shrink(1);
+            }
+            return InteractionResult.sidedSuccess(client);
+        }
+        if (this.koboldUnderAttack() || this.koboldState() == com.trolmastercard.sexmod.tribe.KoboldBehavior.ST_SLEEP) {
+            return InteractionResult.PASS;
+        }
+        if (com.trolmastercard.sexmod.tribe.KoboldBehavior.holdsStaff(player)) {
+            if (!this.hasMaster()) {
+                if (client && this.tribeId().isPresent() && !com.trolmastercard.sexmod.client.TribeClient.hasTribe()) {
+                    com.trolmastercard.sexmod.client.ClientHooks.openNameTribe(this.tribeId().get());
+                }
+                return InteractionResult.sidedSuccess(client);
+            }
+            if (this.isMaster(player)) {
+                if (!client && player instanceof ServerPlayer serverPlayer) {
+                    serverPlayer.openMenu(
+                            new SimpleMenuProvider(
+                                    (containerId, inventory, ignored) -> new net.minecraft.world.inventory.ChestMenu(
+                                            com.trolmastercard.sexmod.registry.ModMenus.COMPANION_STORAGE.get(),
+                                            containerId, inventory, this.storage, 3),
+                                    this.getDisplayName()),
+                            buffer -> buffer.writeVarInt(this.getId()));
+                }
+                return InteractionResult.sidedSuccess(client);
+            }
+        }
+        if (!client) {
+            this.koboldBehavior.interact(player);
+        }
+        return null;
+    }
+
+    private void configureKobold() {
+        // Original ff goals: swim, tempt (0.4), door, look-at-player. Everything else is scripted in KoboldBehavior.
+        this.goalSelector.removeAllGoals(goal -> true);
+        this.targetSelector.removeAllGoals(goal -> true);
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(2, new TemptGoal(
+                this, 0.4D, Ingredient.of(Items.EMERALD, Items.DIAMOND, Items.GOLD_INGOT, Items.ENDER_PEARL), false));
+        this.goalSelector.addGoal(3, new OpenDoorGoal(this, true));
+        this.goalSelector.addGoal(5, new IdleLookGoal());
     }
 
     public Optional<BlockPos> homePos() {
@@ -1413,6 +1607,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.beeBehavior != null) {
             this.beeBehavior.tick(serverLevel);
         }
+        if (this.koboldBehavior != null) {
+            this.koboldBehavior.tick(serverLevel);
+        }
         this.tickEllieHorny(serverLevel);
         this.tickTargetSanity();
         this.tickGoHome(serverLevel);
@@ -1788,13 +1985,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
     }
 
-    private void playCue(String path, float volume) {
+    public void playCue(String path, float volume) {
         com.trolmastercard.sexmod.registry.ModSounds.find(path)
                 .ifPresent(sound -> this.playSound(sound.get(), volume, 1.0F));
     }
 
     /** A line she "says": local chat for players within 40 blocks, like the original's chat broadcast. */
-    private void sayNearby(ServerLevel serverLevel, Component line) {
+    public void sayNearby(ServerLevel serverLevel, Component line) {
         Component message = Component.literal("<").append(this.getDisplayName()).append("> ").append(line);
         for (ServerPlayer player : serverLevel.players()) {
             if (player.distanceToSqr(this) <= 40.0D * 40.0D) {
@@ -2216,6 +2413,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.slimeBehavior != null) {
             return InteractionResult.PASS; // original Slime: no menu, scenes start when you walk into her
         }
+        if (this.koboldBehavior != null) {
+            InteractionResult result = this.koboldInteract(player, heldItem);
+            if (result != null) {
+                return result;
+            }
+        }
         // Like the original, whatever the player holds, right-click opens the panel.
         if (this.level().isClientSide) {
             if (!this.isInScene() && this.mayUseSceneActions(player)) {
@@ -2237,6 +2440,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return super.getName();
         }
 
+        if (this.kind == CompanionKind.KOBOLD) {
+            return Component.literal(this.koboldName());
+        }
         return Component.literal(this.kind.displayName());
     }
 
@@ -2266,6 +2472,18 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             tag.putInt("hornyLevel", this.slimeHorny());
             tag.putInt("ticksUntilBirth", this.slimeBirth());
         }
+        if (this.kind == CompanionKind.KOBOLD) {
+            tag.putFloat("body_size", this.koboldSize());
+            tag.putString("name", this.koboldName());
+            tag.putString("bodyColor", this.bodyColor().name());
+            tag.putString("eyeColor", this.eyeColor().name());
+            this.masterId().ifPresent(owner -> tag.putString("master", owner.toString()));
+            this.tribeId().ifPresent(tribe -> {
+                tag.putUUID("tribeId", tribe);
+                tag.putBoolean("isLeader", this.isTribeLeader());
+                tag.putString("tribeName", this.tribeName());
+            });
+        }
         tag.putBoolean("FapCraftTechnicalProxy", this.technicalProxy);
     }
 
@@ -2280,8 +2498,39 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 this.girlId = UUID.randomUUID();
             }
         }
-        // Like the original: nothing about who she follows is saved.
+        // Like the original: nothing about who she follows is saved (a Kobold's owner is saved, it is the tribe master).
         this.setMaster(null);
+        if (this.kind == CompanionKind.KOBOLD) {
+            if (tag.contains("body_size", Tag.TAG_ANY_NUMERIC)) {
+                this.setKoboldSize(tag.getFloat("body_size"));
+            }
+            if (tag.contains("name", Tag.TAG_STRING) && !tag.getString("name").isEmpty()) {
+                this.setKoboldName(tag.getString("name"));
+            }
+            if (tag.contains("bodyColor", Tag.TAG_STRING)) {
+                this.setBodyColor(com.trolmastercard.sexmod.tribe.KoboldColor.byName(tag.getString("bodyColor")));
+            }
+            if (tag.contains("eyeColor", Tag.TAG_STRING)) {
+                this.setEyeColor(com.trolmastercard.sexmod.tribe.KoboldColor.byName(tag.getString("eyeColor")));
+            }
+            if (tag.contains("master", Tag.TAG_STRING) && !tag.getString("master").isEmpty()) {
+                try {
+                    this.setMaster(UUID.fromString(tag.getString("master")));
+                } catch (IllegalArgumentException ignored) {
+                    // malformed owner: treat as wild
+                }
+            }
+            if (tag.hasUUID("tribeId")) {
+                this.setTribeId(tag.getUUID("tribeId"));
+                this.setTribeLeader(tag.getBoolean("isLeader"));
+                this.setTribeName(tag.getString("tribeName"));
+            }
+            this.getAttribute(Attributes.MAX_HEALTH).setBaseValue(10.0D - this.koboldSize() * 25.0D);
+            this.setHealth(Math.min(this.getHealth(), this.getMaxHealth()));
+            if (this.koboldBehavior != null) {
+                this.koboldBehavior.onLoaded();
+            }
+        }
 
         // Dressed again after every reload for the girls who can undress (as in the original).
         this.setOutfit(this.kind.hasClothingToggle()
@@ -2394,6 +2643,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     ? software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.galath.boost")
                     : software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.galath.controlled_flight"));
         }
+        if (this.koboldBehavior != null) {
+            return state.setAndContinue(this.koboldAnimation());
+        }
         if (this.kind.hasMasterAI()) {
             CompanionAction action = this.action();
             if (action != CompanionAction.NONE) {
@@ -2415,6 +2667,24 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         return state.setAndContinue(this.kind.idleAnimation());
+    }
+
+    /** Original ff animation predicate outside scenes: attack / sleep / work states, else idle, walk, run (armed when attacked). */
+    private software.bernie.geckolib.animation.RawAnimation koboldAnimation() {
+        return switch (this.koboldState()) {
+            case com.trolmastercard.sexmod.tribe.KoboldBehavior.ST_ATTACK ->
+                    software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.kobold.attack");
+            case com.trolmastercard.sexmod.tribe.KoboldBehavior.ST_SLEEP -> this.kind.stateAnimation("sleep");
+            case com.trolmastercard.sexmod.tribe.KoboldBehavior.ST_WORK -> this.kind.stateAnimation("fall_tree");
+            default -> {
+                boolean armed = this.koboldUnderAttack();
+                if (this.isWalkingVisibly()) {
+                    double speed = Math.abs(this.getX() - this.xo) + Math.abs(this.getZ() - this.zo);
+                    yield this.kind.stateAnimation(armed ? "run_armed" : speed > 0.2D ? "run" : "walk");
+                }
+                yield this.kind.stateAnimation(armed ? "idle_armed" : "idle");
+            }
+        };
     }
 
     /**

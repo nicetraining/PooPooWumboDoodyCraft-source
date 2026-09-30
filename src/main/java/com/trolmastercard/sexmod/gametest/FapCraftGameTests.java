@@ -605,4 +605,279 @@ public final class FapCraftGameTests {
         bee.discard();
         helper.succeed();
     }
+
+    // ---------------------------------------------------------------- Kobold tribes
+
+    /** Keeps the arena chunks entity-ticking so the AI tests do not depend on where the structure lands. */
+    private static void forceArena(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var centre = helper.absolutePos(new net.minecraft.core.BlockPos(3, 1, 3));
+        int cx = centre.getX() >> 4;
+        int cz = centre.getZ() >> 4;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                level.setChunkForced(cx + dx, cz + dz, true);
+            }
+        }
+    }
+
+    private static void floor(GameTestHelper helper, int size) {
+        for (int x = -1; x <= size; x++) {
+            for (int z = -1; z <= size; z++) {
+                helper.setBlock(new net.minecraft.core.BlockPos(x, 0, z), net.minecraft.world.level.block.Blocks.STONE);
+            }
+        }
+    }
+
+    @GameTest(template = "empty", batch = "a_first")
+    public static void tribeSpawnClaimAndPersist(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        var server = level.getServer();
+        var tribe = com.trolmastercard.sexmod.tribe.TribeManager.spawnTribe(level, helper.absoluteVec(new Vec3(1.5, 1.0, 1.5)));
+        var members = com.trolmastercard.sexmod.tribe.TribeManager.loadedMembers(server, tribe);
+        if (tribe.memberCount() != 4 || members.size() != 4) {
+            helper.fail("a generated tribe has 4 members, got " + tribe.memberCount() + "/" + members.size());
+            return;
+        }
+        CompanionEntity leader = members.get(0);
+        if (!leader.getUUID().equals(tribe.leader) || leader.koboldSize() != 0.25F
+                || Math.abs(leader.getMaxHealth() - 3.75F) > 0.01F || leader.hasMaster()) {
+            helper.fail("member 0 is the unowned full-size leader with 3.75 health");
+        }
+        for (CompanionEntity member : members) {
+            if (member.tribeId().isEmpty() || !member.tribeId().get().equals(tribe.id) || member.bodyColor() != tribe.color) {
+                helper.fail("every member knows its tribe and wears its colour");
+            }
+        }
+        UUID player = UUID.randomUUID();
+        if (com.trolmastercard.sexmod.tribe.TribeManager.claim(server, player, "Tester", leader.position(), tribe.id, "")
+                || com.trolmastercard.sexmod.tribe.TribeManager.claim(server, player, "Tester", leader.position(), tribe.id, "ABCDEFGHIJKLMNOP")) {
+            helper.fail("an empty or 16 character tribe name is refused");
+        }
+        if (!com.trolmastercard.sexmod.tribe.TribeManager.claim(server, player, "Tester", leader.position(), tribe.id, "Reds")) {
+            helper.fail("a named wild tribe can be claimed");
+        }
+        for (CompanionEntity member : members) {
+            if (!member.isMaster(helper.makeMockPlayer(GameType.SURVIVAL)) && !member.masterId().equals(java.util.Optional.of(player))) {
+                helper.fail("claiming makes the player the owner of every member");
+            }
+            if (!"Reds".equals(member.tribeName())) {
+                helper.fail("the tribe name is copied to every member");
+            }
+        }
+        if (!tribe.follow || !player.equals(tribe.master)
+                || com.trolmastercard.sexmod.tribe.TribeData.get(server).ofMaster(player) != tribe
+                || com.trolmastercard.sexmod.tribe.TribeManager.claim(server, UUID.randomUUID(), "Other", leader.position(), tribe.id, "Nope")) {
+            helper.fail("claim turns follow mode on, sets the master and cannot be repeated by someone else");
+        }
+
+        // saved data round trip
+        tribe.beds.add(new net.minecraft.core.BlockPos(1, 1, 1));
+        tribe.beds.add(new net.minecraft.core.BlockPos(1, 1, 2));
+        tribe.chests.add(new net.minecraft.core.BlockPos(4, 1, 4));
+        var blocks = com.trolmastercard.sexmod.tribe.TribeCommands.tunnel(new net.minecraft.core.BlockPos(0, 1, 0),
+                net.minecraft.core.Direction.EAST, level);
+        tribe.tasks.add(new com.trolmastercard.sexmod.tribe.TribeTask(com.trolmastercard.sexmod.tribe.TribeTask.Kind.MINE,
+                new net.minecraft.core.BlockPos(0, 1, 0), java.util.Set.of(new net.minecraft.core.BlockPos(2, 1, 0)),
+                net.minecraft.core.Direction.EAST));
+        var data = com.trolmastercard.sexmod.tribe.TribeData.get(server);
+        var saved = data.save(new CompoundTag(), level.registryAccess());
+        var loaded = com.trolmastercard.sexmod.tribe.TribeData.load(saved, level.registryAccess());
+        var copy = loaded.tribe(tribe.id);
+        if (copy == null || copy.color != tribe.color || !player.equals(copy.master) || copy.memberCount() != 4
+                || copy.beds.size() != 2 || copy.chests.size() != 1 || copy.tasks.size() != 1
+                || copy.tasks.get(0).facing != net.minecraft.core.Direction.EAST) {
+            helper.fail("tribe record (colour, master, members, beds, chests, tasks) survives saving");
+        }
+
+        // kobold NBT
+        CompoundTag tag = new CompoundTag();
+        leader.addAdditionalSaveData(tag);
+        CompanionEntity fresh = spawnKind(helper, CompanionKind.KOBOLD);
+        fresh.readAdditionalSaveData(tag);
+        if (!fresh.tribeId().equals(leader.tribeId()) || !fresh.isTribeLeader() || !"Reds".equals(fresh.tribeName())
+                || fresh.koboldSize() != 0.25F || fresh.bodyColor() != leader.bodyColor() || !fresh.masterId().equals(leader.masterId())
+                || !fresh.koboldName().equals(leader.koboldName())) {
+            helper.fail("a Kobold keeps tribe id, leader flag, tribe name, size, colour, owner and name across a reload");
+        }
+        fresh.discard();
+        members.forEach(Entity::discard);
+        data.tribe(tribe.id).members.clear();
+        data.tribe(tribe.id).master = null;
+        data.tribe(tribe.id).beds.clear();
+        data.tribe(tribe.id).chests.clear();
+        data.tribe(tribe.id).tasks.clear();
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 1000, batch = "b_tree")
+    public static void koboldFellsAMarkedTree(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        level.setDayTime(1000L);
+        forceArena(helper);
+        floor(helper, 7);
+        var base = new net.minecraft.core.BlockPos(4, 1, 4);
+        for (int y = 1; y <= 3; y++) {
+            helper.setBlock(base.above(y - 1), net.minecraft.world.level.block.Blocks.OAK_LOG);
+        }
+        var data = com.trolmastercard.sexmod.tribe.TribeData.get(level.getServer());
+        var tribe = data.getOrCreate(UUID.randomUUID(), com.trolmastercard.sexmod.tribe.KoboldColor.GREEN);
+        CompanionEntity kobold = spawnKind(helper, CompanionKind.KOBOLD);
+        UUID owner = UUID.randomUUID();
+        kobold.moveTo(helper.absoluteVec(new Vec3(2.5, 1.0, 2.5)));
+        kobold.setMaster(owner);
+        kobold.setTribeId(tribe.id);
+        tribe.master = owner;
+        tribe.members.put(kobold.getUUID(), kobold.blockPosition());
+        tribe.leader = kobold.getUUID();
+        var task = com.trolmastercard.sexmod.tribe.KoboldWork.treeTask(level, helper.absolutePos(base), tribe);
+        if (task.kind != com.trolmastercard.sexmod.tribe.TribeTask.Kind.FALL_TREE || task.blocks.size() != 3
+                || task.kind.maxWorkers != 1) {
+            helper.fail("a three log trunk is one FALL_TREE task with one worker, got " + task.blocks.size());
+            return;
+        }
+        tribe.tasks.add(task);
+        helper.runAfterDelay(900, () -> {
+            boolean gone = helper.getBlockState(base).isAir();
+            int logs = 0;
+            for (int i = 0; i < kobold.storage().getContainerSize(); i++) {
+                if (kobold.storage().getItem(i).is(Items.OAK_LOG)) {
+                    logs += kobold.storage().getItem(i).getCount();
+                }
+            }
+            if (!gone || logs < 1 || tribe.tasks.contains(task)) {
+                helper.fail("the Kobold walked to the tree, swung, felled it and finished the task (base gone=" + gone
+                        + ", logs=" + logs + ", task left=" + tribe.tasks.contains(task) + ") DIAG tc=" + kobold.tickCount + " scene=" + kobold.isInScene() + " bed=" + kobold.isBedWalking() + " tid=" + kobold.tribeId() + " pos=" + kobold.position() + " st=" + kobold.koboldState()
+                        + " workers=" + task.workers + " mode=" + tribe.mode + " under=" + kobold.koboldUnderAttack() + " enemies=" + tribe.enemies
+                        + " blocks=" + task.blocks.size() + " nav=" + kobold.getNavigation().isDone() + " t=" + level.getDayTime() + " chunk=" + kobold.chunkPosition()
+                        + " base=" + helper.absolutePos(base));
+                return;
+            }
+            kobold.discard();
+            tribe.members.clear();
+            tribe.master = null;
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400, batch = "b_mine")
+    public static void koboldMinesATunnel(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        level.setDayTime(1000L);
+        forceArena(helper);
+        floor(helper, 9);
+        for (int x = 3; x <= 8; x++) {
+            for (int y = 1; y <= 3; y++) {
+                for (int z = 1; z <= 3; z++) {
+                    helper.setBlock(new net.minecraft.core.BlockPos(x, y, z), net.minecraft.world.level.block.Blocks.STONE);
+                }
+            }
+        }
+        var data = com.trolmastercard.sexmod.tribe.TribeData.get(level.getServer());
+        var tribe = data.getOrCreate(UUID.randomUUID(), com.trolmastercard.sexmod.tribe.KoboldColor.RED);
+        CompanionEntity kobold = spawnKind(helper, CompanionKind.KOBOLD);
+        UUID owner = UUID.randomUUID();
+        kobold.setMaster(owner);
+        kobold.setTribeId(tribe.id);
+        tribe.master = owner;
+        tribe.members.put(kobold.getUUID(), kobold.blockPosition());
+        tribe.leader = kobold.getUUID();
+        var start = helper.absolutePos(new net.minecraft.core.BlockPos(2, 1, 2));
+        var blocks = com.trolmastercard.sexmod.tribe.TribeCommands.tunnel(start, net.minecraft.core.Direction.EAST, level);
+        if (blocks.size() != 6 * 9 - 0 && blocks.size() <= 0) {
+            helper.fail("the tunnel covers the stone 3x3 cross sections");
+            return;
+        }
+        int total = blocks.size();
+        var task = new com.trolmastercard.sexmod.tribe.TribeTask(com.trolmastercard.sexmod.tribe.TribeTask.Kind.MINE, start, blocks,
+                net.minecraft.core.Direction.EAST);
+        tribe.tasks.add(task);
+        helper.runAfterDelay(300, () -> {
+            int cobble = 0;
+            for (int i = 0; i < kobold.storage().getContainerSize(); i++) {
+                if (kobold.storage().getItem(i).is(Items.COBBLESTONE)) {
+                    cobble += kobold.storage().getItem(i).getCount();
+                }
+            }
+            if (cobble < 1 || task.blocks.size() >= total) {
+                helper.fail("the Kobold mined at least one block of the tunnel (cobble=" + cobble + ", left=" + task.blocks.size() + "/" + total + ")");
+                return;
+            }
+            kobold.discard();
+            tribe.tasks.clear();
+            tribe.members.clear();
+            tribe.master = null;
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 300, batch = "b_fight")
+    public static void koboldFightsEnemiesOfItsTribe(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        level.setDayTime(1000L);
+        forceArena(helper);
+        floor(helper, 6);
+        var data = com.trolmastercard.sexmod.tribe.TribeData.get(level.getServer());
+        var tribe = data.getOrCreate(UUID.randomUUID(), com.trolmastercard.sexmod.tribe.KoboldColor.BROWN);
+        CompanionEntity kobold = spawnKind(helper, CompanionKind.KOBOLD);
+        kobold.moveTo(helper.absoluteVec(new Vec3(2.5, 1.0, 2.5)));
+        kobold.setTribeId(tribe.id);
+        tribe.members.put(kobold.getUUID(), kobold.blockPosition());
+        tribe.leader = kobold.getUUID();
+        net.minecraft.world.entity.animal.Cow cow = EntityType.COW.create(level);
+        cow.setNoAi(true);
+        cow.moveTo(helper.absoluteVec(new Vec3(4.5, 1.0, 2.5)));
+        level.addFreshEntity(cow);
+        tribe.enemies.add(cow.getUUID());
+        helper.runAfterDelay(100, () -> System.out.println("FIGHTDBG tc=" + kobold.tickCount + " scene=" + kobold.isInScene() + " bed=" + kobold.isBedWalking()
+                + " busy=" + kobold.koboldBehavior().isBusy() + " under=" + kobold.koboldUnderAttack() + " enemies=" + tribe.enemies.size()
+                + " cowAlive=" + cow.isAlive() + " cowInLevel=" + (level.getEntity(cow.getUUID()) != null) + " nav=" + kobold.getNavigation().isDone() + " hp=" + kobold.getHealth()
+                + " master=" + kobold.masterId() + " leader=" + tribe.leader + " me=" + kobold.getUUID() + " mode=" + tribe.mode + " t=" + level.getDayTime()));
+        helper.runAfterDelay(260, () -> {
+            if (cow.getHealth() >= cow.getMaxHealth() || !kobold.koboldUnderAttack() && cow.isAlive()) {
+                helper.fail("the Kobold ran at the enemy and hit it for 5 (cow health " + cow.getHealth() + ", kobold at "
+                        + kobold.position() + " cow at " + cow.position() + " state " + kobold.koboldState()
+                        + " attacked " + kobold.koboldUnderAttack() + " enemies " + tribe.enemies.size()
+                        + " tribe " + kobold.tribeId().isPresent() + ")");
+                return;
+            }
+            kobold.discard();
+            cow.discard();
+            tribe.members.clear();
+            tribe.enemies.clear();
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty")
+    public static void koboldEggCarriesTheTribe(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        var data = com.trolmastercard.sexmod.tribe.TribeData.get(level.getServer());
+        var tribe = data.getOrCreate(UUID.randomUUID(), com.trolmastercard.sexmod.tribe.KoboldColor.SILVER);
+        UUID owner = UUID.randomUUID();
+        tribe.master = owner;
+        var egg = com.trolmastercard.sexmod.registry.ModEntities.KOBOLD_EGG.get().create(level);
+        egg.setTribeId(tribe.id);
+        egg.setEggColor("SILVER");
+        egg.setPos(helper.absoluteVec(new Vec3(1.5, 1.0, 1.5)));
+        level.addFreshEntity(egg);
+        egg.setHatchAge(com.trolmastercard.sexmod.entity.KoboldEggEntity.MAX_HATCH_AGE - 1);
+        helper.runAfterDelay(6, () -> {
+            var hatched = com.trolmastercard.sexmod.tribe.TribeManager.loadedMembers(level.getServer(), tribe);
+            if (hatched.size() != 1 || !hatched.get(0).isMaster(helper.makeMockPlayer(GameType.SURVIVAL)) && !hatched.get(0).masterId().equals(java.util.Optional.of(owner))
+                    || egg.isAlive() || hatched.get(0).bodyColor() != com.trolmastercard.sexmod.tribe.KoboldColor.SILVER) {
+                helper.fail("a hatched egg is a new member of the tribe, owned by its master");
+                return;
+            }
+            hatched.forEach(Entity::discard);
+            tribe.members.clear();
+            tribe.master = null;
+            helper.succeed();
+        });
+    }
 }

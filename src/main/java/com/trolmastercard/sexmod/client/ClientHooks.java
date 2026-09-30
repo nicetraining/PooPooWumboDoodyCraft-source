@@ -26,6 +26,19 @@ public final class ClientHooks {
         minecraft.setScreen(new CompanionActionScreen(companion, scenes, false));
     }
 
+    /** The Dragon Staff's menu exists only for players that have a tribe (original: list of members not empty). */
+    public static void openStaffMenu() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen == null && TribeClient.hasTribe()) {
+            minecraft.setScreen(new StaffRadialScreen());
+            TribeClient.request();
+        }
+    }
+
+    public static void openNameTribe(java.util.UUID tribeId) {
+        Minecraft.getInstance().setScreen(new NameTribeScreen(tribeId));
+    }
+
     public static void openBeeScreen(CompanionEntity bee) {
         Minecraft.getInstance().setScreen(new BeeScreen(bee));
     }

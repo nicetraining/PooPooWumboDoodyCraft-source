@@ -116,54 +116,50 @@ public final class KoboldEggEntity extends PathfinderMob implements GeoEntity {
         }
     }
 
+    /** Original i.a(): a new Kobold of the tribe, owned by the tribe master, with the tribe's name. */
     private void hatch(ServerLevel level) {
         this.hatching = true;
-        CompanionEntity kobold = ModEntities.get(CompanionKind.KOBOLD).create(level);
+        com.trolmastercard.sexmod.tribe.TribeData data = com.trolmastercard.sexmod.tribe.TribeData.get(level.getServer());
+        java.util.UUID tribeId = this.tribeId().orElse(UUID.randomUUID());
+        com.trolmastercard.sexmod.tribe.KoboldColor color = com.trolmastercard.sexmod.tribe.KoboldColor.byName(this.eggColor());
+        com.trolmastercard.sexmod.tribe.Tribe tribe = data.getOrCreate(tribeId, color);
+        CompanionEntity kobold = com.trolmastercard.sexmod.tribe.TribeManager.newKobold(
+                level, tribeId, (float) (Math.random() * 0.25D), tribe.color);
         if (kobold == null) {
             this.hatching = false;
             return;
         }
-
-        kobold.setPos(this.getX(), this.getY(), this.getZ());
-        kobold.setYRot(this.getYRot());
-        kobold.setAppearanceVariant(this.deterministicVariant());
-
-        // The hatchling joins whoever placed the egg: it follows that player from the start.
-        this.ownerId().ifPresent(kobold::setMaster);
-
+        kobold.moveTo(this.getX() + 0.5D, this.getY(), this.getZ() + 0.5D, this.getYRot(), 0.0F);
+        tribe.members.put(kobold.getUUID(), kobold.blockPosition());
+        if (tribe.master != null) {
+            kobold.setMaster(tribe.master);
+        }
+        for (CompanionEntity member : com.trolmastercard.sexmod.tribe.TribeManager.loadedMembers(level.getServer(), tribe)) {
+            if (!"null".equals(member.tribeName())) {
+                kobold.setTribeName(member.tribeName());
+                break;
+            }
+        }
+        data.touch();
         if (!level.addFreshEntity(kobold)) {
             this.hatching = false;
             return;
         }
-
-        level.sendParticles(
-                ParticleTypes.POOF,
-                this.getX(),
-                this.getY() + this.getBbHeight() * 0.5D,
-                this.getZ(),
-                30,
-                0.35D,
-                0.35D,
-                0.35D,
-                0.08D
-        );
-        level.playSound(
-                null,
-                this.blockPosition(),
-                SoundEvents.TURTLE_EGG_HATCH,
-                SoundSource.BLOCKS,
-                0.8F,
-                1.0F
-        );
-        this.ownerId().map(level.getServer().getPlayerList()::getPlayer).ifPresent(player ->
-                player.displayClientMessage(Component.translatable("message.sexmod.kobold_hatched"), true));
+        level.sendParticles(ParticleTypes.POOF, this.getX(), this.getY() + this.getBbHeight() * 0.5D, this.getZ(),
+                30, 0.35D, 0.35D, 0.35D, 0.08D);
+        level.playSound(null, this.blockPosition(), SoundEvents.TURTLE_EGG_HATCH, SoundSource.BLOCKS, 0.5F, 1.0F);
+        if (tribe.master != null) {
+            net.minecraft.server.level.ServerPlayer owner = level.getServer().getPlayerList().getPlayer(tribe.master);
+            if (owner != null) {
+                owner.sendSystemMessage(Component.literal(kobold.koboldName() + " ").withStyle(tribe.color.chat())
+                        .append(Component.literal("has become a ").withStyle(net.minecraft.ChatFormatting.WHITE))
+                        .append(Component.literal("new tribe member").withStyle(net.minecraft.ChatFormatting.RED))
+                        .append(Component.literal("!").withStyle(net.minecraft.ChatFormatting.WHITE)));
+                owner.playNotifySound(SoundEvents.PLAYER_LEVELUP, SoundSource.NEUTRAL, 1.0F, 1.0F);
+                owner.playNotifySound(SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.NEUTRAL, 1.0F, 1.0F);
+            }
+        }
         this.discard();
-    }
-
-    private int deterministicVariant() {
-        int hash = 31 + this.eggColor().strip().toUpperCase(Locale.ROOT).hashCode();
-        hash = 31 * hash + this.tribeId().map(UUID::hashCode).orElse(0);
-        return Math.floorMod(hash, CompanionKind.KOBOLD.appearanceVariants());
     }
 
     @Override

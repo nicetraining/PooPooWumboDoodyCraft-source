@@ -1,69 +1,37 @@
 package com.trolmastercard.sexmod.item;
 
-import com.trolmastercard.sexmod.entity.CompanionEntity;
-import com.trolmastercard.sexmod.entity.CompanionKind;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
+import com.trolmastercard.sexmod.tribe.TribeManager;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
-import java.util.List;
-
+/** Original b9: right-click within 5 blocks of a block and a wild tribe of Kobolds appears there. */
 public final class TribeEggItem extends LegacyPurposeItem {
-    private static final int[][] OFFSETS = {
-            {0, 0},
-            {1, 0},
-            {-1, 0},
-            {0, 1}
-    };
-
     public TribeEggItem(Properties properties) {
         super(properties, "tribe_egg", 1);
     }
 
     @Override
-    public InteractionResult useOn(UseOnContext context) {
-        Player player = context.getPlayer();
-        if (player == null) {
-            return InteractionResult.PASS;
+    public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        Vec3 start = player.getEyePosition();
+        Vec3 end = start.add(player.getLookAngle().scale(5.0D));
+        var hit = level.clip(new ClipContext(start, end, ClipContext.Block.OUTLINE, ClipContext.Fluid.ANY, player));
+        if (hit.getType() == HitResult.Type.MISS) {
+            return InteractionResultHolder.fail(stack);
         }
-
-        if (context.getLevel() instanceof ServerLevel serverLevel) {
-            BlockPos origin = context.getClickedPos().relative(context.getClickedFace());
-            List<CompanionEntity> spawned = new ArrayList<>(OFFSETS.length);
-
-            for (int[] offset : OFFSETS) {
-                CompanionEntity kobold = CompanionItemSupport.spawn(
-                        serverLevel,
-                        CompanionKind.KOBOLD,
-                        origin.offset(offset[0], 0, offset[1]),
-                        player,
-                        false
-                );
-                if (kobold == null) {
-                    spawned.forEach(CompanionEntity::discard);
-                    return InteractionResult.FAIL;
-                }
-                kobold.setAppearanceVariant(serverLevel.getRandom().nextInt(
-                        CompanionKind.KOBOLD.appearanceVariants()
-                ));
-                spawned.add(kobold);
-            }
-
+        if (level instanceof ServerLevel serverLevel) {
             if (!player.getAbilities().instabuild) {
-                context.getItemInHand().shrink(1);
+                stack.shrink(1);
             }
-
-            player.displayClientMessage(
-                    Component.translatable("message.sexmod.tribe_created", spawned.size()),
-                    true
-            );
+            TribeManager.spawnTribe(serverLevel, hit.getLocation());
         }
-
-        return InteractionResult.sidedSuccess(context.getLevel().isClientSide);
+        return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
 }

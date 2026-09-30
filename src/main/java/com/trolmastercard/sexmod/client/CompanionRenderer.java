@@ -54,7 +54,7 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
                 renderColor
         );
 
-        float baseScale = entity.kind() == CompanionKind.KOBOLD ? 0.75F : 1.0F;
+        float baseScale = entity.kind() == CompanionKind.KOBOLD ? 0.75F + entity.koboldSize() : 1.0F;
         float scale = baseScale * entity.appearanceScale();
         poseStack.scale(scale, scale, scale);
     }
@@ -96,6 +96,10 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
             buffer = bufferSource.getBuffer(renderType);
         }
 
+        if (entity.kind() == CompanionKind.KOBOLD) {
+            renderColor = koboldTint(entity, bone.getName(), renderColor);
+        }
+
         super.renderRecursively(
                 poseStack,
                 entity,
@@ -109,6 +113,52 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
                 packedOverlay,
                 renderColor
         );
+    }
+
+    private static final java.util.Set<String> BODY_BONES = java.util.Set.of("colorSpots", "neck", "head", "snout", "midSectionR",
+            "midSectionL", "innerCheekLR", "innerCheekRR", "gayL", "gayR", "legR", "legL", "shinL", "toesL", "kneeL", "curvesL",
+            "shinR", "toesR", "kneeR", "curvesR", "sideL", "sideR", "hip", "torsoL", "torsoR", "armR", "lowerArmR", "ellbowR",
+            "armL", "lowerArmL", "ellbowL", "hornUL", "hornUR", "tail", "tail2", "tail3", "tail4", "tail5", "hornDL2", "hornDR2",
+            "hornDR3M", "hornDL3M", "frecklesAL1", "frecklesAL2", "frecklesAR1", "frecklesAR2", "frecklesHL1", "frecklesHL2",
+            "frecklesHR1", "frecklesHR2");
+    private static final java.util.Set<String> SECONDARY_BONES = java.util.Set.of("boobR", "boobL", "frontNeck", "Rside", "Lside",
+            "frontAndInside", "innerCheekLL", "innerCheekRL", "layer", "layer2", "down", "down2", "down3", "down4", "down5",
+            "fuckhole", "hornDR3S", "hornDL3S", "assholeCoverUp", "assholeCoverUp2");
+
+    /** Original de.a(String): body bones use the body colour, secondary bones its secondary, irises the eye colour. */
+    private static int koboldTint(CompanionEntity entity, String bone, int renderColor) {
+        int alpha = renderColor & 0xFF000000;
+        if (BODY_BONES.contains(bone)) {
+            return alpha | entity.bodyColor().mainRgb();
+        }
+        if (SECONDARY_BONES.contains(bone)) {
+            return alpha | entity.bodyColor().secondaryRgb();
+        }
+        if (bone.equals("irisR") || bone.equals("irisL")) {
+            return alpha | entity.eyeColor().mainRgb();
+        }
+        return alpha | 0xFFFFFF;
+    }
+
+    /** Original dj: tribe members show their coloured tribe name over their head. */
+    @Override
+    public boolean shouldShowName(CompanionEntity entity) {
+        if (entity.kind() == CompanionKind.KOBOLD && !"null".equals(entity.tribeName())) {
+            return Minecraft.getInstance().getEntityRenderDispatcher().distanceToSqr(entity) < 64.0D * 64.0D;
+        }
+        return super.shouldShowName(entity);
+    }
+
+    @Override
+    protected void renderNameTag(CompanionEntity entity, net.minecraft.network.chat.Component displayName, PoseStack poseStack,
+                                 MultiBufferSource bufferSource, int packedLight, float partialTick) {
+        if (entity.kind() == CompanionKind.KOBOLD && !"null".equals(entity.tribeName())) {
+            net.minecraft.network.chat.MutableComponent tag = entity.hasCustomName()
+                    ? entity.getCustomName().copy().append(" ") : net.minecraft.network.chat.Component.literal("");
+            displayName = tag.append(net.minecraft.network.chat.Component.literal("-" + entity.tribeName() + "-")
+                    .withStyle(entity.bodyColor().chat()));
+        }
+        super.renderNameTag(entity, displayName, poseStack, bufferSource, packedLight, partialTick);
     }
 
     static PlayerSkin partnerSkin(CompanionEntity entity) {

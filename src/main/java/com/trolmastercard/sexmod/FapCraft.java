@@ -39,6 +39,9 @@ public final class FapCraft {
         modEventBus.addListener(com.trolmastercard.sexmod.network.TransitionPayload::register);
         modEventBus.addListener(com.trolmastercard.sexmod.network.SceneControlPayload::register);
         modEventBus.addListener(com.trolmastercard.sexmod.network.GalathFlightPayload::register);
+        modEventBus.addListener(com.trolmastercard.sexmod.network.TribeCommandPayload::register);
+        modEventBus.addListener(com.trolmastercard.sexmod.network.TribeMarkersPayload::register);
+        modEventBus.addListener(com.trolmastercard.sexmod.network.TribeUiPayload::register);
         modEventBus.addListener(ModEntities::createAttributes);
         modEventBus.addListener(ModEntities::registerSpawnPlacements);
         NeoForge.EVENT_BUS.addListener(ModPotions::registerBrewingRecipes);
