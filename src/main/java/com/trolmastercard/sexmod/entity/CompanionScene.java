@@ -326,6 +326,7 @@ public enum CompanionScene {
             case BIA_ANAL -> "action.names.anal";
             case BIA_PRONE -> "action.names.doggy";
             case BIA_TALK -> "action.names.talk";
+            case ELLIE_CARRY -> "action.names.facefuck";
             default -> this.translationKey();
         };
     }

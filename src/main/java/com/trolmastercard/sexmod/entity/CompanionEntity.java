@@ -1557,7 +1557,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 return state.setAndContinue(this.kind.stateAnimation(
                         action.animationSuffix(this.entityData.get(DATA_ATTACK_VARIANT))));
             }
-            if (state.isMoving()) {
+            if (this.isWalkingVisibly()) {
                 String suffix = switch (this.entityData.get(DATA_SPEED_CLASS)) {
                     case 2 -> "run";
                     case 1 -> "fastwalk";
@@ -1567,11 +1567,19 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             }
         }
 
-        if (state.getData(DataTickets.ENTITY) != null && state.isMoving()) {
+        if (this.isWalkingVisibly()) {
             return state.setAndContinue(this.kind.walkAnimation());
         }
 
         return state.setAndContinue(this.kind.idleAnimation());
+    }
+
+    /**
+     * GeckoLib's own isMoving() needs a fairly high limb speed, so a slow idle wander never counted as
+     * walking. Any real horizontal movement should play the walk animation, as in the original.
+     */
+    private boolean isWalkingVisibly() {
+        return this.walkAnimation.speed() > 0.02F;
     }
 
     @Override
