@@ -1239,7 +1239,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
         private void navigate() {
             Vec3 target = CompanionEntity.this.bedWalk.target();
-            CompanionEntity.this.getNavigation().moveTo(target.x, target.y, target.z, 0.35D);
+            // The original asks for 0.35 on a base speed of 0.5 (absolute 0.175); keep the same pace here.
+            double modifier = 0.175D / Math.max(0.05D, CompanionEntity.this.getAttributeValue(Attributes.MOVEMENT_SPEED));
+            CompanionEntity.this.getNavigation().moveTo(target.x, target.y, target.z, modifier);
         }
 
         @Override
@@ -1259,7 +1261,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             if (self.bedWalkTicks == 60 || self.bedWalkTicks == 120) {
                 this.navigate();
             }
-            if (self.position().distanceTo(walk.target()) < 0.6D || self.bedWalkTicks > 200) {
+            double horizontal = Math.hypot(self.getX() - walk.target().x, self.getZ() - walk.target().z);
+            boolean pathEnded = self.bedWalkTicks > 10 && self.getNavigation().isDone();
+            if (horizontal < 0.6D || (pathEnded && horizontal < 1.6D) || self.bedWalkTicks > 200) {
                 self.bedWalk = null;
                 self.arriveAtBed(player, walk);
             }
