@@ -257,6 +257,11 @@ public enum CompanionKind {
         return this == KOBOLD || this == BEE;
     }
 
+    /** The original let any player open a Kobold's (paid) action menu, owned or not. */
+    public boolean opensMenuToStrangers() {
+        return this == KOBOLD;
+    }
+
     public boolean canFly() {
         return this == BEE || this == GALATH || this == MANGLELIE;
     }

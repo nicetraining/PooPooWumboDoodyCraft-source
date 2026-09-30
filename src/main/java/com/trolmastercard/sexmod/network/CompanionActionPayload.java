@@ -37,7 +37,7 @@ public record CompanionActionPayload(int entityId, String action) implements Cus
             }
             Entity entity = player.level().getEntity(payload.entityId());
             if (entity instanceof CompanionEntity companion
-                    && companion.mayBeCommandedBy(player)
+                    && companion.mayUseSceneActions(player)
                     && player.distanceToSqr(companion) <= 64.0D) {
                 companion.performAction(player, payload.action());
             }

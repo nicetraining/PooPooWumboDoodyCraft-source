@@ -352,6 +352,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return this.ownerId().map(player.getUUID()::equals).orElse(false);
     }
 
+    /** Owners and operators, plus anyone for kinds whose scene menu is public (Kobold). */
+    public boolean mayUseSceneActions(Player player) {
+        return this.kind.opensMenuToStrangers() || this.mayBeCommandedBy(player);
+    }
+
     public boolean mayBeCommandedBy(Player player) {
         return this.isOwnedBy(player) || player.hasPermissions(2);
     }
@@ -419,30 +424,41 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.isInScene()) {
             return;
         }
+        boolean commander = this.mayBeCommandedBy(player);
         switch (action) {
             case "followme" -> {
-                this.setFollowing(true);
-                player.displayClientMessage(
-                        Component.translatable("message.sexmod.following", this.getDisplayName()), true);
+                if (commander) {
+                    this.setFollowing(true);
+                    player.displayClientMessage(
+                            Component.translatable("message.sexmod.following", this.getDisplayName()), true);
+                }
             }
             case "stopfollowme" -> {
-                this.setFollowing(false);
-                player.displayClientMessage(
-                        Component.translatable("message.sexmod.staying", this.getDisplayName()), true);
+                if (commander) {
+                    this.setFollowing(false);
+                    player.displayClientMessage(
+                            Component.translatable("message.sexmod.staying", this.getDisplayName()), true);
+                }
             }
             case "gohome" -> {
-                if (this.homePos().isPresent()) {
+                if (commander && this.homePos().isPresent()) {
                     this.setMode(CompanionMode.HOME);
                 }
             }
             case "setnewhome" -> {
-                this.setHome(this.blockPosition());
-                player.displayClientMessage(Component.translatable("message.sexmod.home_set"), true);
+                if (commander) {
+                    this.setHome(this.blockPosition());
+                    player.displayClientMessage(Component.translatable("message.sexmod.home_set"), true);
+                }
             }
-            case "equipment" -> this.openControlMenu(player);
+            case "equipment" -> {
+                if (commander) {
+                    this.openControlMenu(player);
+                }
+            }
             default -> {
                 CompanionScene scene = CompanionScene.byName(action);
-                if (scene == null || scene.kind() != this.kind) {
+                if (scene == null || !CompanionActions.actionsFor(this, player).contains(scene)) {
                     return;
                 }
                 if (!CompanionActions.canAfford(player, this, scene)) {
@@ -480,7 +496,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 || scene == null
                 || scene.kind() != this.kind
                 || this.isInScene()
-                || !this.mayBeCommandedBy(player)
+                || !this.mayUseSceneActions(player)
                 || player.distanceToSqr(this) > 64.0D
                 || !this.isSceneEnvironmentValid(serverLevel, player, scene, true)) {
             return false;
@@ -611,7 +627,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     public boolean canControlScene(Player player) {
         return this.isInScene()
-                && this.mayBeCommandedBy(player)
+                && this.mayUseSceneActions(player)
                 && player.distanceToSqr(this) <= 64.0D
                 && this.scenePartnerId().filter(player.getUUID()::equals).isPresent();
     }
@@ -1293,11 +1309,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             }
 
             if (this.level().isClientSide) {
-                if (this.mayBeCommandedBy(player)) {
+                if (this.mayUseSceneActions(player)) {
                     com.trolmastercard.sexmod.client.ClientHooks.openActionPanel(this);
                 }
             } else {
-                if (this.ownerId().isEmpty() && !player.hasPermissions(2)) {
+                if (this.kind.opensMenuToStrangers()) {
+                    // The Kobold's menu is open to everyone; nothing to say here.
+                } else if (this.ownerId().isEmpty() && !player.hasPermissions(2)) {
                     player.displayClientMessage(
                             Component.translatable("message.sexmod.gift_required", this.getDisplayName()),
                             true

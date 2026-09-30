@@ -14,12 +14,38 @@ import net.minecraft.world.item.ItemStack;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 /** Item costs for scene actions offered in the companion action panel (both sides read the same jar resource). */
 public final class CompanionActions {
     private static final Map<CompanionScene, ItemStack> COSTS = load();
+    private static final Map<CompanionKind, Menu> MENUS = loadMenus();
+
+    /** One kind's right-click panel: whether the follow/home/equipment column shows, and its scene actions. */
+    public record Menu(boolean fixedButtons, List<CompanionScene> actions) {
+    }
+
+    /** Scene actions this player is offered; the Kobold's third action is only for its owner. */
+    public static List<CompanionScene> actionsFor(CompanionEntity companion, Player player) {
+        Menu menu = MENUS.get(companion.kind());
+        List<CompanionScene> all = menu == null ? CompanionScene.forKind(companion.kind()) : menu.actions();
+        List<CompanionScene> result = new ArrayList<>();
+        for (CompanionScene scene : all) {
+            if (scene == CompanionScene.KOBOLD_MATING_PRESS && !companion.isOwnedBy(player)) {
+                continue;
+            }
+            result.add(scene);
+        }
+        return result;
+    }
+
+    public static boolean showsFixedButtons(CompanionKind kind) {
+        Menu menu = MENUS.get(kind);
+        return menu == null || menu.fixedButtons();
+    }
 
     private CompanionActions() {
     }
@@ -85,5 +111,33 @@ public final class CompanionActions {
             FapCraft.LOGGER.error("Could not read companion action costs", exception);
         }
         return costs;
+    }
+
+    private static Map<CompanionKind, Menu> loadMenus() {
+        Map<CompanionKind, Menu> menus = new EnumMap<>(CompanionKind.class);
+        try (InputStream stream = CompanionActions.class.getResourceAsStream("/data/sexmod/companion_menus.json")) {
+            if (stream == null) {
+                return menus;
+            }
+            JsonObject root = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();
+            for (Map.Entry<String, JsonElement> entry : root.entrySet()) {
+                if (!entry.getValue().isJsonObject()) {
+                    continue;
+                }
+                CompanionKind kind = CompanionKind.byName(entry.getKey().toLowerCase(java.util.Locale.ROOT));
+                JsonObject menu = entry.getValue().getAsJsonObject();
+                List<CompanionScene> actions = new ArrayList<>();
+                for (JsonElement name : menu.getAsJsonArray("actions")) {
+                    CompanionScene scene = CompanionScene.byName(name.getAsString());
+                    if (scene != null && scene.kind() == kind) {
+                        actions.add(scene);
+                    }
+                }
+                menus.put(kind, new Menu(menu.get("fixed").getAsBoolean(), List.copyOf(actions)));
+            }
+        } catch (Exception exception) {
+            FapCraft.LOGGER.error("Could not read companion menus", exception);
+        }
+        return menus;
     }
 }

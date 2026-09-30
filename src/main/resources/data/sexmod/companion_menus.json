@@ -1,0 +1,8 @@
+{
+  "_comment": "What the right-click panel offers per companion kind, from the original menus. 'fixed' = the follow/go home/set home/equipment column. Kinds not listed show every scene and the fixed column.",
+  "JENNY":  { "fixed": true,  "actions": ["JENNY_BLOWJOB", "JENNY_BOOBJOB", "JENNY_DOGGY"] },
+  "LUNA":   { "fixed": true,  "actions": ["LUNA_SITTING", "LUNA_TOUCH", "LUNA_HEADPAT"] },
+  "BIA":    { "fixed": true,  "actions": ["BIA_HEADPAT"] },
+  "ALLIE":  { "fixed": false, "actions": ["ALLIE_RICH", "ALLIE_DEEPTHROAT", "ALLIE_REVERSE_COWGIRL"] },
+  "KOBOLD": { "fixed": false, "actions": ["KOBOLD_ANAL", "KOBOLD_BLOWJOB", "KOBOLD_MATING_PRESS"] }
+}

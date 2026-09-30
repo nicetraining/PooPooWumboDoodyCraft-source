@@ -333,4 +333,39 @@ public final class FapCraftGameTests {
             helper.fail(scene + " should cost " + count + " x " + item + ", got " + cost);
         }
     }
+
+    @GameTest(template = "empty")
+    public static void actionPanelListsMatchTheOriginal(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        CompanionEntity jenny = spawnKind(helper, CompanionKind.JENNY);
+        CompanionEntity kobold = spawnKind(helper, CompanionKind.KOBOLD);
+        CompanionEntity luna = spawnKind(helper, CompanionKind.LUNA);
+
+        var jennyActions = CompanionActions.actionsFor(jenny, player);
+        if (jennyActions.size() != 3 || jennyActions.contains(CompanionScene.JENNY_WAVE)) {
+            helper.fail("Jenny offers blowjob, boobjob and doggy only, got " + jennyActions);
+        }
+        var koboldActions = CompanionActions.actionsFor(kobold, player);
+        if (koboldActions.size() != 2 || koboldActions.contains(CompanionScene.KOBOLD_MATING_PRESS)) {
+            helper.fail("a stranger gets anal and oral only, got " + koboldActions);
+        }
+        if (!CompanionKind.KOBOLD.opensMenuToStrangers() || CompanionKind.JENNY.opensMenuToStrangers()) {
+            helper.fail("only the Kobold menu is public");
+        }
+        if (!kobold.mayUseSceneActions(player) || jenny.mayUseSceneActions(player)) {
+            helper.fail("strangers may use Kobold actions, not Jenny's");
+        }
+        if (CompanionActions.actionsFor(luna, player).size() != 3) {
+            helper.fail("Luna offers three actions");
+        }
+        if (!CompanionActions.showsFixedButtons(CompanionKind.JENNY)
+                || CompanionActions.showsFixedButtons(CompanionKind.ALLIE)
+                || CompanionActions.showsFixedButtons(CompanionKind.KOBOLD)) {
+            helper.fail("fixed follow/home column: Jenny yes, Allie and Kobold no");
+        }
+        jenny.discard();
+        kobold.discard();
+        luna.discard();
+        helper.succeed();
+    }
 }

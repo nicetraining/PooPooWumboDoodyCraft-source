@@ -5,6 +5,7 @@ import com.trolmastercard.sexmod.entity.CompanionActions;
 import com.trolmastercard.sexmod.entity.CompanionEntity;
 import com.trolmastercard.sexmod.entity.CompanionScene;
 import com.trolmastercard.sexmod.network.CompanionActionPayload;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
@@ -41,13 +42,16 @@ public final class CompanionActionScreen extends Screen {
     private final Button[] fixedButtons = new Button[FIXED_ACTIONS.length];
     private final List<Button> sceneButtons = new ArrayList<>();
     private final int[] hoverWidth = new int[FIXED_ACTIONS.length];
+    private final boolean showFixed;
     private float slideIn;
     private float expand;
 
     public CompanionActionScreen(CompanionEntity companion) {
         super(companion.getDisplayName());
         this.companion = companion;
-        this.scenes = CompanionScene.forKind(companion.kind());
+        this.showFixed = CompanionActions.showsFixedButtons(companion.kind())
+                && companion.mayBeCommandedBy(Minecraft.getInstance().player);
+        this.scenes = CompanionActions.actionsFor(companion, Minecraft.getInstance().player);
     }
 
     @Override
@@ -91,7 +95,9 @@ public final class CompanionActionScreen extends Screen {
     private void layoutButtons(int mouseX, int mouseY) {
         int visibleIndex = 0;
         for (int index = 0; index < FIXED_ACTIONS.length; index++) {
-            boolean shown = !(index == 0 && this.companion.isFollowing()) && !(index == 1 && !this.companion.isFollowing());
+            boolean shown = this.showFixed
+                    && !(index == 0 && this.companion.isFollowing())
+                    && !(index == 1 && !this.companion.isFollowing());
             Button button = this.fixedButtons[index];
             button.visible = shown && this.expand > 0.0F;
             if (!shown) {
