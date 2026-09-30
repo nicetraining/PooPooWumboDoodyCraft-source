@@ -196,6 +196,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.xpReward = 0;
         if (kind == CompanionKind.SLIME && !technicalProxy) {
             this.slimeBehavior = new SlimeBehavior(this);
+            // registerGoals() already ran inside the Mob constructor, before this field existed: the original
+            // slime has no goals at all, everything is scripted.
+            this.goalSelector.removeAllGoals(goal -> true);
+            this.targetSelector.removeAllGoals(goal -> true);
         }
         if (this.getNavigation() instanceof GroundPathNavigation ground) {
             ground.setCanOpenDoors(true);
