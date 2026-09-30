@@ -47,11 +47,17 @@ public final class CompanionActionScreen extends Screen {
     private float expand;
 
     public CompanionActionScreen(CompanionEntity companion) {
+        this(companion,
+                CompanionActions.actionsFor(companion, Minecraft.getInstance().player),
+                CompanionActions.showsFixedButtons(companion.kind())
+                        && companion.canUsePanel(Minecraft.getInstance().player));
+    }
+
+    public CompanionActionScreen(CompanionEntity companion, List<CompanionScene> scenes, boolean showFixed) {
         super(companion.getDisplayName());
         this.companion = companion;
-        this.showFixed = CompanionActions.showsFixedButtons(companion.kind())
-                && companion.canUsePanel(Minecraft.getInstance().player);
-        this.scenes = CompanionActions.actionsFor(companion, Minecraft.getInstance().player);
+        this.showFixed = showFixed;
+        this.scenes = scenes;
     }
 
     @Override
@@ -70,7 +76,7 @@ public final class CompanionActionScreen extends Screen {
         for (CompanionScene scene : this.scenes) {
             this.sceneButtons.add(this.addRenderableWidget(Button.builder(
                     Component.translatable(scene.isClothingToggle() && this.companion.isNude()
-                            ? "action.names.dressup" : scene.translationKey()),
+                            ? "action.names.dressup" : scene.menuLabelKey()),
                     ignored -> this.choose(scene.serializedName())
             ).bounds(0, 0, 100, 20).build()));
         }

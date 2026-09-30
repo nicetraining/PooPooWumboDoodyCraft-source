@@ -550,6 +550,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     /** Handles an entry of the right-click action panel; every check is repeated here because the client is not trusted. */
     public void performAction(ServerPlayer player, String action) {
+        if (this.pickTalkFollowUp(player, action)) {
+            return;
+        }
         if (this.isInScene()) {
             return;
         }
@@ -600,6 +603,24 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 }
             }
         }
+    }
+
+    /** Bia's second menu (Anal / Doggy) after Talk: she answers, then walks the chosen scene. */
+    private boolean pickTalkFollowUp(ServerPlayer player, String action) {
+        CompanionScene chosen = CompanionScene.byName(action);
+        if (this.currentScene() != CompanionScene.BIA_TALK
+                || this.currentScenePhase() != 1
+                || chosen == null
+                || (chosen != CompanionScene.BIA_ANAL && chosen != CompanionScene.BIA_PRONE)
+                || !this.scenePartnerId().filter(player.getUUID()::equals).isPresent()
+                || !(this.level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        if (this.isSceneEnvironmentValid(serverLevel, player, chosen, true)) {
+            this.queuedScene = chosen;
+            this.enterScenePhase(2);
+        }
+        return true;
     }
 
     public boolean openStorageMenu(ServerPlayer player) {
@@ -968,8 +989,21 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     private void onScenePhaseEntered(CompanionScene scene, int phaseIndex) {
-        if (!(this.level() instanceof ServerLevel)) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
+        }
+
+        if (scene == CompanionScene.BIA_TALK && phaseIndex == 1) {
+            ServerPlayer controller = this.scenePartnerId()
+                    .map(serverLevel.getServer().getPlayerList()::getPlayer)
+                    .orElse(null);
+            if (controller != null) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+                        controller,
+                        new com.trolmastercard.sexmod.network.OpenSceneMenuPayload(
+                                this.getId(),
+                                List.of(CompanionScene.BIA_ANAL.serializedName(), CompanionScene.BIA_PRONE.serializedName())));
+            }
         }
 
         String cuePath = this.sceneCuePath();
@@ -1105,7 +1139,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 controller.setXRot(this.scenePartnerReturnPitch);
             }
 
-            if (completed && scene != null && controller != null && !scene.isClothingToggle()) {
+            if (completed && scene != null && controller != null && !scene.isPrelude()) {
                 if (scene == CompanionScene.ALLIE_RICH) {
                     this.grantAllieRichReward(controller, serverLevel);
                 } else {

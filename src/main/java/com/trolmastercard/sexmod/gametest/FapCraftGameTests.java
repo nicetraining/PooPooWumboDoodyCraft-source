@@ -450,4 +450,25 @@ public final class FapCraftGameTests {
         copy.discard();
         helper.succeed();
     }
+
+    @GameTest(template = "empty")
+    public static void biaTalkLeadsToSecondMenu(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        CompanionEntity bia = spawnKind(helper, CompanionKind.BIA);
+        if (!CompanionActions.actionsFor(bia, player).equals(
+                List.of(CompanionScene.BIA_STRIP, CompanionScene.BIA_TALK, CompanionScene.BIA_HEADPAT))) {
+            helper.fail("Bia offers strip, talk and head pat, got " + CompanionActions.actionsFor(bia, player));
+        }
+        if (!CompanionScene.BIA_ANAL.requiresBed() || !CompanionScene.BIA_PRONE.requiresBed()) {
+            helper.fail("both second-menu scenes need a bed");
+        }
+        if (!CompanionScene.BIA_TALK.isPrelude() || CompanionScene.BIA_ANAL.isPrelude()) {
+            helper.fail("talk is only a prelude");
+        }
+        if (CompanionScene.BIA_TALK.phases().size() != 3) {
+            helper.fail("talk, wait for the choice, response");
+        }
+        bia.discard();
+        helper.succeed();
+    }
 }

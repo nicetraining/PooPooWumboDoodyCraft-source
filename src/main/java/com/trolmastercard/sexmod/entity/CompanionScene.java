@@ -103,6 +103,12 @@ public enum CompanionScene {
             CompanionKind.BIA, "strip", false,
             phase("animation.bia.strip", 101)
     ),
+    BIA_TALK(
+            CompanionKind.BIA, "talk", false,
+            phase("animation.bia.talk_horny2", 47),
+            loop("animation.bia.talk_idle2", 300),
+            phase("animation.bia.talk_response", 68)
+    ),
     BIA_HEADPAT(
             CompanionKind.BIA, "headpat", true,
             phase("animation.bia.headpat", 155)
@@ -305,7 +311,23 @@ public enum CompanionScene {
     }
 
     public boolean requiresBed() {
-        return this == JENNY_DOGGY || this == SLIME_DOGGY || this == MANGLELIE_BED;
+        return this == JENNY_DOGGY || this == SLIME_DOGGY || this == MANGLELIE_BED
+                || this == BIA_ANAL || this == BIA_PRONE;
+    }
+
+    /** Scenes that only lead into something else: no reward, no afterglow, no completion message. */
+    public boolean isPrelude() {
+        return this.isClothingToggle() || this == BIA_TALK;
+    }
+
+    /** Label on the action panel; Bia's second menu uses the original's plain "Anal" / "Doggy". */
+    public String menuLabelKey() {
+        return switch (this) {
+            case BIA_ANAL -> "action.names.anal";
+            case BIA_PRONE -> "action.names.doggy";
+            case BIA_TALK -> "action.names.talk";
+            default -> this.translationKey();
+        };
     }
 
     public PhaseRole phaseRole(int index) {
