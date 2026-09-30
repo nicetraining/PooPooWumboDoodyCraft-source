@@ -117,6 +117,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<UUID>> DATA_SCENE_PARTNER =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Boolean> DATA_BEE_TAMED =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_BEE_CHEST =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_SLIME_STATE =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_SLIME_HORNY =
@@ -176,6 +180,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private int goHomeTicks = -1;
     /** Scene the player asked for while she was still dressed; it starts once the strip has finished. */
     private SlimeBehavior slimeBehavior;
+    private BeeBehavior beeBehavior;
     private CompanionScene queuedScene;
     /** A scene to queue after {@link #queuedScene} has started (Allie: prepare, then the chosen scene). */
     private CompanionScene chainedScene;
@@ -200,6 +205,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             // slime has no goals at all, everything is scripted.
             this.goalSelector.removeAllGoals(goal -> true);
             this.targetSelector.removeAllGoals(goal -> true);
+        }
+        if (kind == CompanionKind.BEE && !technicalProxy) {
+            this.beeBehavior = new BeeBehavior(this);
+            this.configureBee();
         }
         if (this.getNavigation() instanceof GroundPathNavigation ground) {
             ground.setCanOpenDoors(true);
@@ -247,6 +256,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     case JENNY, ELLIE, BIA, LUNA -> 0.0D;
                     default -> 3.0D;
                 })
+                .add(Attributes.FLYING_SPEED, 0.4D)
                 .add(Attributes.ARMOR, kind == CompanionKind.GALATH ? 4.0D : 0.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, kind == CompanionKind.GALATH ? 0.20D : 0.0D);
     }
@@ -325,6 +335,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_FLYING, false);
         builder.define(DATA_GALATH_BOOST, 0);
         builder.define(DATA_ALLIE_USES, 0);
+        builder.define(DATA_BEE_TAMED, false);
+        builder.define(DATA_BEE_CHEST, false);
         builder.define(DATA_SLIME_STATE, 0);
         builder.define(DATA_SLIME_HORNY, 0);
         builder.define(DATA_SLIME_BIRTH, -1);
@@ -657,13 +669,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         Vec3 target = new Vec3(home.getX() + 0.5D, home.getY(), home.getZ() + 0.5D);
         this.goHomeTicks++;
         // The throw animation fires its "pearl" event at 0.96 s and again at 2.88 s.
-        if (this.goHomeTicks == 19) {
+        boolean bee = this.kind == CompanionKind.BEE;
+        if (this.goHomeTicks == (bee ? 26 : 19)) {
             ThrownEnderpearl pearl = new ThrownEnderpearl(EntityType.ENDER_PEARL, serverLevel);
             pearl.setPos(this.getX(), this.getEyeY() - 0.1D, this.getZ());
             Vec3 aim = target.subtract(this.position());
             pearl.shoot(aim.x, aim.y, aim.z, (float) Math.min(4.0D, aim.length() * 0.1D), 0.0F);
             serverLevel.addFreshEntity(pearl);
-        } else if (this.goHomeTicks >= 58) {
+        } else if (this.goHomeTicks >= (bee ? 34 : 58)) {
             for (int burst = 0; burst < 32; burst++) {
                 serverLevel.sendParticles(ParticleTypes.PORTAL, this.getX(), this.getY() + 1.0D, this.getZ(),
                         1, 0.2D, 0.2D, 0.2D, 0.5D);
@@ -698,6 +711,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     /** Handles an entry of the right-click action panel; every check is repeated here because the client is not trusted. */
     public void performAction(ServerPlayer player, String action) {
+        if (this.performBeeAction(player, action)) {
+            return;
+        }
         if (this.pickTalkFollowUp(player, action)) {
             return;
         }
@@ -750,6 +766,77 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 }
             }
         }
+    }
+
+    public boolean isBeeTamed() {
+        return this.entityData.get(DATA_BEE_TAMED);
+    }
+
+    void setBeeTamed(boolean tamed) {
+        this.entityData.set(DATA_BEE_TAMED, tamed);
+    }
+
+    public boolean hasBeeChest() {
+        return this.entityData.get(DATA_BEE_CHEST);
+    }
+
+    /** Original fz: flying navigation, panic, look at players, random flying, and the follow goal. */
+    private void configureBee() {
+        this.goalSelector.removeAllGoals(goal -> true);
+        this.targetSelector.removeAllGoals(goal -> true);
+        net.minecraft.world.entity.ai.navigation.FlyingPathNavigation flying =
+                new net.minecraft.world.entity.ai.navigation.FlyingPathNavigation(this, this.level());
+        flying.setCanOpenDoors(false);
+        flying.setCanFloat(true);
+        flying.setCanPassDoors(true);
+        this.navigation = flying;
+        this.moveControl = new net.minecraft.world.entity.ai.control.FlyingMoveControl(this, 20, false);
+        this.goalSelector.addGoal(0, new BeeFollowGoal());
+        this.goalSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.PanicGoal(this, 1.25D));
+        this.goalSelector.addGoal(1, new FloatGoal(this));
+        this.goalSelector.addGoal(2, new IdleLookGoal());
+        this.goalSelector.addGoal(3, new net.minecraft.world.entity.ai.goal.WaterAvoidingRandomFlyingGoal(this, 1.0D));
+    }
+
+    /** Original fz.func_184645_a / GUI packet f3: the chest lets any player open her 27 slot inventory. */
+    public boolean openBeeStorage(ServerPlayer player) {
+        if (this.beeBehavior == null || !this.isBeeTamed() || !this.hasBeeChest()
+                || player.distanceToSqr(this) > 64.0D) {
+            return false;
+        }
+        player.openMenu(
+                new SimpleMenuProvider(
+                        (containerId, inventory, ignored) -> new net.minecraft.world.inventory.ChestMenu(
+                                com.trolmastercard.sexmod.registry.ModMenus.COMPANION_STORAGE.get(),
+                                containerId, inventory, this.storage, 3),
+                        this.getDisplayName()
+                ),
+                buffer -> buffer.writeVarInt(this.getId())
+        );
+        return true;
+    }
+
+    /** The bee screen's buttons (original packets n "master", gg, a6, f3). */
+    private boolean performBeeAction(ServerPlayer player, String action) {
+        if (this.beeBehavior == null || !action.startsWith("bee_")) {
+            return false;
+        }
+        if (this.isInScene() || !this.isBeeTamed()) {
+            return true;
+        }
+        switch (action) {
+            case "bee_follow" -> this.setMaster(player.getUUID());
+            case "bee_stop" -> this.clearMaster();
+            case "bee_gohome" -> {
+                this.clearMaster();
+                this.startGoHome();
+            }
+            case "bee_sethome" -> this.setHome(this.blockPosition());
+            case "bee_chest" -> this.openBeeStorage(player);
+            default -> {
+            }
+        }
+        return true;
     }
 
     int slimeState() {
@@ -1322,6 +1409,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if (this.slimeBehavior != null) {
             this.slimeBehavior.tick(serverLevel);
+        }
+        if (this.beeBehavior != null) {
+            this.beeBehavior.tick(serverLevel);
         }
         this.tickEllieHorny(serverLevel);
         this.tickTargetSanity();
@@ -1991,6 +2081,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     private void tickFlight() {
+        if (this.beeBehavior != null) {
+            return; // the bee flies by navigation, see BeeBehavior
+        }
         if (this.galathRider() != null) {
             this.entityData.set(DATA_FLYING, false);
             return; // controlled flight: only the rider's flaps move her
@@ -2104,6 +2197,22 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
 
+        if (this.beeBehavior != null) {
+            if (this.isBeeTamed() && !this.hasBeeChest() && heldItem.is(Items.CHEST)) {
+                if (!this.level().isClientSide) {
+                    this.entityData.set(DATA_BEE_CHEST, true);
+                    heldItem.shrink(1); // original: no creative check
+                }
+                return InteractionResult.sidedSuccess(this.level().isClientSide);
+            }
+            if (this.isBeeTamed()) {
+                if (this.level().isClientSide) {
+                    com.trolmastercard.sexmod.client.ClientHooks.openBeeScreen(this);
+                }
+                return InteractionResult.sidedSuccess(this.level().isClientSide);
+            }
+            return InteractionResult.PASS; // untamed: nothing (no gifts in the original)
+        }
         if (this.slimeBehavior != null) {
             return InteractionResult.PASS; // original Slime: no menu, scenes start when you walk into her
         }
@@ -2149,6 +2258,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         tag.put("FapCraftEquipment", SlotNbt.save(this.equipment, this.registryAccess()));
         tag.put("FapCraftStorage", SlotNbt.save(this.storage, this.registryAccess()));
         tag.putBoolean("FapCraftGalathCoinSummon", this.summonedByGalathCoin);
+        if (this.kind == CompanionKind.BEE) {
+            tag.putBoolean("isTamed", this.isBeeTamed());
+            tag.putBoolean("hasChest", this.hasBeeChest());
+        }
         if (this.kind == CompanionKind.SLIME) {
             tag.putInt("hornyLevel", this.slimeHorny());
             tag.putInt("ticksUntilBirth", this.slimeBirth());
@@ -2174,6 +2287,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.setOutfit(this.kind.hasClothingToggle()
                 ? OutfitMode.DEFAULT
                 : OutfitMode.byName(tag.getString("FapCraftOutfit")));
+        if (this.kind == CompanionKind.BEE) {
+            if (tag.contains("isTamed")) {
+                this.setBeeTamed(tag.getBoolean("isTamed"));
+            }
+            this.entityData.set(DATA_BEE_CHEST, tag.getBoolean("hasChest"));
+        }
         if (this.kind == CompanionKind.SLIME) {
             this.setSlimeHorny(tag.getInt("hornyLevel"));
             this.setSlimeBirth(tag.contains("ticksUntilBirth", Tag.TAG_ANY_NUMERIC) ? tag.getInt("ticksUntilBirth") : -1);
@@ -2254,6 +2373,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return state.setAndContinue(sceneAnimation.rawAnimation());
         }
 
+        if (this.beeBehavior != null) {
+            return state.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin().thenLoop(
+                    this.action() == CompanionAction.THROW_PEARL ? "animation.bee.throw_pearl"
+                            : this.hasBeeChest() ? "animation.bee.idle_has_chest" : "animation.bee.idle"));
+        }
         if (this.slimeBehavior != null) {
             return state.setAndContinue(switch (this.slimeState()) {
                 case SlimeBehavior.JUMP_START -> software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.slime.jumpstart");
@@ -2324,6 +2448,61 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         public boolean canUse() {
             return (!CompanionEntity.this.hasMaster() || CompanionEntity.this.followState == FollowState.IDLE)
                     && super.canUse();
+        }
+    }
+
+    /** The bee's follow goal (original class h): follow at 5+ blocks, keep following for 60 ticks, never fight. */
+    private final class BeeFollowGoal extends Goal {
+        private int linger;
+
+        private BeeFollowGoal() {
+            this.setFlags(EnumSet.of(Flag.MOVE));
+        }
+
+        @Override
+        public boolean canUse() {
+            return CompanionEntity.this.hasMaster() && CompanionEntity.this.masterPlayer().isPresent()
+                    && !CompanionEntity.this.isInScene();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return this.canUse();
+        }
+
+        @Override
+        public void stop() {
+            CompanionEntity.this.getNavigation().stop();
+            if (CompanionEntity.this.masterPlayer().isEmpty()) {
+                CompanionEntity.this.setMaster(null); // original: the master is lost when the goal ends
+            }
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+            CompanionEntity self = CompanionEntity.this;
+            Player master = self.masterPlayer().orElse(null);
+            if (master == null) {
+                return;
+            }
+            float distance = self.distanceTo(master);
+            if (distance > 5.0F) {
+                this.linger = 60;
+            } else if (this.linger-- <= 0) {
+                self.getNavigation().stop();
+                return;
+            }
+            if (distance > 24.0F) {
+                self.teleportTo(master.getX(), master.getY() + 1.0D, master.getZ());
+                return;
+            }
+            double speed = Math.min(1.5D, 0.5D + Math.floor(distance / 3.0F) * 0.25D);
+            self.getNavigation().moveTo(master, speed);
         }
     }
 

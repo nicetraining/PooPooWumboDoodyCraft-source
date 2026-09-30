@@ -49,7 +49,7 @@ public enum CompanionKind {
             "textures/entity/bee/bee.png",
             "animations/bee/bee.animation.json",
             "animation.bee.idle", "animation.bee.idle",
-            0.30F, 1.50F, 12.0D, 0.30D, 0xFED268, 0x432ADB
+            0.30F, 1.50F, 12.0D, 0.20D, 0xFED268, 0x432ADB
     ),
     LUNA(
             "luna", "Luna",

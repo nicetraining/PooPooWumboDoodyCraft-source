@@ -585,4 +585,23 @@ public final class FapCraftGameTests {
         slime.discard();
         helper.succeed();
     }
+
+    @GameTest(template = "empty")
+    public static void beeTamedAndChestFlagsSurviveReload(GameTestHelper helper) {
+        CompanionEntity bee = spawnKind(helper, CompanionKind.BEE);
+        if (bee.isBeeTamed() || bee.hasBeeChest()) {
+            helper.fail("a new bee is wild and has no chest");
+        }
+        CompoundTag tag = new CompoundTag();
+        tag.putBoolean("isTamed", true);
+        tag.putBoolean("hasChest", true);
+        bee.readAdditionalSaveData(tag);
+        CompoundTag saved = new CompoundTag();
+        bee.addAdditionalSaveData(saved);
+        if (!bee.isBeeTamed() || !bee.hasBeeChest() || !saved.getBoolean("isTamed") || !saved.getBoolean("hasChest")) {
+            helper.fail("isTamed and hasChest are read and saved with the original keys");
+        }
+        bee.discard();
+        helper.succeed();
+    }
 }

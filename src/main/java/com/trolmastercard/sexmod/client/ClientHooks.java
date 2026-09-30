@@ -26,6 +26,10 @@ public final class ClientHooks {
         minecraft.setScreen(new CompanionActionScreen(companion, scenes, false));
     }
 
+    public static void openBeeScreen(CompanionEntity bee) {
+        Minecraft.getInstance().setScreen(new BeeScreen(bee));
+    }
+
     public static void openActionPanel(CompanionEntity companion) {
         Minecraft.getInstance().setScreen(new CompanionActionScreen(companion));
     }
