@@ -1150,7 +1150,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return this.bedWalk == null ? null : this.bedWalk.target();
     }
 
-    private boolean beginBedWalk(ServerLevel serverLevel, Player player, CompanionScene scene) {
+    /** Searches for a bed and starts walking to it; false (with her refusal line) when none is usable. */
+    public boolean beginBedWalk(ServerLevel serverLevel, Player player, CompanionScene scene) {
         BlockPos center = this.blockPosition();
         boolean anyBed = false;
         BedWalk best = null;

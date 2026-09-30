@@ -477,7 +477,7 @@ public final class FapCraftGameTests {
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         CompanionEntity bia = spawnKind(helper, CompanionKind.BIA);
 
-        if (bia.startScene(player, CompanionScene.BIA_ANAL) || bia.isBedWalking()) {
+        if (bia.beginBedWalk(helper.getLevel(), player, CompanionScene.BIA_ANAL) || bia.isBedWalking()) {
             helper.fail("with no bed she refuses (nobedinsight) and does not walk");
         }
 
@@ -490,7 +490,7 @@ public final class FapCraftGameTests {
         helper.setBlock(head, bed.setValue(net.minecraft.world.level.block.BedBlock.PART,
                 net.minecraft.world.level.block.state.properties.BedPart.HEAD));
 
-        if (!bia.startScene(player, CompanionScene.BIA_ANAL) || !bia.isBedWalking()) {
+        if (!bia.beginBedWalk(helper.getLevel(), player, CompanionScene.BIA_ANAL) || !bia.isBedWalking()) {
             helper.fail("with a bed she starts walking to it instead of starting the scene");
         }
         if (bia.isInScene()) {
