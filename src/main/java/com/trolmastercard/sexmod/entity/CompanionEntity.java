@@ -1540,7 +1540,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "main", 0, this::animationPredicate));
+        controllers.add(new AnimationController<CompanionEntity>(this, "main", 0, this::animationPredicate)
+                .setSoundKeyframeHandler(event -> com.trolmastercard.sexmod.client.KeyframeEvents
+                        .handle(this, event.getKeyframeData().getSound())));
     }
 
     private <T extends CompanionEntity> software.bernie.geckolib.animation.PlayState animationPredicate(
