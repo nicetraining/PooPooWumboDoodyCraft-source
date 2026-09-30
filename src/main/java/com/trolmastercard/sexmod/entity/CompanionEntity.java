@@ -139,6 +139,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private Vec3 bedSpotPosition;
     private float bedSpotYaw;
     private int attachCountdown = -1;
+    /** True while the scene that follows Jenny's payment animation starts, so it is not asked to pay again. */
+    private boolean skipPayment;
     private int waitTicks;
     private Vec3 scenePartnerReturnPosition;
     private float scenePartnerReturnYaw;
@@ -660,6 +662,16 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return false;
         }
 
+
+        if (this.kind == CompanionKind.JENNY && !this.skipPayment && this.needsPaymentStep(scene)) {
+            // Original: every paid Jenny action starts with her payment animation, then U() runs the chosen scene.
+            if (!this.startScene(player, CompanionScene.JENNY_PAYMENT)) {
+                return false;
+            }
+            this.queuedScene = scene;
+            return true;
+        }
+
         if (this.walksToBed() && scene.requiresBed() && this.bedSpotPosition == null) {
             // Like the original: find a bed, walk to it, wait for the player there, then start.
             return this.beginBedWalk(serverLevel, player, scene);
@@ -711,6 +723,36 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.enterScenePhase(0);
         this.playSound(SoundEvents.ENCHANTMENT_TABLE_USE, 0.45F, 1.35F);
         return true;
+    }
+
+    private boolean needsPaymentStep(CompanionScene scene) {
+        boolean paid = scene == CompanionScene.JENNY_BLOWJOB || scene == CompanionScene.JENNY_BOOBJOB
+                || scene == CompanionScene.JENNY_DOGGY || (scene == CompanionScene.JENNY_STRIP && !this.isNude());
+        return paid && !this.hasEffect(com.trolmastercard.sexmod.registry.ModPotions.HORNY_EFFECT);
+    }
+
+    /** The player's own chat line at the payment animation's 2.12 s keyframe (original paymentMSG2). */
+    private void sayPaymentLine(ServerPlayer player) {
+        CompanionScene queued = this.queuedScene;
+        if (queued == null) {
+            return;
+        }
+        String key = switch (queued) {
+            case JENNY_STRIP -> "jenny.dialogue.showBobsandveganapls";
+            case JENNY_BLOWJOB -> "jenny.dialogue.giveblowjob";
+            case JENNY_DOGGY -> "jenny.dialogue.givesex";
+            case JENNY_BOOBJOB -> "jenny.dialogue.givebooba";
+            default -> null;
+        };
+        if (key != null && this.level() instanceof ServerLevel serverLevel) {
+            Component line = Component.literal("<").append(player.getDisplayName()).append("> ")
+                    .append(Component.translatable(key));
+            for (ServerPlayer other : serverLevel.players()) {
+                if (other.distanceToSqr(this) <= 40.0D * 40.0D) {
+                    other.sendSystemMessage(line);
+                }
+            }
+        }
     }
 
     /**
@@ -972,6 +1014,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         this.scenePhaseTicks++;
+        if (scene == CompanionScene.JENNY_PAYMENT && this.scenePhaseTicks == 43) {
+            this.sayPaymentLine(controller);
+        }
         if (scene.isWaitScene()) {
             this.tickWaitForPartner(controller, scene);
             return;
@@ -1425,7 +1470,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.attachCountdown = -1;
         this.waitTicks = 0;
         if (next != null && controller != null && controller.isAlive()) {
+            this.skipPayment = true;
             this.startScene(controller, next);
+            this.skipPayment = false;
         }
         if (!this.isInScene()) {
             this.bedSpotPosition = null;

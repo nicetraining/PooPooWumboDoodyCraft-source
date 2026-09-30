@@ -20,6 +20,11 @@ public enum CompanionScene {
             phase("animation.jenny.wave", 72),
             loop("animation.jenny.wave_idle", 80)
     ),
+    /** The original PAYMENT state: she takes the payment before any paid action, then the chosen scene follows. */
+    JENNY_PAYMENT(
+            CompanionKind.JENNY, "payment", false,
+            phase("animation.jenny.payment", 187)
+    ),
     JENNY_STRIP(
             CompanionKind.JENNY, "strip", false,
             phase("animation.jenny.strip", 101)
@@ -345,7 +350,7 @@ public enum CompanionScene {
 
     /** Scenes that only lead into something else: no reward, no afterglow, no completion message. */
     public boolean isPrelude() {
-        return this.isClothingToggle() || this == BIA_TALK || this.isWaitScene();
+        return this.isClothingToggle() || this == BIA_TALK || this == JENNY_PAYMENT || this.isWaitScene();
     }
 
     /** Scenes that only wait beside the bed until the player steps up, then hand over to the chosen scene. */
