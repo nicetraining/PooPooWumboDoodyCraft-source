@@ -30,6 +30,10 @@ public final class CompanionActions {
 
     /** Scene actions this player is offered; the Kobold's third action is only for its owner. */
     public static List<CompanionScene> actionsFor(CompanionEntity companion, Player player) {
+        if (companion.kind() == CompanionKind.ELLIE) {
+            // Dressed she offers "Face fuck"; nude only "Dress up". The other scenes come from her hug flow.
+            return companion.isNude() ? List.of(CompanionScene.ELLIE_STRIP) : List.of(CompanionScene.ELLIE_CARRY);
+        }
         Menu menu = MENUS.get(companion.kind());
         List<CompanionScene> all = menu == null ? CompanionScene.forKind(companion.kind()) : menu.actions();
         List<CompanionScene> result = new ArrayList<>();
@@ -57,6 +61,12 @@ public final class CompanionActions {
 
     /** What this player actually has to pay: Kobold prices are waived for its owner and while it is under the horny effect. */
     public static ItemStack costFor(CompanionEntity companion, Player player, CompanionScene scene) {
+        if (scene.isClothingToggle() && companion.isNude()) {
+            return ItemStack.EMPTY; // dressing up is free
+        }
+        if (scene.kind() == CompanionKind.JENNY && companion.hasEffect(ModPotions.HORNY_EFFECT)) {
+            return ItemStack.EMPTY; // a horny Jenny asks for nothing
+        }
         if (scene.kind() == CompanionKind.KOBOLD
                 && (companion.isMaster(player) || companion.hasEffect(ModPotions.HORNY_EFFECT))) {
             return ItemStack.EMPTY;

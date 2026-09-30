@@ -20,6 +20,10 @@ public enum CompanionScene {
             phase("animation.jenny.wave", 72),
             loop("animation.jenny.wave_idle", 80)
     ),
+    JENNY_STRIP(
+            CompanionKind.JENNY, "strip", false,
+            phase("animation.jenny.strip", 101)
+    ),
     JENNY_BLOWJOB(
             CompanionKind.JENNY, "blowjob", true,
             phase("animation.jenny.blowjobintro", 986),
@@ -43,6 +47,10 @@ public enum CompanionScene {
             phase("animation.jenny.doggycum", 134)
     ),
 
+    ELLIE_STRIP(
+            CompanionKind.ELLIE, "strip", false,
+            phase("animation.ellie.strip", 101)
+    ),
     ELLIE_HUG(
             CompanionKind.ELLIE, "hug", true,
             phase("animation.ellie.hug", 152),
@@ -90,6 +98,10 @@ public enum CompanionScene {
             CompanionKind.BIA, "wave", false,
             phase("animation.bia.wave", 76),
             loop("animation.bia.wave_idle", 80)
+    ),
+    BIA_STRIP(
+            CompanionKind.BIA, "strip", false,
+            phase("animation.bia.strip", 101)
     ),
     BIA_HEADPAT(
             CompanionKind.BIA, "headpat", true,
@@ -285,6 +297,11 @@ public enum CompanionScene {
      */
     public boolean anchorsOnBed() {
         return this == MANGLELIE_BED;
+    }
+
+    /** The strip / dress up scenes: they swap the model at the animation's 3 s keyframe. */
+    public boolean isClothingToggle() {
+        return this == JENNY_STRIP || this == ELLIE_STRIP || this == BIA_STRIP;
     }
 
     public boolean requiresBed() {

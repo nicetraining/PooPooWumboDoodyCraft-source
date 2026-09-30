@@ -268,6 +268,11 @@ public enum CompanionKind {
         return this == JENNY || this == ELLIE || this == BIA || this == LUNA;
     }
 
+    /** Jenny, Ellie and Bia can be stripped and dressed again; nudity is not saved (as in the original). */
+    public boolean hasClothingToggle() {
+        return this == JENNY || this == ELLIE || this == BIA;
+    }
+
     /** Translation key of the line said when she is following somebody else (Luna is never busy). */
     public String busyDialogue() {
         return switch (this) {

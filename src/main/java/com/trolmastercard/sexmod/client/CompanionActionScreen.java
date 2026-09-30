@@ -69,7 +69,8 @@ public final class CompanionActionScreen extends Screen {
         this.sceneButtons.clear();
         for (CompanionScene scene : this.scenes) {
             this.sceneButtons.add(this.addRenderableWidget(Button.builder(
-                    Component.translatable(scene.translationKey()),
+                    Component.translatable(scene.isClothingToggle() && this.companion.isNude()
+                            ? "action.names.dressup" : scene.translationKey()),
                     ignored -> this.choose(scene.serializedName())
             ).bounds(0, 0, 100, 20).build()));
         }

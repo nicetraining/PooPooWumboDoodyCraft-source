@@ -154,6 +154,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private Vec3 pinPosition;
     private float pinYaw;
     private int goHomeTicks = -1;
+    /** Scene the player asked for while she was still dressed; it starts once the strip has finished. */
+    private CompanionScene queuedScene;
 
     public CompanionEntity(EntityType<? extends CompanionEntity> entityType, Level level, CompanionKind kind) {
         this(entityType, level, kind, false);
@@ -379,6 +381,17 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             safeOutfit = OutfitMode.DEFAULT;
         }
         this.entityData.set(DATA_OUTFIT, safeOutfit.serializedName());
+    }
+
+    /** Nude = the alternate model (the original's currentModel 0). */
+    public boolean isNude() {
+        return this.outfit() == OutfitMode.ALTERNATE;
+    }
+
+    public void toggleClothing() {
+        if (this.kind.supportsOutfit(OutfitMode.ALTERNATE)) {
+            this.setOutfit(this.isNude() ? OutfitMode.DEFAULT : OutfitMode.ALTERNATE);
+        }
     }
 
     public int appearanceVariant() {
@@ -616,6 +629,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 || player.distanceToSqr(this) > 64.0D
                 || !this.isSceneEnvironmentValid(serverLevel, player, scene, true)) {
             return false;
+        }
+
+        this.queuedScene = null;
+        if (this.kind == CompanionKind.JENNY
+                && (scene == CompanionScene.JENNY_BLOWJOB || scene == CompanionScene.JENNY_BOOBJOB)
+                && !this.isNude()) {
+            // Like the original: she undresses first, then the chosen scene follows.
+            this.queuedScene = scene;
+            scene = CompanionScene.JENNY_STRIP;
         }
 
         SceneAnchor anchor = scene.anchorsOnBed()
@@ -916,6 +938,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         this.scenePhaseTicks++;
+        if (scene.isClothingToggle() && this.scenePhaseTicks == 60) {
+            this.toggleClothing();
+        }
         int timeout = phase.loop() && scene.hasInteractivePhases()
                 ? phase.durationTicks() * 3
                 : phase.durationTicks();
@@ -1080,7 +1105,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 controller.setXRot(this.scenePartnerReturnPitch);
             }
 
-            if (completed && scene != null && controller != null) {
+            if (completed && scene != null && controller != null && !scene.isClothingToggle()) {
                 if (scene == CompanionScene.ALLIE_RICH) {
                     this.grantAllieRichReward(controller, serverLevel);
                 } else {
@@ -1094,6 +1119,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 controller.displayClientMessage(Component.translatable("message.sexmod.scene_stopped"), true);
             }
         }
+        CompanionScene next = completed ? this.queuedScene : null;
+        this.queuedScene = null;
 
         this.entityData.set(DATA_SCENE, "");
         this.entityData.set(DATA_SCENE_PHASE, 0);
@@ -1106,6 +1133,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.setDeltaMovement(Vec3.ZERO);
         this.setNoAi(this.scenePreviousNoAi);
         this.setNoGravity(this.scenePreviousNoGravity);
+        if (next != null && controller != null && controller.isAlive()) {
+            this.startScene(controller, next);
+        }
     }
 
     /**
@@ -1380,7 +1410,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         super.addAdditionalSaveData(tag);
         tag.putString("FapCraftKind", this.kind.registryPath());
         tag.putString("girlID", this.girlId.toString());
-        tag.putString("FapCraftOutfit", this.outfit().serializedName());
+        if (!this.kind.hasClothingToggle()) {
+            tag.putString("FapCraftOutfit", this.outfit().serializedName());
+        }
         tag.putInt("FapCraftVariant", this.appearanceVariant());
         tag.putFloat("FapCraftScale", this.appearanceScale());
         this.homePos().ifPresent(home -> {
@@ -1409,7 +1441,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         // Like the original: nothing about who she follows is saved.
         this.setMaster(null);
 
-        this.setOutfit(OutfitMode.byName(tag.getString("FapCraftOutfit")));
+        // Dressed again after every reload for the girls who can undress (as in the original).
+        this.setOutfit(this.kind.hasClothingToggle()
+                ? OutfitMode.DEFAULT
+                : OutfitMode.byName(tag.getString("FapCraftOutfit")));
         this.setAppearanceVariant(tag.getInt("FapCraftVariant"));
         if (tag.contains("FapCraftScale", Tag.TAG_FLOAT)) {
             this.setAppearanceScale(tag.getFloat("FapCraftScale"));

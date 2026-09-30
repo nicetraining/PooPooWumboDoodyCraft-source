@@ -274,8 +274,9 @@ public final class FapCraftGameTests {
         CompanionEntity luna = spawnKind(helper, CompanionKind.LUNA);
 
         var jennyActions = CompanionActions.actionsFor(jenny, player);
-        if (jennyActions.size() != 3 || jennyActions.contains(CompanionScene.JENNY_WAVE)) {
-            helper.fail("Jenny offers blowjob, boobjob and doggy only, got " + jennyActions);
+        if (jennyActions.size() != 4 || jennyActions.contains(CompanionScene.JENNY_WAVE)
+                || !jennyActions.contains(CompanionScene.JENNY_STRIP)) {
+            helper.fail("Jenny offers blowjob, boobjob, doggy and strip, got " + jennyActions);
         }
         var koboldActions = CompanionActions.actionsFor(kobold, player);
         if (koboldActions.size() != 2 || koboldActions.contains(CompanionScene.KOBOLD_MATING_PRESS)) {
@@ -403,5 +404,50 @@ public final class FapCraftGameTests {
             jenny.discard();
             helper.succeed();
         });
+    }
+
+    @GameTest(template = "empty")
+    public static void clothingToggleFollowsTheOriginal(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        CompanionEntity jenny = spawnKind(helper, CompanionKind.JENNY);
+        CompanionEntity ellie = spawnKind(helper, CompanionKind.ELLIE);
+        CompanionEntity bia = spawnKind(helper, CompanionKind.BIA);
+        requireCost(helper, CompanionScene.JENNY_STRIP, Items.GOLD_INGOT, 1);
+        if (!CompanionActions.costFor(jenny, player, CompanionScene.JENNY_STRIP).is(Items.GOLD_INGOT)) {
+            helper.fail("stripping a dressed Jenny costs a gold ingot");
+        }
+        if (!CompanionActions.actionsFor(ellie, player).equals(List.of(CompanionScene.ELLIE_CARRY))) {
+            helper.fail("dressed Ellie offers only her carry scene");
+        }
+        if (!CompanionActions.costFor(bia, player, CompanionScene.BIA_STRIP).isEmpty()) {
+            helper.fail("Bia's strip is free");
+        }
+        jenny.toggleClothing();
+        ellie.toggleClothing();
+        if (!jenny.isNude() || !ellie.isNude()) {
+            helper.fail("toggling undresses");
+        }
+        if (!CompanionActions.costFor(jenny, player, CompanionScene.JENNY_STRIP).isEmpty()) {
+            helper.fail("dressing up again is free");
+        }
+        if (!CompanionActions.actionsFor(ellie, player).equals(List.of(CompanionScene.ELLIE_STRIP))) {
+            helper.fail("nude Ellie offers only dress up");
+        }
+        CompoundTag tag = new CompoundTag();
+        jenny.addAdditionalSaveData(tag);
+        CompanionEntity copy = spawnKind(helper, CompanionKind.JENNY);
+        copy.readAdditionalSaveData(tag);
+        if (copy.isNude()) {
+            helper.fail("nudity is not saved: she is dressed after a reload");
+        }
+        jenny.toggleClothing();
+        if (jenny.isNude()) {
+            helper.fail("toggling again dresses her");
+        }
+        jenny.discard();
+        ellie.discard();
+        bia.discard();
+        copy.discard();
+        helper.succeed();
     }
 }
