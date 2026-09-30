@@ -25,33 +25,33 @@ import java.util.Set;
  * girl's chat line and sound. Scene timing itself stays on the server.
  */
 public final class KeyframeEvents {
-    private static JsonObject table;
+    private static final java.util.Map<String, JsonObject> tables = new java.util.concurrent.ConcurrentHashMap<>();
     private static final Set<String> REPORTED = new HashSet<>();
 
     private KeyframeEvents() {
     }
 
-    private static JsonObject table() {
-        if (table == null) {
-            table = new JsonObject();
-            try (InputStream stream = KeyframeEvents.class.getResourceAsStream("/assets/sexmod/keyframe_events.json")) {
+    /** One file per kind: assets/sexmod/keyframe_events/&lt;kind&gt;.json, event id -> chat line / sounds / volume. */
+    private static JsonObject tableFor(String kind) {
+        return tables.computeIfAbsent(kind, key -> {
+            try (InputStream stream = KeyframeEvents.class.getResourceAsStream(
+                    "/assets/sexmod/keyframe_events/" + key + ".json")) {
                 if (stream != null) {
-                    table = JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();
+                    return JsonParser.parseReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).getAsJsonObject();
                 }
             } catch (Exception exception) {
-                FapCraft.LOGGER.warn("Could not read keyframe_events.json", exception);
+                FapCraft.LOGGER.warn("Could not read keyframe events for {}", key, exception);
             }
-        }
-        return table;
+            return new JsonObject();
+        });
     }
 
     public static void handle(CompanionEntity girl, String eventId) {
         if (eventId == null || eventId.isEmpty() || girl.level() == null || !girl.level().isClientSide) {
             return;
         }
-        JsonObject kind = table().has(girl.kind().registryPath())
-                ? table().getAsJsonObject(girl.kind().registryPath()) : null;
-        JsonObject entry = kind != null && kind.has(eventId) ? kind.getAsJsonObject(eventId) : null;
+        JsonObject kind = tableFor(girl.kind().registryPath());
+        JsonObject entry = kind.has(eventId) ? kind.getAsJsonObject(eventId) : null;
         if (entry == null) {
             return; // events without an entry are timing markers or not ported yet
         }
