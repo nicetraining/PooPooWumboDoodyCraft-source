@@ -56,13 +56,15 @@ public final class KeyframeEvents {
             return; // events without an entry are timing markers or not ported yet
         }
 
-        if (entry.has("chat")) {
+        if (entry.has("chat") || entry.has("text")) {
             Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.player != null && minecraft.player.distanceToSqr(girl) < 30.0D * 30.0D) {
                 minecraft.player.sendSystemMessage(Component.literal("<")
                         .append(girl.getDisplayName())
                         .append("> ")
-                        .append(Component.translatable(entry.get("chat").getAsString())));
+                        .append(entry.has("chat")
+                                ? Component.translatable(entry.get("chat").getAsString())
+                                : Component.literal(entry.get("text").getAsString())));
             }
         }
         if (entry.has("sounds")) {

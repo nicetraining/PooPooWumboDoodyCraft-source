@@ -1,0 +1,454 @@
+{
+ "breath": {
+  "sounds": [
+   "girls.luna.lightbreathing.lightbreathing0",
+   "girls.luna.lightbreathing.lightbreathing1",
+   "girls.luna.lightbreathing.lightbreathing2",
+   "girls.luna.lightbreathing.lightbreathing3",
+   "girls.luna.lightbreathing.lightbreathing4",
+   "girls.luna.lightbreathing.lightbreathing5",
+   "girls.luna.lightbreathing.lightbreathing6",
+   "girls.luna.lightbreathing.lightbreathing7",
+   "girls.luna.lightbreathing.lightbreathing8",
+   "girls.luna.lightbreathing.lightbreathing9",
+   "girls.luna.lightbreathing.lightbreathing10",
+   "girls.luna.lightbreathing.lightbreathing11",
+   "girls.luna.lightbreathing.lightbreathing12",
+   "girls.luna.lightbreathing.lightbreathing13",
+   "girls.luna.lightbreathing.lightbreathing14",
+   "girls.luna.lightbreathing.lightbreathing15",
+   "girls.luna.lightbreathing.lightbreathing16",
+   "girls.luna.lightbreathing.lightbreathing17",
+   "girls.luna.lightbreathing.lightbreathing18",
+   "girls.luna.lightbreathing.lightbreathing19",
+   "girls.luna.lightbreathing.lightbreathing20",
+   "girls.luna.lightbreathing.lightbreathing21",
+   "girls.luna.lightbreathing.lightbreathing22",
+   "girls.luna.lightbreathing.lightbreathing23",
+   "girls.luna.lightbreathing.lightbreathing24"
+  ]
+ },
+ "rod_breath": {
+  "sounds": [
+   "girls.luna.lightbreathing.lightbreathing0",
+   "girls.luna.lightbreathing.lightbreathing1",
+   "girls.luna.lightbreathing.lightbreathing2",
+   "girls.luna.lightbreathing.lightbreathing3",
+   "girls.luna.lightbreathing.lightbreathing4",
+   "girls.luna.lightbreathing.lightbreathing5",
+   "girls.luna.lightbreathing.lightbreathing6",
+   "girls.luna.lightbreathing.lightbreathing7",
+   "girls.luna.lightbreathing.lightbreathing8",
+   "girls.luna.lightbreathing.lightbreathing9",
+   "girls.luna.lightbreathing.lightbreathing10",
+   "girls.luna.lightbreathing.lightbreathing11",
+   "girls.luna.lightbreathing.lightbreathing12",
+   "girls.luna.lightbreathing.lightbreathing13",
+   "girls.luna.lightbreathing.lightbreathing14",
+   "girls.luna.lightbreathing.lightbreathing15",
+   "girls.luna.lightbreathing.lightbreathing16",
+   "girls.luna.lightbreathing.lightbreathing17",
+   "girls.luna.lightbreathing.lightbreathing18",
+   "girls.luna.lightbreathing.lightbreathing19",
+   "girls.luna.lightbreathing.lightbreathing20",
+   "girls.luna.lightbreathing.lightbreathing21",
+   "girls.luna.lightbreathing.lightbreathing22",
+   "girls.luna.lightbreathing.lightbreathing23",
+   "girls.luna.lightbreathing.lightbreathing24"
+  ]
+ },
+ "happyOh": {
+  "sounds": [
+   "girls.luna.happyoh.happyoh0",
+   "girls.luna.happyoh.happyoh1",
+   "girls.luna.happyoh.happyoh2",
+   "girls.luna.happyoh.happyoh3",
+   "girls.luna.happyoh.happyoh4",
+   "girls.luna.happyoh.happyoh5",
+   "girls.luna.happyoh.happyoh6",
+   "girls.luna.happyoh.happyoh7"
+  ]
+ },
+ "cutenya3": {
+  "sounds": [
+   "girls.luna.cutenya.cutenya3"
+  ]
+ },
+ "huh": {
+  "sounds": [
+   "girls.luna.huh.huh0",
+   "girls.luna.huh.huh1",
+   "girls.luna.huh.huh2",
+   "girls.luna.huh.huh3",
+   "girls.luna.huh.huh4"
+  ]
+ },
+ "hmph": {
+  "sounds": [
+   "girls.luna.hmph.hmph0",
+   "girls.luna.hmph.hmph1",
+   "girls.luna.hmph.hmph2",
+   "girls.luna.hmph.hmph3",
+   "girls.luna.hmph.hmph4",
+   "girls.luna.hmph.hmph5"
+  ]
+ },
+ "hehe": {
+  "sounds": [
+   "girls.luna.giggle.giggle0",
+   "girls.luna.giggle.giggle1",
+   "girls.luna.giggle.giggle2",
+   "girls.luna.giggle.giggle3",
+   "girls.luna.giggle.giggle4",
+   "girls.luna.giggle.giggle5",
+   "girls.luna.giggle.giggle6",
+   "girls.luna.giggle.giggle7",
+   "girls.luna.giggle.giggle8",
+   "girls.luna.giggle.giggle9",
+   "girls.luna.giggle.giggle10",
+   "girls.luna.giggle.giggle11",
+   "girls.luna.giggle.giggle12",
+   "girls.luna.giggle.giggle13",
+   "girls.luna.giggle.giggle14"
+  ]
+ },
+ "giggle": {
+  "sounds": [
+   "girls.luna.giggle.giggle0",
+   "girls.luna.giggle.giggle1",
+   "girls.luna.giggle.giggle2",
+   "girls.luna.giggle.giggle3",
+   "girls.luna.giggle.giggle4",
+   "girls.luna.giggle.giggle5",
+   "girls.luna.giggle.giggle6",
+   "girls.luna.giggle.giggle7",
+   "girls.luna.giggle.giggle8",
+   "girls.luna.giggle.giggle9",
+   "girls.luna.giggle.giggle10",
+   "girls.luna.giggle.giggle11",
+   "girls.luna.giggle.giggle12",
+   "girls.luna.giggle.giggle13",
+   "girls.luna.giggle.giggle14"
+  ]
+ },
+ "singing": {
+  "sounds": [
+   "girls.luna.singing.singing0",
+   "girls.luna.singing.singing1",
+   "girls.luna.singing.singing2",
+   "girls.luna.singing.singing3",
+   "girls.luna.singing.singing4",
+   "girls.luna.singing.singing5",
+   "girls.luna.singing.singing6",
+   "girls.luna.singing.singing7"
+  ]
+ },
+ "touch_boobsMSG1": {
+  "sounds": [
+   "girls.luna.giggle.giggle0",
+   "girls.luna.giggle.giggle1",
+   "girls.luna.giggle.giggle2",
+   "girls.luna.giggle.giggle3",
+   "girls.luna.giggle.giggle4",
+   "girls.luna.giggle.giggle5",
+   "girls.luna.giggle.giggle6",
+   "girls.luna.giggle.giggle7",
+   "girls.luna.giggle.giggle8",
+   "girls.luna.giggle.giggle9",
+   "girls.luna.giggle.giggle10",
+   "girls.luna.giggle.giggle11",
+   "girls.luna.giggle.giggle12",
+   "girls.luna.giggle.giggle13",
+   "girls.luna.giggle.giggle14"
+  ]
+ },
+ "touch": {
+  "sounds": [
+   "misc.touch.touch0",
+   "misc.touch.touch1"
+  ]
+ },
+ "jump": {
+  "sounds": [
+   "misc.jump.jump0"
+  ],
+  "volume": 0.2
+ },
+ "horninya": {
+  "sounds": [
+   "girls.luna.horninya.horninya0"
+  ]
+ },
+ "horninya2": {
+  "sounds": [
+   "girls.luna.horninya.horninya1"
+  ]
+ },
+ "touch_boobs_cumMSG3": {
+  "sounds": [
+   "girls.luna.horninya.horninya1"
+  ]
+ },
+ "sitting_cumMSG1": {
+  "sounds": [
+   "girls.luna.horninya.horninya1"
+  ]
+ },
+ "touch_boobs_cumMSG1": {
+  "sounds": [
+   "girls.luna.horninya.horninya3"
+  ]
+ },
+ "moan": {
+  "sounds": [
+   "girls.luna.moan.moan0",
+   "girls.luna.moan.moan1",
+   "girls.luna.moan.moan2",
+   "girls.luna.moan.moan3",
+   "girls.luna.moan.moan4",
+   "girls.luna.moan.moan5",
+   "girls.luna.moan.moan6",
+   "girls.luna.moan.moan7",
+   "girls.luna.moan.moan8",
+   "girls.luna.moan.moan9"
+  ]
+ },
+ "moanOrNya": {
+  "sounds": [
+   "girls.luna.moan.moan0",
+   "girls.luna.moan.moan1",
+   "girls.luna.moan.moan2",
+   "girls.luna.moan.moan3",
+   "girls.luna.moan.moan4",
+   "girls.luna.moan.moan5",
+   "girls.luna.moan.moan6",
+   "girls.luna.moan.moan7",
+   "girls.luna.moan.moan8",
+   "girls.luna.moan.moan9",
+   "girls.luna.horninya.horninya0",
+   "girls.luna.horninya.horninya1",
+   "girls.luna.horninya.horninya2",
+   "girls.luna.horninya.horninya3",
+   "girls.luna.horninya.horninya4",
+   "girls.luna.horninya.horninya5",
+   "girls.luna.horninya.horninya6",
+   "girls.luna.horninya.horninya7",
+   "girls.luna.horninya.horninya8",
+   "girls.luna.horninya.horninya9"
+  ]
+ },
+ "pounding": {
+  "sounds": [
+   "misc.pounding.pounding0",
+   "misc.pounding.pounding1",
+   "misc.pounding.pounding2",
+   "misc.pounding.pounding3",
+   "misc.pounding.pounding4",
+   "misc.pounding.pounding5",
+   "misc.pounding.pounding6",
+   "misc.pounding.pounding7",
+   "misc.pounding.pounding8",
+   "misc.pounding.pounding9",
+   "misc.pounding.pounding10",
+   "misc.pounding.pounding11",
+   "misc.pounding.pounding12",
+   "misc.pounding.pounding13",
+   "misc.pounding.pounding14",
+   "misc.pounding.pounding15",
+   "misc.pounding.pounding16",
+   "misc.pounding.pounding17",
+   "misc.pounding.pounding18",
+   "misc.pounding.pounding19",
+   "misc.pounding.pounding20",
+   "misc.pounding.pounding21",
+   "misc.pounding.pounding22",
+   "misc.pounding.pounding23",
+   "misc.pounding.pounding24",
+   "misc.pounding.pounding25",
+   "misc.pounding.pounding26",
+   "misc.pounding.pounding27",
+   "misc.pounding.pounding28",
+   "misc.pounding.pounding29",
+   "misc.pounding.pounding30",
+   "misc.pounding.pounding31",
+   "misc.pounding.pounding32",
+   "misc.pounding.pounding33",
+   "misc.pounding.pounding34"
+  ]
+ },
+ "call_playerMSG1": {
+  "text": "come here - big guy hehe~",
+  "sounds": [
+   "girls.luna.giggle.giggle0",
+   "girls.luna.giggle.giggle1",
+   "girls.luna.giggle.giggle2",
+   "girls.luna.giggle.giggle3",
+   "girls.luna.giggle.giggle4",
+   "girls.luna.giggle.giggle5",
+   "girls.luna.giggle.giggle6",
+   "girls.luna.giggle.giggle7",
+   "girls.luna.giggle.giggle8",
+   "girls.luna.giggle.giggle9",
+   "girls.luna.giggle.giggle10",
+   "girls.luna.giggle.giggle11",
+   "girls.luna.giggle.giggle12",
+   "girls.luna.giggle.giggle13",
+   "girls.luna.giggle.giggle14"
+  ]
+ },
+ "headpatMSG1": {
+  "text": "huh?~",
+  "sounds": [
+   "girls.luna.huh.huh0",
+   "girls.luna.huh.huh1",
+   "girls.luna.huh.huh2",
+   "girls.luna.huh.huh3",
+   "girls.luna.huh.huh4"
+  ]
+ },
+ "headpatMSG2": {
+  "sounds": [
+   "girls.luna.mmm.mmm0",
+   "girls.luna.mmm.mmm1",
+   "girls.luna.mmm.mmm2",
+   "girls.luna.mmm.mmm3",
+   "girls.luna.mmm.mmm4",
+   "girls.luna.mmm.mmm5",
+   "girls.luna.mmm.mmm6",
+   "girls.luna.mmm.mmm7"
+  ]
+ },
+ "headpatMSG3": {
+  "text": "nya~",
+  "sounds": [
+   "girls.luna.horninya.horninya0"
+  ]
+ },
+ "paymentMSG1": {
+  "text": "Here, I know u like fish and yea.. these are for you",
+  "sounds": [
+   "misc.plob.plob0"
+  ]
+ },
+ "paymentMSG2": {
+  "text": "huh~?",
+  "sounds": [
+   "girls.luna.huh.huh0",
+   "girls.luna.huh.huh1",
+   "girls.luna.huh.huh2",
+   "girls.luna.huh.huh3",
+   "girls.luna.huh.huh4"
+  ]
+ },
+ "paymentMSG3": {
+  "text": "nyyyaaaa~ :D",
+  "sounds": [
+   "girls.luna.cutenya.cutenya1",
+   "girls.luna.cutenya.cutenya7",
+   "girls.luna.cutenya.cutenya10",
+   "girls.luna.cutenya.cutenya11"
+  ]
+ },
+ "paymentMSG4": {
+  "text": "tankuuuu owowowo",
+  "sounds": [
+   "girls.luna.owo.owo0",
+   "girls.luna.owo.owo1",
+   "girls.luna.owo.owo2",
+   "girls.luna.owo.owo3",
+   "girls.luna.owo.owo4",
+   "girls.luna.owo.owo5",
+   "girls.luna.owo.owo6",
+   "girls.luna.owo.owo7"
+  ]
+ },
+ "sitting_slowMSG1": {
+  "sounds": [
+   "girls.luna.horninya.horninya0",
+   "girls.luna.horninya.horninya1",
+   "girls.luna.horninya.horninya2",
+   "girls.luna.horninya.horninya3",
+   "girls.luna.horninya.horninya4",
+   "girls.luna.horninya.horninya5",
+   "girls.luna.horninya.horninya6",
+   "girls.luna.horninya.horninya7",
+   "girls.luna.horninya.horninya8",
+   "girls.luna.horninya.horninya9",
+   "girls.luna.moan.moan0",
+   "girls.luna.moan.moan1",
+   "girls.luna.moan.moan2",
+   "girls.luna.moan.moan3",
+   "girls.luna.moan.moan4",
+   "girls.luna.moan.moan5",
+   "girls.luna.moan.moan6",
+   "girls.luna.moan.moan7",
+   "girls.luna.moan.moan8",
+   "girls.luna.moan.moan9",
+   "girls.luna.lightbreathing.lightbreathing0",
+   "girls.luna.lightbreathing.lightbreathing1",
+   "girls.luna.lightbreathing.lightbreathing2",
+   "girls.luna.lightbreathing.lightbreathing3",
+   "girls.luna.lightbreathing.lightbreathing4",
+   "girls.luna.lightbreathing.lightbreathing5",
+   "girls.luna.lightbreathing.lightbreathing6",
+   "girls.luna.lightbreathing.lightbreathing7",
+   "girls.luna.lightbreathing.lightbreathing8",
+   "girls.luna.lightbreathing.lightbreathing9",
+   "girls.luna.lightbreathing.lightbreathing10",
+   "girls.luna.lightbreathing.lightbreathing11",
+   "girls.luna.lightbreathing.lightbreathing12",
+   "girls.luna.lightbreathing.lightbreathing13",
+   "girls.luna.lightbreathing.lightbreathing14",
+   "girls.luna.lightbreathing.lightbreathing15",
+   "girls.luna.lightbreathing.lightbreathing16",
+   "girls.luna.lightbreathing.lightbreathing17",
+   "girls.luna.lightbreathing.lightbreathing18",
+   "girls.luna.lightbreathing.lightbreathing19",
+   "girls.luna.lightbreathing.lightbreathing20",
+   "girls.luna.lightbreathing.lightbreathing21",
+   "girls.luna.lightbreathing.lightbreathing22",
+   "girls.luna.lightbreathing.lightbreathing23",
+   "girls.luna.lightbreathing.lightbreathing24"
+  ]
+ },
+ "sitting_fastMSG1": {
+  "sounds": [
+   "girls.luna.horninya.horninya0",
+   "girls.luna.horninya.horninya1",
+   "girls.luna.horninya.horninya2",
+   "girls.luna.horninya.horninya3",
+   "girls.luna.horninya.horninya4",
+   "girls.luna.horninya.horninya5",
+   "girls.luna.horninya.horninya6",
+   "girls.luna.horninya.horninya7",
+   "girls.luna.horninya.horninya8",
+   "girls.luna.horninya.horninya9",
+   "girls.luna.moan.moan0",
+   "girls.luna.moan.moan1",
+   "girls.luna.moan.moan2",
+   "girls.luna.moan.moan3",
+   "girls.luna.moan.moan4",
+   "girls.luna.moan.moan5",
+   "girls.luna.moan.moan6",
+   "girls.luna.moan.moan7",
+   "girls.luna.moan.moan8",
+   "girls.luna.moan.moan9"
+  ]
+ },
+ "eat": {
+  "sounds": [
+   "misc.eat.eat0",
+   "misc.eat.eat1",
+   "misc.eat.eat2"
+  ],
+  "volume": 0.5
+ },
+ "eatPay": {
+  "sounds": [
+   "misc.eat.eat0",
+   "misc.eat.eat1",
+   "misc.eat.eat2"
+  ],
+  "volume": 0.5
+ }
+}
