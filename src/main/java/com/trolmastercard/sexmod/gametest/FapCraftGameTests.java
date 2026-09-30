@@ -651,7 +651,11 @@ public final class FapCraftGameTests {
         var fishing = luna.lunaFishing();
         helper.runAfterDelay(300, () -> {
             var hook = fishing.hook();
-            if (hook == null || !hook.isBobbing() || luna.fishState() != com.trolmastercard.sexmod.entity.LunaFishing.IDLE) {
+            int now = luna.fishState();
+            if (now == com.trolmastercard.sexmod.entity.LunaFishing.EAT || now == com.trolmastercard.sexmod.entity.LunaFishing.THROW_AWAY) {
+                return; // a natural bite already happened (she walks faster now)
+            }
+            if (hook == null || !hook.isBobbing() || now != com.trolmastercard.sexmod.entity.LunaFishing.IDLE) {
                 com.trolmastercard.sexmod.entity.LunaFishing.ignoreBiomes = false;
                 helper.fail("Luna walked to the water, cast her rod and the bobber floats (state " + luna.fishState() + ", hook " + hook + ")");
                 return;

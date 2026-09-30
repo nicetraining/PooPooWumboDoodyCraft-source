@@ -58,7 +58,7 @@ public final class ModItems {
             () -> new LegacyPurposeItem(
                     new Item.Properties().stacksTo(1),
                     "winchester",
-                    2
+                    0
             )
     );
     public static final DeferredItem<LunaRodItem> LUNA_ROD = ITEMS.register(

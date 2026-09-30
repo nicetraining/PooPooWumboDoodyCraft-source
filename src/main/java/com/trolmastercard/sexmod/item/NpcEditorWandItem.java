@@ -13,7 +13,7 @@ import net.minecraft.world.level.Level;
 
 public final class NpcEditorWandItem extends LegacyPurposeItem {
     public NpcEditorWandItem(Properties properties) {
-        super(properties, "npc_editor_wand", 2);
+        super(properties, "npc_editor_wand", 0);
     }
 
     @Override

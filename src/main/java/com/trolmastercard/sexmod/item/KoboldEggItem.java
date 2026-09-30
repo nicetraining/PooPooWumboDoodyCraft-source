@@ -18,7 +18,7 @@ import java.util.UUID;
  */
 public final class KoboldEggItem extends LegacyPurposeItem {
     public KoboldEggItem(Properties properties) {
-        super(properties, "kobold_egg_item", 1);
+        super(properties, "kobold_egg_item", 0);
     }
 
     @Override

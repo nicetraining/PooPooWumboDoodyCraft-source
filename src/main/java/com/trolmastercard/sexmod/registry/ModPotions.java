@@ -36,7 +36,7 @@ public final class ModPotions {
 
     public static final DeferredHolder<MobEffect, MobEffect> HORNY_EFFECT = EFFECTS.register(
             "horny_potion",
-            () -> new MarkerEffect(MobEffectCategory.BENEFICIAL, 0xE85D9E)
+            () -> new MarkerEffect(MobEffectCategory.BENEFICIAL, 0xFF62C8)
     );
     public static final DeferredHolder<Potion, Potion> HORNY_POTION = POTIONS.register(
             "horny_potion",

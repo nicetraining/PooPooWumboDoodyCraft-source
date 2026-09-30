@@ -21,9 +21,10 @@ public final class GoblinWheelScreen extends Screen {
 
     private final CompanionEntity goblin;
     private float open;
-    private float left;
-    private float top;
-    private float bottom;
+    private float left;   // original g: mouse in the left half
+    private float right;  // original e: mouse in the right half (opens the two right-hand tiles)
+    private float top;    // original d
+    private float bottom; // original m
 
     public GoblinWheelScreen(CompanionEntity goblin) {
         super(Component.empty());
@@ -40,24 +41,39 @@ public final class GoblinWheelScreen extends Screen {
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         float delta = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
         this.open = Math.min(1.0F, this.open + delta / 5.0F);
-        float offset = (float) (100.0D * (1.0D - easeOutBack(this.open)));
+        float scale = (float) easeOutBack(this.open);
+        float offset = (1.0F - scale) * 100.0F;
         int cx = this.width / 2;
         int cy = this.height / 2;
         this.left = Mth.clamp(this.left + (mouseX < cx ? delta : -delta), 0.0F, 1.0F);
-        this.top = Mth.clamp(this.top + (mouseX >= cx && mouseY < cy ? delta : -delta), 0.0F, 1.0F);
-        this.bottom = Mth.clamp(this.bottom + (mouseX >= cx && mouseY >= cy ? delta : -delta), 0.0F, 1.0F);
-        this.tile(graphics, cx, cy, this.left, -62.0F + offset - this.left * 15.0F, -32.0F, 0, 64, 128);
-        this.tile(graphics, cx, cy, this.top, -2.0F - offset + this.top * 15.0F, -62.0F + offset - this.top * 15.0F, 128, 128, 128);
-        this.tile(graphics, cx, cy, this.bottom, -2.0F - offset + this.bottom * 15.0F, -2.0F - offset + this.bottom * 15.0F, 192, 128, 128);
-    }
+        this.right = Mth.clamp(this.right + (mouseX > cx ? delta : -delta), 0.0F, 1.0F);
+        this.top = Mth.clamp(this.top + (mouseY < cy - 1 ? delta : -delta), 0.0F, 1.0F);
+        this.bottom = Mth.clamp(this.bottom + (mouseY > cy ? delta : -delta), 0.0F, 1.0F);
 
-    private void tile(GuiGraphics graphics, int cx, int cy, float growth, float x, float y, int baseV, int iconU, int iconV) {
         var pose = graphics.pose();
         pose.pushPose();
         pose.translate(cx, cy, 0.0F);
-        pose.scale(1.0F + growth * 0.5F, 1.0F + growth * 0.5F, 1.0F);
-        graphics.blit(TEXTURE, (int) x, (int) y, 0, 0, 64, 64, 256, 256);
-        graphics.blit(TEXTURE, (int) x, (int) y, iconU, iconV, 64, 64, 256, 256);
+        pose.scale(scale, scale, scale);
+        // left tile: grows towards the mouse
+        this.tile(graphics, 1.0F + this.left * 0.5F, -62.0F + offset - this.left * 15.0F, offset - 32.0F, 64, 128);
+        // right hub shrinks away as the mouse moves right; the two sub-tiles take its place
+        this.tile(graphics, 1.0F - this.right, -2.0F - offset + this.right * 32.0F, -offset - 32.0F, 0, 128);
+        if (this.right > 0.0F) {
+            float topScale = this.right + this.top * 0.5F;
+            this.tile(graphics, topScale, -2.0F - offset + this.top * 5.0F, -offset - 64.0F - this.top * 5.0F / 2.0F, 128, 128);
+            float bottomScale = this.right + this.bottom * 0.5F;
+            this.tile(graphics, bottomScale, -2.0F - offset + this.bottom * 5.0F, -offset + this.bottom * 5.0F / 2.0F, 192, 128);
+        }
+        pose.popPose();
+    }
+
+    private void tile(GuiGraphics graphics, float scale, float x, float y, int iconU, int iconV) {
+        var pose = graphics.pose();
+        pose.pushPose();
+        pose.scale(scale, scale, 1.0F);
+        pose.translate(x, y, 0.0F);
+        graphics.blit(TEXTURE, 0, 0, 0, 0, 64, 64, 256, 256);
+        graphics.blit(TEXTURE, 0, 0, iconU, iconV, 64, 64, 256, 256);
         pose.popPose();
     }
 
@@ -78,11 +94,11 @@ public final class GoblinWheelScreen extends Screen {
     @Override
     public void removed() {
         super.removed();
-        float largest = Math.max(this.left, Math.max(this.top, this.bottom));
-        if (largest <= 0.0F) {
+        // original ea.onGuiClosed: the left tile wins as soon as it is open, otherwise the larger of top and bottom
+        if (this.top == 0.0F && this.bottom == 0.0F && this.left == 0.0F) {
             return;
         }
-        int op = this.left == largest ? 0 : this.top == largest ? 1 : 2;
+        int op = this.left > 0.0F ? 0 : this.top > this.bottom ? 1 : 2;
         PacketDistributor.sendToServer(new GoblinWheelPayload(this.goblin.getId(), op));
     }
 

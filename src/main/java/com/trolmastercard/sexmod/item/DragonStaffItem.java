@@ -12,7 +12,7 @@ import net.minecraft.world.level.Level;
  */
 public final class DragonStaffItem extends LegacyPurposeItem {
     public DragonStaffItem(Properties properties) {
-        super(properties, "dragon_staff", 2);
+        super(properties, "dragon_staff", 0);
     }
 
     @Override

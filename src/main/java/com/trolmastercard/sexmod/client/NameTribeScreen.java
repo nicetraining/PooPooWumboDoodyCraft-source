@@ -41,18 +41,10 @@ public final class NameTribeScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == 257 || keyCode == 335) { // enter
-            this.submit();
-            return true;
-        }
-        return super.keyPressed(keyCode, scanCode, modifiers);
-    }
-
-    @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
-        graphics.drawString(this.font, "Name Tribe", this.width / 2 - 39, this.height / 2 - 24, 0xFFFFFF, true);
+        // original: drawHoveringText("Name Tribe", w/2 - 39, h/2 - 10), a tooltip box above the field
+        graphics.renderTooltip(this.font, Component.literal("Name Tribe"), this.width / 2 - 39, this.height / 2 - 10);
     }
 
     @Override
