@@ -1,5 +1,10 @@
 {
-  "_comment": "Item cost per scene action, keyed by CompanionScene enum name. Reconstructed from the original 1.12.2 menu (Luna only; every other action was free).",
+  "_comment": "Item cost per scene action, keyed by CompanionScene enum name, taken from the original 1.12.2 menus. Kobold prices are waived for its owner and while it has the horny effect (see CompanionActions).",
+  "JENNY_BLOWJOB": { "item": "minecraft:emerald", "count": 3 },
+  "JENNY_BOOBJOB": { "item": "minecraft:ender_pearl", "count": 2 },
+  "JENNY_DOGGY": { "item": "minecraft:diamond", "count": 2 },
   "LUNA_SITTING": { "item": "minecraft:cod", "count": 3 },
-  "LUNA_TOUCH": { "item": "minecraft:salmon", "count": 2 }
+  "LUNA_TOUCH": { "item": "minecraft:salmon", "count": 2 },
+  "KOBOLD_ANAL": { "item": "minecraft:gold_ingot", "count": 3 },
+  "KOBOLD_BLOWJOB": { "item": "minecraft:iron_pickaxe", "count": 1 }
 }

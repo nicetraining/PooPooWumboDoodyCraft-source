@@ -285,30 +285,52 @@ public final class FapCraftGameTests {
     @GameTest(template = "empty")
     public static void actionCostsAreChargedLikeTheOriginal(GameTestHelper helper) {
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
-        ItemStack cost = CompanionActions.costOf(CompanionScene.LUNA_SITTING);
-        if (!cost.is(Items.COD) || cost.getCount() != 3) {
-            helper.fail("Luna's first paid action should cost 3 raw cod, got " + cost);
-        }
+        CompanionEntity luna = spawnKind(helper, CompanionKind.LUNA);
+        CompanionEntity kobold = spawnKind(helper, CompanionKind.KOBOLD);
+
+        requireCost(helper, CompanionScene.JENNY_BLOWJOB, Items.EMERALD, 3);
+        requireCost(helper, CompanionScene.JENNY_BOOBJOB, Items.ENDER_PEARL, 2);
+        requireCost(helper, CompanionScene.JENNY_DOGGY, Items.DIAMOND, 2);
+        requireCost(helper, CompanionScene.LUNA_SITTING, Items.COD, 3);
+        requireCost(helper, CompanionScene.LUNA_TOUCH, Items.SALMON, 2);
+        requireCost(helper, CompanionScene.KOBOLD_ANAL, Items.GOLD_INGOT, 3);
+        requireCost(helper, CompanionScene.KOBOLD_BLOWJOB, Items.IRON_PICKAXE, 1);
         if (!CompanionActions.costOf(CompanionScene.JENNY_WAVE).isEmpty()) {
             helper.fail("actions without an entry must be free");
         }
-        if (CompanionActions.canAfford(player, CompanionScene.LUNA_SITTING)) {
+        if (CompanionActions.canAfford(player, luna, CompanionScene.LUNA_SITTING)) {
             helper.fail("an empty inventory cannot afford a paid action");
         }
-        player.getInventory().add(new ItemStack(Items.COD, 5));
-        if (!CompanionActions.canAfford(player, CompanionScene.LUNA_SITTING)) {
-            helper.fail("5 cod should afford a 3 cod action");
+        player.getInventory().setItem(0, new ItemStack(Items.COD, 2));
+        player.getInventory().setItem(1, new ItemStack(Items.COD, 1));
+        if (CompanionActions.canAfford(player, luna, CompanionScene.LUNA_SITTING)) {
+            helper.fail("the price must fit in one stack (2+1 cod is not enough)");
         }
-        CompanionActions.pay(player, CompanionScene.LUNA_SITTING);
-        int left = 0;
-        for (ItemStack stack : player.getInventory().items) {
-            if (stack.is(Items.COD)) {
-                left += stack.getCount();
-            }
+        player.getInventory().setItem(2, new ItemStack(Items.COD, 5));
+        if (!CompanionActions.canAfford(player, luna, CompanionScene.LUNA_SITTING)) {
+            helper.fail("a stack of 5 cod should afford a 3 cod action");
         }
-        if (left != 2) {
-            helper.fail("paying should leave 2 cod, left " + left);
+        CompanionActions.pay(player, luna, CompanionScene.LUNA_SITTING);
+        if (player.getInventory().countItem(Items.COD) != 5) {
+            helper.fail("paying should leave 5 cod in total, left " + player.getInventory().countItem(Items.COD));
         }
+        if (!CompanionActions.costFor(kobold, player, CompanionScene.KOBOLD_ANAL).is(Items.GOLD_INGOT)) {
+            helper.fail("a stranger pays a wild Kobold");
+        }
+        kobold.addEffect(new net.minecraft.world.effect.MobEffectInstance(
+                com.trolmastercard.sexmod.registry.ModPotions.HORNY_EFFECT, 200));
+        if (!CompanionActions.costFor(kobold, player, CompanionScene.KOBOLD_ANAL).isEmpty()) {
+            helper.fail("a Kobold under the horny effect is free");
+        }
+        luna.discard();
+        kobold.discard();
         helper.succeed();
+    }
+
+    private static void requireCost(GameTestHelper helper, CompanionScene scene, net.minecraft.world.item.Item item, int count) {
+        ItemStack cost = CompanionActions.costOf(scene);
+        if (!cost.is(item) || cost.getCount() != count) {
+            helper.fail(scene + " should cost " + count + " x " + item + ", got " + cost);
+        }
     }
 }

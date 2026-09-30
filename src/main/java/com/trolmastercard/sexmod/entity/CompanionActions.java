@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.trolmastercard.sexmod.FapCraft;
+import com.trolmastercard.sexmod.registry.ModPotions;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -23,43 +24,45 @@ public final class CompanionActions {
     private CompanionActions() {
     }
 
-    /** The stack a player must hand over to start the scene, or {@link ItemStack#EMPTY} if it is free. */
+    /** The listed price of a scene, ignoring who is asking. */
     public static ItemStack costOf(CompanionScene scene) {
         return COSTS.getOrDefault(scene, ItemStack.EMPTY).copy();
     }
 
-    public static boolean canAfford(Player player, CompanionScene scene) {
-        ItemStack cost = costOf(scene);
-        return cost.isEmpty() || player.getAbilities().instabuild || count(player, cost.getItem()) >= cost.getCount();
+    /** What this player actually has to pay: Kobold prices are waived for its owner and while it is under the horny effect. */
+    public static ItemStack costFor(CompanionEntity companion, Player player, CompanionScene scene) {
+        if (scene.kind() == CompanionKind.KOBOLD
+                && (companion.isOwnedBy(player) || companion.hasEffect(ModPotions.HORNY_EFFECT))) {
+            return ItemStack.EMPTY;
+        }
+        return costOf(scene);
     }
 
-    /** Removes the cost from the player's inventory; call only after {@link #canAfford}. */
-    public static void pay(Player player, CompanionScene scene) {
-        ItemStack cost = costOf(scene);
+    /** Like the original, one single stack must hold the whole price; creative players pay nothing. */
+    public static boolean canAfford(Player player, CompanionEntity companion, CompanionScene scene) {
+        ItemStack cost = costFor(companion, player, scene);
+        return cost.isEmpty() || player.getAbilities().instabuild || findStack(player, cost) != null;
+    }
+
+    /** Removes the price from the first stack that can cover it; call only after {@link #canAfford}. */
+    public static void pay(Player player, CompanionEntity companion, CompanionScene scene) {
+        ItemStack cost = costFor(companion, player, scene);
         if (cost.isEmpty() || player.getAbilities().instabuild) {
             return;
         }
-        int remaining = cost.getCount();
-        for (ItemStack stack : player.getInventory().items) {
-            if (remaining <= 0) {
-                break;
-            }
-            if (stack.is(cost.getItem())) {
-                int taken = Math.min(remaining, stack.getCount());
-                stack.shrink(taken);
-                remaining -= taken;
-            }
+        ItemStack stack = findStack(player, cost);
+        if (stack != null) {
+            stack.shrink(cost.getCount());
         }
     }
 
-    private static int count(Player player, Item item) {
-        int total = 0;
+    private static ItemStack findStack(Player player, ItemStack cost) {
         for (ItemStack stack : player.getInventory().items) {
-            if (stack.is(item)) {
-                total += stack.getCount();
+            if (stack.is(cost.getItem()) && stack.getCount() >= cost.getCount()) {
+                return stack;
             }
         }
-        return total;
+        return null;
     }
 
     private static Map<CompanionScene, ItemStack> load() {

@@ -445,13 +445,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 if (scene == null || scene.kind() != this.kind) {
                     return;
                 }
-                if (!CompanionActions.canAfford(player, scene)) {
+                if (!CompanionActions.canAfford(player, this, scene)) {
                     player.displayClientMessage(
                             Component.translatable("message.sexmod.cannot_afford", this.getDisplayName()), false);
                     return;
                 }
                 if (this.startScene(player, scene)) {
-                    CompanionActions.pay(player, scene);
+                    CompanionActions.pay(player, this, scene);
                 }
             }
         }

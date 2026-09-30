@@ -116,7 +116,7 @@ public final class CompanionActionScreen extends Screen {
             Button button = this.sceneButtons.get(index);
             button.setX(sceneX);
             button.setY(this.height - 70 - 30 * index);
-            button.active = CompanionActions.canAfford(this.minecraft.player, this.scenes.get(index));
+            button.active = CompanionActions.canAfford(this.minecraft.player, this.companion, this.scenes.get(index));
         }
     }
 
@@ -140,7 +140,7 @@ public final class CompanionActionScreen extends Screen {
             }
         }
         for (int index = 0; index < this.sceneButtons.size(); index++) {
-            ItemStack cost = CompanionActions.costOf(this.scenes.get(index));
+            ItemStack cost = CompanionActions.costFor(this.companion, this.minecraft.player, this.scenes.get(index));
             if (!cost.isEmpty()) {
                 int x = this.width - (int) Mth.lerp(this.expand, 91.0F, 137.0F);
                 int y = this.height - 68 - 30 * index;
