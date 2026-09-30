@@ -264,6 +264,21 @@ public enum CompanionScene {
             phase("animation.goblin.nelson_cum", 35)
     ),
 
+    /** Tamed "cowgirl": original RAPE_INTRO -> RAPE_ON_GOING -> RAPE_CUM (no damage, no minigame when tamed). */
+    GALATH_COWGIRL(
+            CompanionKind.GALATH, "cowgirl", true,
+            phase("animation.galath.rape_intro", 46),
+            loop("animation.galath.rape0", 19),
+            phase("animation.galath.rape_cum", 35),
+            phase("animation.galath.rape_cum_idle", 79)
+    ),
+    /** Tamed "anal": starts straight in CORRUPT_SLOW (the intro is skipped). */
+    GALATH_ANAL(
+            CompanionKind.GALATH, "anal", true,
+            loop("animation.galath.corrupt_slow", 88),
+            loop("animation.galath.corrupt_hard", 75),
+            phase("animation.galath.corrupt_cum", 57)
+    ),
     GALATH_CORRUPT(
             CompanionKind.GALATH, "corrupt", true,
             phase("animation.galath.corrupt_intro", 30),
@@ -404,7 +419,8 @@ public enum CompanionScene {
             case BIA_PRONE -> "action.names.doggy";
             case BIA_TALK -> "action.names.talk";
             case ELLIE_CARRY -> "action.names.facefuck";
-            case ELLIE_COWGIRL -> "action.names.cowgirl";
+            case ELLIE_COWGIRL, GALATH_COWGIRL -> "action.names.cowgirl";
+            case GALATH_ANAL -> "action.names.anal";
             case ELLIE_MISSIONARY -> "action.names.missionary";
             default -> this.translationKey();
         };

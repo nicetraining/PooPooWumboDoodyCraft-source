@@ -141,6 +141,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private int attachCountdown = -1;
     /** True while the scene that follows Jenny's payment animation starts, so it is not asked to pay again. */
     private boolean skipPayment;
+    private boolean skipDelay;
+    private CompanionScene delayedScene;
+    private UUID delayedScenePlayer;
+    private int delayedSceneTicks;
     private int waitTicks;
     private Vec3 scenePartnerReturnPosition;
     private float scenePartnerReturnYaw;
@@ -732,6 +736,19 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return this.beginBedWalk(serverLevel, player, scene);
         }
 
+        if (this.kind == CompanionKind.GALATH && !this.skipDelay
+                && (scene == CompanionScene.GALATH_COWGIRL || scene == CompanionScene.GALATH_ANAL)) {
+            // Original: fade out and lock, the scene itself starts 1200 ms later.
+            if (player instanceof ServerPlayer serverPlayer) {
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+                        serverPlayer, new com.trolmastercard.sexmod.network.TransitionPayload());
+            }
+            this.delayedScene = scene;
+            this.delayedScenePlayer = player.getUUID();
+            this.delayedSceneTicks = 24;
+            return true;
+        }
+
         this.queuedScene = null;
         if (this.kind == CompanionKind.JENNY
                 && (scene == CompanionScene.JENNY_BLOWJOB || scene == CompanionScene.JENNY_BOOBJOB)
@@ -1065,6 +1082,16 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.sceneControlCooldown--;
         }
 
+        if (this.delayedScene != null && --this.delayedSceneTicks <= 0) {
+            CompanionScene pending = this.delayedScene;
+            this.delayedScene = null;
+            ServerPlayer pendingPlayer = serverLevel.getServer().getPlayerList().getPlayer(this.delayedScenePlayer);
+            if (pendingPlayer != null && pendingPlayer.isAlive() && !this.isInScene()) {
+                this.skipDelay = true;
+                this.startScene(pendingPlayer, pending);
+                this.skipDelay = false;
+            }
+        }
         if (this.galathDespawnTicks >= 0 && --this.galathDespawnTicks < 0) {
             this.discard();
             return;
