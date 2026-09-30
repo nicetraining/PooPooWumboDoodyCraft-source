@@ -885,6 +885,50 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 && this.scenePartnerId().filter(player.getUUID()::equals).isPresent();
     }
 
+    private boolean sceneFastHeld;
+    private int interactiveLoopTicks;
+
+    public void setSceneFastHeld(boolean held) {
+        this.sceneFastHeld = held;
+    }
+
+    /** Jump with a full meter (original em.f): go to the finishing phase right away. */
+    public void finishSceneFromMeter(Player player) {
+        this.sceneControlCooldown = 0;
+        this.requestSceneFinish(player);
+    }
+
+    /**
+     * Interactive loops never time out by themselves: holding sneak moves to the fast loop at once, releasing it
+     * returns to the slow loop when the fast animation ends (original fastDone), and only the meter ends the scene.
+     */
+    private void tickInteractiveLoop(CompanionScene scene, CompanionScene.Phase phase) {
+        int current = this.currentScenePhase();
+        int faster = scene.nextLoopPhase(current);
+        int slower = scene.previousLoopPhase(current);
+        if (faster >= 0 && this.sceneFastHeld) {
+            this.enterScenePhase(faster);
+            return;
+        }
+        if (this.scenePhaseTicks >= phase.durationTicks()) {
+            if (slower >= 0 && !this.sceneFastHeld) {
+                this.enterScenePhase(slower);
+                return;
+            }
+            this.scenePhaseTicks = 0;
+        }
+        if (++this.interactiveLoopTicks > 12000) {
+            // Safety net so a scene can never run forever (10 minutes).
+            this.interactiveLoopTicks = 0;
+            int finale = scene.finalePhase();
+            if (finale >= 0) {
+                this.enterScenePhase(finale);
+            } else {
+                this.finishScene(true);
+            }
+        }
+    }
+
     public boolean changeSceneIntensity(Player player, int direction) {
         CompanionScene scene = this.currentScene();
         CompanionScene.Phase currentPhase = scene == null
@@ -1078,9 +1122,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (scene.isClothingToggle() && this.scenePhaseTicks == 60) {
             this.toggleClothing();
         }
-        int timeout = phase.loop() && scene.hasInteractivePhases()
-                ? phase.durationTicks() * 3
-                : phase.durationTicks();
+        if (phase.loop() && scene.hasInteractivePhases()) {
+            this.tickInteractiveLoop(scene, phase);
+            return;
+        }
+        int timeout = phase.durationTicks();
         if (this.scenePhaseTicks < timeout) {
             return;
         }
@@ -1555,6 +1601,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.setNoGravity(this.scenePreviousNoGravity);
         this.attachCountdown = -1;
         this.waitTicks = 0;
+        this.sceneFastHeld = false;
+        this.interactiveLoopTicks = 0;
         if (next != null && controller != null && controller.isAlive()) {
             this.skipPayment = true;
             this.startScene(controller, next);

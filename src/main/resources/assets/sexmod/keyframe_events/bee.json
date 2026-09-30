@@ -36,7 +36,8 @@
    "misc.pounding.pounding32",
    "misc.pounding.pounding33",
    "misc.pounding.pounding34"
-  ]
+  ],
+  "meter": 0.04
  },
  "sex_startMSG1": {
   "sounds": [
@@ -75,7 +76,8 @@
    "misc.pounding.pounding32",
    "misc.pounding.pounding33",
    "misc.pounding.pounding34"
-  ]
+  ],
+  "meter": 0.02
  },
  "sex_cumMSG1": {
   "sounds": [
@@ -125,5 +127,14 @@
     "volume": 1.0
    }
   ]
+ },
+ "resetCumPercentage": {
+  "hud": "reset"
+ },
+ "sex_cumDone": {
+  "hud": "reset"
+ },
+ "sex_startDone": {
+  "hud": "show"
  }
 }

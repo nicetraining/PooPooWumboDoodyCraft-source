@@ -53,7 +53,8 @@
      1
     ]
    }
-  ]
+  ],
+  "meter": 0.02
  },
  "touch": {
   "sounds": [
@@ -267,5 +268,32 @@
    "girls.kobold.moan.moan9"
   ],
   "every": 4
+ },
+ "analCumDone": {
+  "hud": "hide"
+ },
+ "blowjobCumDone": {
+  "hud": "hide"
+ },
+ "analHard": {
+  "meter": 0.04
+ },
+ "analSoft": {
+  "meter": 0.02
+ },
+ "analStartDone": {
+  "hud": "show"
+ },
+ "blowjobStartDone": {
+  "hud": "show"
+ },
+ "mating_press_hardReady": {
+  "meter": 0.04
+ },
+ "mating_press_softReady": {
+  "meter": 0.04
+ },
+ "mating_press_startDone": {
+  "hud": "show"
  }
 }

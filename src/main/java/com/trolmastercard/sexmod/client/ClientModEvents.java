@@ -42,5 +42,8 @@ public final class ClientModEvents {
         event.registerAboveAll(
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, "transition"),
                 TransitionOverlay::render);
+        event.registerAboveAll(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, "scene_hud"),
+                SceneHud::render);
     }
 }

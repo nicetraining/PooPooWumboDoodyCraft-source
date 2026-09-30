@@ -97,7 +97,8 @@
    "misc.pounding.pounding33",
    "misc.pounding.pounding34"
   ],
-  "volume": 0.33
+  "volume": 0.33,
+  "meter": 0.02
  },
  "doggyfastMSG1": {
   "sounds": [
@@ -137,7 +138,8 @@
    "misc.pounding.pounding33",
    "misc.pounding.pounding34"
   ],
-  "volume": 0.75
+  "volume": 0.75,
+  "meter": 0.04
  },
  "doggycumMSG1": {
   "sounds": [
@@ -187,5 +189,32 @@
     "volume": 2.0
    }
   ]
+ },
+ "bjcDone": {
+  "hud": "reset"
+ },
+ "doggyCumDone": {
+  "hud": "reset"
+ },
+ "bjcMSG2": {
+  "hud": "hide"
+ },
+ "bjiDone": {
+  "hud": "show"
+ },
+ "bjiMSG11": {
+  "meter": 0.02
+ },
+ "bjiMSG12": {
+  "meter": 0.02
+ },
+ "bjtMSG1": {
+  "meter": 0.04
+ },
+ "doggystartDone": {
+  "hud": "show"
+ },
+ "sexUiOn": {
+  "hud": "show"
  }
 }

@@ -240,7 +240,8 @@
    "misc.pounding.pounding33",
    "misc.pounding.pounding34"
   ],
-  "volume": 1.0
+  "volume": 1.0,
+  "meter": 0.03
  },
  "flap": {
   "sounds": [
@@ -333,5 +334,17 @@
     "volume": 1.0
    }
   ]
+ },
+ "addCum": {
+  "meter": 0.03
+ },
+ "enableRapeUI": {
+  "hud": "show"
+ },
+ "setCamCorrupt": {
+  "hud": "show"
+ },
+ "sexui": {
+  "hud": "show"
  }
 }

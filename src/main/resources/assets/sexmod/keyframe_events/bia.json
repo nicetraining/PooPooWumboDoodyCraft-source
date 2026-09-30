@@ -126,7 +126,8 @@
    "misc.pounding.pounding33",
    "misc.pounding.pounding34"
   ],
-  "volume": 0.5
+  "volume": 0.5,
+  "meter": 0.02
  },
  "anal_cumMSG2": {
   "sounds": [
@@ -145,7 +146,8 @@
    "misc.slide.slide0",
    "misc.slide.slide1",
    "misc.slide.slide2"
-  ]
+  ],
+  "meter": 0.005
  },
  "pound": {
   "sounds": [
@@ -204,7 +206,8 @@
    "girls.bia.mmm.mmm5",
    "girls.bia.mmm.mmm6",
    "girls.bia.mmm.mmm7"
-  ]
+  ],
+  "meter": 0.04
  },
  "cum": {
   "sounds": [
@@ -215,5 +218,26 @@
    "misc.inserts.inserts4"
   ],
   "volume": 6.0
+ },
+ "anal_cumDone": {
+  "hud": "reset"
+ },
+ "doggy_cumDone": {
+  "hud": "reset"
+ },
+ "anal_fastMSG1": {
+  "meter": 0.04
+ },
+ "anal_prepareDone": {
+  "hud": "reset"
+ },
+ "anal_slowMSG1": {
+  "meter": 0.02
+ },
+ "anal_startDone": {
+  "hud": "show"
+ },
+ "sexUiOn": {
+  "hud": "show"
  }
 }

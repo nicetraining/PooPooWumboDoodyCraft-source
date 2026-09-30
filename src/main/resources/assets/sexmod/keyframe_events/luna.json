@@ -470,7 +470,8 @@
      2
     ]
    }
-  ]
+  ],
+  "meter": 0.02
  },
  "sitting_fastMSG1": {
   "layers": [
@@ -510,7 +511,8 @@
      1
     ]
    }
-  ]
+  ],
+  "meter": 0.04
  },
  "eat": {
   "layers": [
@@ -567,5 +569,20 @@
     ]
    }
   ]
+ },
+ "addCumFast": {
+  "meter": 0.04
+ },
+ "addCumSlow": {
+  "meter": 0.02
+ },
+ "sitting_introDone": {
+  "hud": "show"
+ },
+ "touch_boobs_cumDone": {
+  "hud": "reset"
+ },
+ "touch_boobs_introDone": {
+  "hud": "show"
  }
 }

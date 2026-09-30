@@ -28,7 +28,8 @@
    "girls.allie.moan.moan6",
    "girls.allie.moan.moan7"
   ],
-  "every": 2
+  "every": 2,
+  "meter": 0.04
  },
  "giggle": {
   "sounds": [
@@ -135,7 +136,8 @@
     ],
     "chance": 0.5
    }
-  ]
+  ],
+  "meter": 0.02
  },
  "summonMSG1": {
   "chat": "allie.dialogue.summon1",
@@ -213,7 +215,9 @@
    "girls.allie.bjmoan.bjmoan11",
    "girls.allie.bjmoan.bjmoan12",
    "girls.allie.bjmoan.bjmoan13"
-  ]
+  ],
+  "hud": "show",
+  "meter": 0.04
  },
  "deepthroat_slowMSG1": {
   "layers": [
@@ -261,7 +265,9 @@
      33
     ]
    }
-  ]
+  ],
+  "hud": "show",
+  "meter": 0.02
  },
  "deepthroat_cumMSG1": {
   "sounds": [
@@ -350,5 +356,11 @@
   "sounds": [
    "girls.allie.scawy.scawy2"
   ]
+ },
+ "deepthroat_prepareDone": {
+  "hud": "reset"
+ },
+ "openSexUi": {
+  "hud": "show"
  }
 }

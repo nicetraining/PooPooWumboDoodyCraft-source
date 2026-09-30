@@ -58,7 +58,8 @@
  },
  "cowgirlStartMSG1": {
   "chat": "ellie.dialogue.like",
-  "volume": 1.0
+  "volume": 1.0,
+  "hud": "reset"
  },
  "cowgirlcumMSG3": {
   "sounds": [
@@ -165,7 +166,8 @@
    "girls.allie.lipsound.lipsound12",
    "girls.allie.lipsound.lipsound13"
   ],
-  "volume": 1.0
+  "volume": 1.0,
+  "meter": 0.02
  },
  "pound": {
   "sounds": [
@@ -205,7 +207,8 @@
    "misc.pounding.pounding33",
    "misc.pounding.pounding34"
   ],
-  "volume": 1.0
+  "volume": 1.0,
+  "meter": 0.04
  },
  "cowgirlStartMSG2": {
   "layers": [
@@ -264,7 +267,8 @@
     ],
     "volume": 0.75
    }
-  ]
+  ],
+  "meter": 0.02
  },
  "cowgirlfastMSG1": {
   "layers": [
@@ -323,7 +327,8 @@
     ],
     "volume": 0.75
    }
-  ]
+  ],
+  "meter": 0.04
  },
  "cowgirlfastdomMSG1": {
   "layers": [
@@ -367,7 +372,8 @@
     ],
     "volume": 0.75
    }
-  ]
+  ],
+  "meter": 0.2
  },
  "cowgirlcumMSG1": {
   "layers": [
@@ -556,7 +562,8 @@
      3
     ]
    }
-  ]
+  ],
+  "meter": 0.02
  },
  "missionary_fastMSG1": {
   "layers": [
@@ -636,7 +643,8 @@
      1
     ]
    }
-  ]
+  ],
+  "meter": 0.05
  },
  "bedRustle": {
   "layers": [
@@ -744,5 +752,26 @@
     ]
    }
   ]
+ },
+ "carry_cumDone": {
+  "hud": "reset"
+ },
+ "cowgirlcumDone": {
+  "hud": "reset"
+ },
+ "missionary_cumDone": {
+  "hud": "reset"
+ },
+ "cowgirlStartDone": {
+  "hud": "show"
+ },
+ "cowgirlcumMSG4": {
+  "hud": "hide"
+ },
+ "missionary_startDone": {
+  "hud": "show"
+ },
+ "openSexUi": {
+  "hud": "show"
  }
 }

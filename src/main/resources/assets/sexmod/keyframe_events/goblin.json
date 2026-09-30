@@ -89,7 +89,8 @@
    "misc.pounding.pounding32",
    "misc.pounding.pounding33",
    "misc.pounding.pounding34"
-  ]
+  ],
+  "meter": 0.04
  },
  "smallPound": {
   "sounds": [
@@ -129,7 +130,8 @@
    "misc.pounding.pounding33",
    "misc.pounding.pounding34"
   ],
-  "volume": 0.25
+  "volume": 0.25,
+  "meter": 0.02
  },
  "cumSound": {
   "sounds": [
@@ -167,5 +169,17 @@
    "misc.smallinserts.smallinserts4"
   ],
   "volume": 2.0
+ },
+ "breedingCam2": {
+  "hud": "show"
+ },
+ "breedingIntroDone": {
+  "hud": "show"
+ },
+ "neslon_introDone": {
+  "hud": "show"
+ },
+ "paizuri_startDone": {
+  "hud": "show"
  }
 }

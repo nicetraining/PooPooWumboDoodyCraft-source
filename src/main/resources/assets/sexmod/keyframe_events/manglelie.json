@@ -37,7 +37,8 @@
    "misc.pounding.pounding33",
    "misc.pounding.pounding34"
   ],
-  "volume": 1.0
+  "volume": 1.0,
+  "meter": 0.02
  },
  "doubleSemen0": {
   "sounds": [
@@ -91,5 +92,8 @@
     "volume": 1.0
    }
   ]
+ },
+ "sexui": {
+  "hud": "show"
  }
 }

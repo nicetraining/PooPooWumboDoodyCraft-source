@@ -124,17 +124,28 @@ public final class ClientGameplayEvents {
             return;
         }
         boolean locked = TransitionOverlay.isActive();
-        if (!locked) {
-            UUID id = minecraft.player.getUUID();
-            for (Entity loaded : minecraft.level.entitiesForRendering()) {
-                if (loaded instanceof CompanionEntity companion
-                        && companion.isInScene()
-                        && companion.currentScene().locksControls()
-                        && companion.scenePartnerId().filter(id::equals).isPresent()) {
+        CompanionEntity interactive = null;
+        UUID id = minecraft.player.getUUID();
+        for (Entity loaded : minecraft.level.entitiesForRendering()) {
+            if (loaded instanceof CompanionEntity companion
+                    && companion.isInScene()
+                    && companion.scenePartnerId().filter(id::equals).isPresent()) {
+                if (companion.currentScene().locksControls()) {
                     locked = true;
-                    break;
+                }
+                if (companion.currentScene().hasInteractivePhases()) {
+                    interactive = companion;
+                    locked = true;
                 }
             }
+        }
+        if (interactive == null && SceneHud.isShown()) {
+            SceneHud.hide(); // the scene is over
+        }
+        if (interactive != null) {
+            sceneKeys(interactive, event.getInput());
+        } else {
+            SceneHud.setKeys(false, false);
         }
         if (locked) {
             net.minecraft.client.player.Input input = event.getInput();
@@ -147,6 +158,27 @@ public final class ClientGameplayEvents {
             input.forwardImpulse = 0.0F;
             input.leftImpulse = 0.0F;
         }
+    }
+
+    private static boolean lastShift;
+    private static boolean lastJump;
+
+    /** The original's in-scene keys (d3): hold sneak for the fast loop, jump once the meter is full to finish. */
+    private static void sceneKeys(CompanionEntity companion, net.minecraft.client.player.Input input) {
+        boolean shift = input.shiftKeyDown;
+        boolean jump = input.jumping;
+        if (shift != lastShift) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.trolmastercard.sexmod.network.SceneControlPayload(
+                    companion.getId(), shift ? com.trolmastercard.sexmod.network.SceneControlPayload.FAST
+                    : com.trolmastercard.sexmod.network.SceneControlPayload.SLOW));
+        }
+        if (jump && !lastJump && SceneHud.isFull()) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToServer(new com.trolmastercard.sexmod.network.SceneControlPayload(
+                    companion.getId(), com.trolmastercard.sexmod.network.SceneControlPayload.FINISH));
+        }
+        lastShift = shift;
+        lastJump = jump;
+        SceneHud.setKeys(shift, jump);
     }
 
     @SubscribeEvent

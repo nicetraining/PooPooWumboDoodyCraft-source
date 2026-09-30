@@ -56,6 +56,12 @@ public final class KeyframeEvents {
             return; // events without an entry are timing markers or not ported yet
         }
 
+        net.minecraft.client.player.LocalPlayer local = Minecraft.getInstance().player;
+        if ((entry.has("hud") || entry.has("meter")) && local != null
+                && girl.scenePartnerId().filter(local.getUUID()::equals).isPresent()) {
+            SceneHud.apply(entry);
+        }
+
         if (entry.has("chat") || entry.has("text")) {
             Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.player != null && minecraft.player.distanceToSqr(girl) < 30.0D * 30.0D) {

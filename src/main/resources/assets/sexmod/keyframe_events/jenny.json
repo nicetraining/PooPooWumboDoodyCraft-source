@@ -45,7 +45,8 @@
   "sounds": [
    "girls.jenny.mmm.mmm8"
   ],
-  "volume": 1.0
+  "volume": 1.0,
+  "hud": "reset"
  },
  "bjiMSG2": {
   "chat": "jenny.dialogue.blowjobtext2",
@@ -72,7 +73,8 @@
   "sounds": [
    "girls.jenny.hmph.hmph1"
   ],
-  "volume": 0.5
+  "volume": 0.5,
+  "hud": "reset"
  },
  "bjiMSG6": {
   "chat": "jenny.dialogue.blowjobtext5",
@@ -114,7 +116,8 @@
    "girls.jenny.lipsound.lipsound8",
    "girls.jenny.lipsound.lipsound9"
   ],
-  "volume": 1.0
+  "volume": 1.0,
+  "meter": 0.02
  },
  "bjcMSG1": {
   "sounds": [
@@ -126,7 +129,8 @@
   "sounds": [
    "girls.jenny.bjmoan.bjmoan7"
   ],
-  "volume": 1.0
+  "volume": 1.0,
+  "hud": "hide"
  },
  "bjcMSG3": {
   "sounds": [
@@ -281,7 +285,8 @@
    "misc.pounding.pounding33",
    "misc.pounding.pounding34"
   ],
-  "volume": 1.0
+  "volume": 1.0,
+  "meter": 0.02
  },
  "paizuriStartMSG1": {
   "sounds": [
@@ -321,7 +326,8 @@
    "misc.pounding.pounding33",
    "misc.pounding.pounding34"
   ],
-  "volume": 1.0
+  "volume": 1.0,
+  "meter": 0.02
  },
  "bjiMSG12": {
   "layers": [
@@ -357,7 +363,8 @@
     ],
     "chance": 0.2
    }
-  ]
+  ],
+  "meter": 0.02
  },
  "bjtMSG1": {
   "layers": [
@@ -388,7 +395,8 @@
      "girls.jenny.lipsound.lipsound9"
     ]
    }
-  ]
+  ],
+  "meter": 0.04
  },
  "doggystartMSG4": {
   "layers": [
@@ -406,7 +414,8 @@
      "girls.jenny.mmm.mmm1"
     ]
    }
-  ]
+  ],
+  "hud": "reset"
  },
  "doggystartMSG5": {
   "layers": [
@@ -552,7 +561,8 @@
      6
     ]
    }
-  ]
+  ],
+  "meter": 0.00666
  },
  "doggyfastMSG1": {
   "layers": [
@@ -643,7 +653,8 @@
      1
     ]
    }
-  ]
+  ],
+  "meter": 0.02
  },
  "doggycumMSG1": {
   "layers": [
@@ -779,6 +790,28 @@
      }
     ]
    }
-  ]
+  ],
+  "meter": 0.04
+ },
+ "sexUiOn": {
+  "hud": "show"
+ },
+ "bjiDone": {
+  "hud": "show"
+ },
+ "doggystartDone": {
+  "hud": "show"
+ },
+ "paizuri_startDone": {
+  "hud": "show"
+ },
+ "bjcDone": {
+  "hud": "reset"
+ },
+ "paizuri_cumDone": {
+  "hud": "reset"
+ },
+ "doggyCumDone": {
+  "hud": "reset"
  }
 }

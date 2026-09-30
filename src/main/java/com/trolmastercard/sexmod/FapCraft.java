@@ -37,6 +37,7 @@ public final class FapCraft {
         modEventBus.addListener(com.trolmastercard.sexmod.network.CompanionActionPayload::register);
         modEventBus.addListener(com.trolmastercard.sexmod.network.OpenSceneMenuPayload::register);
         modEventBus.addListener(com.trolmastercard.sexmod.network.TransitionPayload::register);
+        modEventBus.addListener(com.trolmastercard.sexmod.network.SceneControlPayload::register);
         modEventBus.addListener(ModEntities::createAttributes);
         modEventBus.addListener(ModEntities::registerSpawnPlacements);
         NeoForge.EVENT_BUS.addListener(ModPotions::registerBrewingRecipes);
