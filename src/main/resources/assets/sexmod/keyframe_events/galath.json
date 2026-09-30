@@ -61,32 +61,53 @@
   "volume": 1.0
  },
  "switchmoan": {
-  "sounds": [
-   "girls.galath.breathing.breathing0",
-   "girls.galath.breathing.breathing1",
-   "girls.galath.breathing.breathing2",
-   "girls.galath.breathing.breathing3",
-   "girls.galath.breathing.breathing4",
-   "girls.galath.breathing.breathing5",
-   "girls.galath.breathing.breathing6",
-   "girls.galath.moan.moan0",
-   "girls.galath.moan.moan1",
-   "girls.galath.moan.moan2",
-   "girls.galath.moan.moan3",
-   "girls.galath.moan.moan4",
-   "girls.galath.moan.moan5",
-   "girls.galath.moan.moan6",
-   "girls.galath.moan.moan7",
-   "girls.galath.ahh.ahh0",
-   "girls.galath.ahh.ahh1",
-   "girls.galath.ahh.ahh2",
-   "girls.galath.ahh.ahh3",
-   "girls.galath.ahh.ahh4",
-   "girls.galath.ahh.ahh5",
-   "girls.galath.ahh.ahh6",
-   "girls.galath.ahh.ahh7"
-  ],
-  "volume": 1.0
+  "volume": 1.0,
+  "layers": [
+   {
+    "any_of": [
+     {
+      "sounds": [
+       "girls.galath.breathing.breathing0",
+       "girls.galath.breathing.breathing1",
+       "girls.galath.breathing.breathing2",
+       "girls.galath.breathing.breathing3",
+       "girls.galath.breathing.breathing4",
+       "girls.galath.breathing.breathing5",
+       "girls.galath.breathing.breathing6"
+      ]
+     },
+     {
+      "sounds": [
+       "girls.galath.moan.moan0",
+       "girls.galath.moan.moan1",
+       "girls.galath.moan.moan2",
+       "girls.galath.moan.moan3",
+       "girls.galath.moan.moan4",
+       "girls.galath.moan.moan5",
+       "girls.galath.moan.moan6",
+       "girls.galath.moan.moan7"
+      ]
+     },
+     {
+      "sounds": [
+       "girls.galath.ahh.ahh0",
+       "girls.galath.ahh.ahh1",
+       "girls.galath.ahh.ahh2",
+       "girls.galath.ahh.ahh3",
+       "girls.galath.ahh.ahh4",
+       "girls.galath.ahh.ahh5",
+       "girls.galath.ahh.ahh6",
+       "girls.galath.ahh.ahh7"
+      ]
+     }
+    ],
+    "weights": [
+     2,
+     1,
+     1
+    ]
+   }
+  ]
  },
  "lightcharge": {
   "sounds": [
@@ -291,5 +312,26 @@
    "girls.allie.lipsound.lipsound13"
   ],
   "volume": 1.0
+ },
+ "boostSound": {
+  "sounds": [
+   "girls.galath.lightcharge.lightcharge0",
+   "girls.galath.lightcharge.lightcharge1",
+   "girls.galath.lightcharge.lightcharge2",
+   "girls.galath.lightcharge.lightcharge3",
+   "girls.galath.lightcharge.lightcharge4"
+  ],
+  "volume": 1.0,
+  "layers": [
+   {
+    "sounds": [
+     "misc.flap.flap0",
+     "misc.flap.flap1",
+     "misc.flap.flap2",
+     "misc.flap.flap3"
+    ],
+    "volume": 1.0
+   }
+  ]
  }
 }

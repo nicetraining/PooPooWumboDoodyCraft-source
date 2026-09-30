@@ -10,33 +10,50 @@
   ]
  },
  "lipsound": {
-  "sounds": [
-   "girls.allie.lipsound.lipsound0",
-   "girls.allie.lipsound.lipsound1",
-   "girls.allie.lipsound.lipsound2",
-   "girls.allie.lipsound.lipsound3",
-   "girls.allie.lipsound.lipsound4",
-   "girls.allie.lipsound.lipsound5",
-   "girls.allie.lipsound.lipsound6",
-   "girls.allie.lipsound.lipsound7",
-   "girls.allie.lipsound.lipsound8",
-   "girls.allie.lipsound.lipsound9",
-   "girls.allie.lipsound.lipsound10",
-   "girls.allie.lipsound.lipsound11",
-   "girls.allie.lipsound.lipsound12",
-   "girls.allie.lipsound.lipsound13",
-   "girls.jenny.lipsound.lipsound0",
-   "girls.jenny.lipsound.lipsound1",
-   "girls.jenny.lipsound.lipsound2",
-   "girls.jenny.lipsound.lipsound3",
-   "girls.jenny.lipsound.lipsound4",
-   "girls.jenny.lipsound.lipsound5",
-   "girls.jenny.lipsound.lipsound6",
-   "girls.jenny.lipsound.lipsound7",
-   "girls.jenny.lipsound.lipsound8",
-   "girls.jenny.lipsound.lipsound9"
-  ],
-  "volume": 1.5
+  "layers": [
+   {
+    "any_of": [
+     {
+      "sounds": [
+       "girls.allie.lipsound.lipsound0",
+       "girls.allie.lipsound.lipsound1",
+       "girls.allie.lipsound.lipsound2",
+       "girls.allie.lipsound.lipsound3",
+       "girls.allie.lipsound.lipsound4",
+       "girls.allie.lipsound.lipsound5",
+       "girls.allie.lipsound.lipsound6",
+       "girls.allie.lipsound.lipsound7",
+       "girls.allie.lipsound.lipsound8",
+       "girls.allie.lipsound.lipsound9",
+       "girls.allie.lipsound.lipsound10",
+       "girls.allie.lipsound.lipsound11",
+       "girls.allie.lipsound.lipsound12",
+       "girls.allie.lipsound.lipsound13"
+      ],
+      "volume": 1.5
+     },
+     {
+      "sounds": [
+       "girls.jenny.lipsound.lipsound0",
+       "girls.jenny.lipsound.lipsound1",
+       "girls.jenny.lipsound.lipsound2",
+       "girls.jenny.lipsound.lipsound3",
+       "girls.jenny.lipsound.lipsound4",
+       "girls.jenny.lipsound.lipsound5",
+       "girls.jenny.lipsound.lipsound6",
+       "girls.jenny.lipsound.lipsound7",
+       "girls.jenny.lipsound.lipsound8",
+       "girls.jenny.lipsound.lipsound9"
+      ],
+      "volume": 1.5
+     }
+    ],
+    "weights": [
+     1,
+     1
+    ]
+   }
+  ]
  },
  "touch": {
   "sounds": [
@@ -220,5 +237,35 @@
    "misc.plob.plob0"
   ],
   "volume": 0.5
+ },
+ "moanMating": {
+  "sounds": [
+   "girls.kobold.moan.moan0",
+   "girls.kobold.moan.moan1",
+   "girls.kobold.moan.moan2",
+   "girls.kobold.moan.moan3",
+   "girls.kobold.moan.moan4",
+   "girls.kobold.moan.moan5",
+   "girls.kobold.moan.moan6",
+   "girls.kobold.moan.moan7",
+   "girls.kobold.moan.moan8",
+   "girls.kobold.moan.moan9"
+  ],
+  "every": 3
+ },
+ "analHardMSG1": {
+  "sounds": [
+   "girls.kobold.moan.moan0",
+   "girls.kobold.moan.moan1",
+   "girls.kobold.moan.moan2",
+   "girls.kobold.moan.moan3",
+   "girls.kobold.moan.moan4",
+   "girls.kobold.moan.moan5",
+   "girls.kobold.moan.moan6",
+   "girls.kobold.moan.moan7",
+   "girls.kobold.moan.moan8",
+   "girls.kobold.moan.moan9"
+  ],
+  "every": 4
  }
 }

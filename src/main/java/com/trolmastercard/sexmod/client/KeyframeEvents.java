@@ -67,21 +67,75 @@ public final class KeyframeEvents {
                                 : Component.literal(entry.get("text").getAsString())));
             }
         }
+        if (entry.has("every")) {
+            // Alternating events: only the 1st, (N+1)th, ... call plays (original toggles like Allie's fastMoan).
+            int every = Math.max(1, entry.get("every").getAsInt());
+            int count = COUNTERS.merge(girl.getId() + ":" + eventId, 1, Integer::sum);
+            if ((count - 1) % every != 0) {
+                return;
+            }
+        }
         if (entry.has("sounds")) {
-            JsonArray sounds = entry.getAsJsonArray("sounds");
-            if (sounds.size() > 0) {
-                JsonElement pick = sounds.get(girl.getRandom().nextInt(sounds.size()));
-                float volume = entry.has("volume") ? entry.get("volume").getAsFloat() : 1.0F;
-                String path = pick.getAsString();
-                if (ModSounds.find(path).isPresent()) {
-                    SoundEvent event = SoundEvent.createVariableRangeEvent(
-                            ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, path));
-                    girl.level().playLocalSound(girl.getX(), girl.getY(), girl.getZ(), event,
-                            SoundSource.NEUTRAL, volume, 1.0F, false);
-                } else if (REPORTED.add(path)) {
-                    FapCraft.LOGGER.warn("keyframe_events.json names an unknown sound: {}", path);
+            playLayer(girl, entry);
+        }
+        if (entry.has("layers")) {
+            for (JsonElement layer : entry.getAsJsonArray("layers")) {
+                playLayer(girl, layer.getAsJsonObject());
+            }
+        }
+    }
+
+    private static final java.util.Map<String, Integer> COUNTERS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /**
+     * One sound layer: {"sounds":[...],"volume":1,"pitch":1,"chance":1} plays a random pick; or
+     * {"any_of":[layer,...],"weights":[1,4]} plays exactly one of the listed layers by weight.
+     */
+    private static void playLayer(CompanionEntity girl, JsonObject layer) {
+        if (layer.has("chance") && girl.getRandom().nextFloat() >= layer.get("chance").getAsFloat()) {
+            return;
+        }
+        if (layer.has("any_of")) {
+            JsonArray options = layer.getAsJsonArray("any_of");
+            if (options.size() == 0) {
+                return;
+            }
+            int[] weights = new int[options.size()];
+            int total = 0;
+            for (int i = 0; i < weights.length; i++) {
+                weights[i] = layer.has("weights") ? layer.getAsJsonArray("weights").get(i).getAsInt() : 1;
+                total += weights[i];
+            }
+            int roll = girl.getRandom().nextInt(Math.max(1, total));
+            for (int i = 0; i < weights.length; i++) {
+                roll -= weights[i];
+                if (roll < 0) {
+                    JsonElement chosen = options.get(i);
+                    if (chosen.isJsonObject()) {
+                        playLayer(girl, chosen.getAsJsonObject());
+                    }
+                    return;
                 }
             }
+            return;
+        }
+        if (!layer.has("sounds")) {
+            return;
+        }
+        JsonArray sounds = layer.getAsJsonArray("sounds");
+        if (sounds.size() == 0) {
+            return;
+        }
+        String path = sounds.get(girl.getRandom().nextInt(sounds.size())).getAsString();
+        float volume = layer.has("volume") ? layer.get("volume").getAsFloat() : 1.0F;
+        float pitch = layer.has("pitch") ? layer.get("pitch").getAsFloat() : 1.0F;
+        if (ModSounds.find(path).isPresent()) {
+            SoundEvent event = SoundEvent.createVariableRangeEvent(
+                    ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, path));
+            girl.level().playLocalSound(girl.getX(), girl.getY(), girl.getZ(), event,
+                    SoundSource.NEUTRAL, volume, pitch, false);
+        } else if (REPORTED.add(path)) {
+            FapCraft.LOGGER.warn("keyframe_events names an unknown sound: {}", path);
         }
     }
 }

@@ -27,7 +27,8 @@
    "girls.allie.moan.moan5",
    "girls.allie.moan.moan6",
    "girls.allie.moan.moan7"
-  ]
+  ],
+  "every": 2
  },
  "giggle": {
   "sounds": [
@@ -118,17 +119,22 @@
   ]
  },
  "slowMoan": {
-  "sounds": [
-   "girls.allie.ahh.ahh0",
-   "girls.allie.ahh.ahh1",
-   "girls.allie.ahh.ahh2",
-   "girls.allie.ahh.ahh3",
-   "girls.allie.ahh.ahh4",
-   "girls.allie.ahh.ahh5",
-   "girls.allie.ahh.ahh6",
-   "girls.allie.ahh.ahh7",
-   "girls.allie.ahh.ahh8",
-   "girls.allie.ahh.ahh9"
+  "layers": [
+   {
+    "sounds": [
+     "girls.allie.ahh.ahh0",
+     "girls.allie.ahh.ahh1",
+     "girls.allie.ahh.ahh2",
+     "girls.allie.ahh.ahh3",
+     "girls.allie.ahh.ahh4",
+     "girls.allie.ahh.ahh5",
+     "girls.allie.ahh.ahh6",
+     "girls.allie.ahh.ahh7",
+     "girls.allie.ahh.ahh8",
+     "girls.allie.ahh.ahh9"
+    ],
+    "chance": 0.5
+   }
   ]
  },
  "summonMSG1": {
@@ -210,35 +216,51 @@
   ]
  },
  "deepthroat_slowMSG1": {
-  "sounds": [
-   "girls.allie.lipsound.lipsound0",
-   "girls.allie.lipsound.lipsound1",
-   "girls.allie.lipsound.lipsound2",
-   "girls.allie.lipsound.lipsound3",
-   "girls.allie.lipsound.lipsound4",
-   "girls.allie.lipsound.lipsound5",
-   "girls.allie.lipsound.lipsound6",
-   "girls.allie.lipsound.lipsound7",
-   "girls.allie.lipsound.lipsound8",
-   "girls.allie.lipsound.lipsound9",
-   "girls.allie.lipsound.lipsound10",
-   "girls.allie.lipsound.lipsound11",
-   "girls.allie.lipsound.lipsound12",
-   "girls.allie.lipsound.lipsound13",
-   "girls.allie.bjmoan.bjmoan0",
-   "girls.allie.bjmoan.bjmoan1",
-   "girls.allie.bjmoan.bjmoan2",
-   "girls.allie.bjmoan.bjmoan3",
-   "girls.allie.bjmoan.bjmoan4",
-   "girls.allie.bjmoan.bjmoan5",
-   "girls.allie.bjmoan.bjmoan6",
-   "girls.allie.bjmoan.bjmoan7",
-   "girls.allie.bjmoan.bjmoan8",
-   "girls.allie.bjmoan.bjmoan9",
-   "girls.allie.bjmoan.bjmoan10",
-   "girls.allie.bjmoan.bjmoan11",
-   "girls.allie.bjmoan.bjmoan12",
-   "girls.allie.bjmoan.bjmoan13"
+  "layers": [
+   {
+    "any_of": [
+     {
+      "sounds": [
+       "girls.allie.lipsound.lipsound0",
+       "girls.allie.lipsound.lipsound1",
+       "girls.allie.lipsound.lipsound2",
+       "girls.allie.lipsound.lipsound3",
+       "girls.allie.lipsound.lipsound4",
+       "girls.allie.lipsound.lipsound5",
+       "girls.allie.lipsound.lipsound6",
+       "girls.allie.lipsound.lipsound7",
+       "girls.allie.lipsound.lipsound8",
+       "girls.allie.lipsound.lipsound9",
+       "girls.allie.lipsound.lipsound10",
+       "girls.allie.lipsound.lipsound11",
+       "girls.allie.lipsound.lipsound12",
+       "girls.allie.lipsound.lipsound13"
+      ]
+     },
+     {
+      "sounds": [
+       "girls.allie.bjmoan.bjmoan0",
+       "girls.allie.bjmoan.bjmoan1",
+       "girls.allie.bjmoan.bjmoan2",
+       "girls.allie.bjmoan.bjmoan3",
+       "girls.allie.bjmoan.bjmoan4",
+       "girls.allie.bjmoan.bjmoan5",
+       "girls.allie.bjmoan.bjmoan6",
+       "girls.allie.bjmoan.bjmoan7",
+       "girls.allie.bjmoan.bjmoan8",
+       "girls.allie.bjmoan.bjmoan9",
+       "girls.allie.bjmoan.bjmoan10",
+       "girls.allie.bjmoan.bjmoan11",
+       "girls.allie.bjmoan.bjmoan12",
+       "girls.allie.bjmoan.bjmoan13"
+      ]
+     }
+    ],
+    "weights": [
+     67,
+     33
+    ]
+   }
   ]
  },
  "deepthroat_cumMSG1": {
@@ -251,6 +273,33 @@
    "girls.allie.moan.moan5",
    "girls.allie.moan.moan6",
    "girls.allie.moan.moan7"
+  ],
+  "layers": [
+   {
+    "sounds": [
+     "girls.allie.lipsound.lipsound0",
+     "girls.allie.lipsound.lipsound1",
+     "girls.allie.lipsound.lipsound2",
+     "girls.allie.lipsound.lipsound3",
+     "girls.allie.lipsound.lipsound4",
+     "girls.allie.lipsound.lipsound5",
+     "girls.allie.lipsound.lipsound6",
+     "girls.allie.lipsound.lipsound7",
+     "girls.allie.lipsound.lipsound8",
+     "girls.allie.lipsound.lipsound9",
+     "girls.allie.lipsound.lipsound10",
+     "girls.allie.lipsound.lipsound11",
+     "girls.allie.lipsound.lipsound12",
+     "girls.allie.lipsound.lipsound13"
+    ],
+    "volume": 1.0
+   },
+   {
+    "sounds": [
+     "misc.cuminflation.cuminflation0"
+    ],
+    "volume": 1.5
+   }
   ]
  },
  "summon_normalMSG1": {
