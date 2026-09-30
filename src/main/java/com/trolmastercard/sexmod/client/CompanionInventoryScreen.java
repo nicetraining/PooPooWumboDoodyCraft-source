@@ -26,11 +26,13 @@ public final class CompanionInventoryScreen extends AbstractContainerScreen<Comp
     private Button scale;
     private Button mode;
     private Button home;
+    private Button storage;
 
     public CompanionInventoryScreen(CompanionInventoryMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         this.imageWidth = 176;
-        this.imageHeight = 218;
+        CompanionEntity companion = menu.companion();
+        this.imageHeight = companion != null && companion.kind().hasStorage() ? 241 : 218;
         this.inventoryLabelX = 8;
         this.inventoryLabelY = 74;
     }
@@ -82,6 +84,12 @@ public final class CompanionInventoryScreen extends AbstractContainerScreen<Comp
                 "editor.sexmod.home", x + 89, y + 192, 83, 20,
                 CompanionInventoryMenu.BUTTON_HOME
         ));
+        if (this.menu.companion() != null && this.menu.companion().kind().hasStorage()) {
+            this.storage = this.addRenderableWidget(this.button(
+                    "editor.sexmod.storage", x + 4, y + 215, 168, 20,
+                    CompanionInventoryMenu.BUTTON_STORAGE
+            ));
+        }
         this.updateButtonState();
     }
 
@@ -143,7 +151,11 @@ public final class CompanionInventoryScreen extends AbstractContainerScreen<Comp
                 this.topPos + this.imageHeight,
                 0xE0101010
         );
-        graphics.blit(TEXTURE, this.leftPos, this.topPos + 52, 80, 142, this.imageWidth, 114);
+        if (this.menu.hasRodSlot()) {
+            graphics.blit(TEXTURE, this.leftPos, this.topPos + 52, 80, 142, this.imageWidth, 114);
+        } else {
+            graphics.blit(TEXTURE, this.leftPos, this.topPos + 52, 33, 16, this.imageWidth, 114);
+        }
         graphics.fill(this.leftPos, this.topPos + 48, this.leftPos + this.imageWidth, this.topPos + 51, 0xFF705030);
         graphics.fill(this.leftPos, this.topPos + 166, this.leftPos + this.imageWidth, this.topPos + 168, 0xFF705030);
     }

@@ -33,5 +33,6 @@ public final class ClientModEvents {
     @SubscribeEvent
     public static void registerMenuScreens(RegisterMenuScreensEvent event) {
         event.register(ModMenus.COMPANION_INVENTORY.get(), CompanionInventoryScreen::new);
+        event.register(ModMenus.COMPANION_STORAGE.get(), net.minecraft.client.gui.screens.inventory.ContainerScreen::new);
     }
 }

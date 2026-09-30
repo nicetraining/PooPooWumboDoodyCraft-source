@@ -3,6 +3,8 @@ package com.trolmastercard.sexmod.registry;
 import com.trolmastercard.sexmod.FapCraft;
 import com.trolmastercard.sexmod.menu.CompanionInventoryMenu;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
@@ -15,6 +17,11 @@ public final class ModMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<CompanionInventoryMenu>> COMPANION_INVENTORY =
             MENUS.register("companion_inventory", () -> IMenuTypeExtension.create(CompanionInventoryMenu::new));
+
+    public static final DeferredHolder<MenuType<?>, MenuType<ChestMenu>> COMPANION_STORAGE =
+            MENUS.register("companion_storage", () -> IMenuTypeExtension.create(
+                    (containerId, inventory, data) -> new ChestMenu(
+                            ModMenus.COMPANION_STORAGE.get(), containerId, inventory, new SimpleContainer(27), 3)));
 
     private ModMenus() {
     }

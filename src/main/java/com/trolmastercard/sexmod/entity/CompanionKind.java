@@ -247,6 +247,16 @@ public enum CompanionKind {
         };
     }
 
+    /** Luna's equipment screen has an extra fishing-rod slot (original 7-slot menu). */
+    public boolean hasFishingRodSlot() {
+        return this == LUNA;
+    }
+
+    /** Kinds with the original 27-slot storage chest (Kobold and Bee). */
+    public boolean hasStorage() {
+        return this == KOBOLD || this == BEE;
+    }
+
     public boolean canFly() {
         return this == BEE || this == GALATH || this == MANGLELIE;
     }

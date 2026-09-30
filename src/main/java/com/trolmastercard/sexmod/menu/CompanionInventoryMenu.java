@@ -32,11 +32,15 @@ public final class CompanionInventoryMenu extends AbstractContainerMenu {
     public static final int BUTTON_SCALE = 8;
     public static final int BUTTON_MODE = 9;
     public static final int BUTTON_HOME = 10;
+    public static final int BUTTON_STORAGE = 11;
 
-    private static final int COMPANION_SLOT_COUNT = 7;
-    private static final int PLAYER_INVENTORY_START = COMPANION_SLOT_COUNT;
-    private static final int PLAYER_INVENTORY_END = PLAYER_INVENTORY_START + 27;
-    private static final int PLAYER_HOTBAR_END = PLAYER_INVENTORY_END + 9;
+    /** Container size held by every companion; menus with no rod slot simply do not show slot 6. */
+    private static final int CONTAINER_SIZE = 7;
+    private static final int[] SIX_SLOT_X = {31, 50, 72, 91, 110, 129};
+    private static final int[] ROD_SLOT_X = {41, 59, 81, 100, 119, 138, 22};
+
+    private final boolean rodSlot;
+    private final int companionSlotCount;
 
     private final int companionEntityId;
     private final Player viewingPlayer;
@@ -60,33 +64,19 @@ public final class CompanionInventoryMenu extends AbstractContainerMenu {
         this.viewingPlayer = playerInventory.player;
         this.addDataSlot(this.selectedSceneIndex);
         Container equipment = openedCompanion.entity() == null
-                ? new SimpleContainer(COMPANION_SLOT_COUNT)
+                ? new SimpleContainer(CONTAINER_SIZE)
                 : openedCompanion.entity().equipment();
-        checkContainerSize(equipment, COMPANION_SLOT_COUNT);
+        checkContainerSize(equipment, CONTAINER_SIZE);
 
-        int[] equipmentX = {41, 59, 81, 100, 119, 138, 22};
-        EquipmentSlot[] equipmentSlots = {
-                EquipmentSlot.MAINHAND,
-                EquipmentSlot.OFFHAND,
-                EquipmentSlot.HEAD,
-                EquipmentSlot.CHEST,
-                EquipmentSlot.LEGS,
-                EquipmentSlot.FEET
-        };
-        for (int slot = 0; slot < COMPANION_SLOT_COUNT; slot++) {
-            if (slot >= equipmentSlots.length) {
-                this.addSlot(new Slot(equipment, slot, equipmentX[slot], 60));
-                continue;
-            }
-
-            EquipmentSlot equipmentSlot = equipmentSlots[slot];
+        this.rodSlot = openedCompanion.entity() != null && openedCompanion.entity().kind().hasFishingRodSlot();
+        this.companionSlotCount = this.rodSlot ? 7 : 6;
+        int[] equipmentX = this.rodSlot ? ROD_SLOT_X : SIX_SLOT_X;
+        for (int slot = 0; slot < this.companionSlotCount; slot++) {
+            SlotRole role = SlotRole.values()[slot];
             this.addSlot(new Slot(equipment, slot, equipmentX[slot], 60) {
                 @Override
                 public boolean mayPlace(ItemStack stack) {
-                    return equipmentSlot == EquipmentSlot.MAINHAND
-                            || equipmentSlot == EquipmentSlot.OFFHAND
-                            || (openedCompanion.entity() != null
-                            && openedCompanion.entity().getEquipmentSlotForItem(stack) == equipmentSlot);
+                    return role.accepts(stack);
                 }
 
                 @Override
@@ -103,6 +93,34 @@ public final class CompanionInventoryMenu extends AbstractContainerMenu {
         }
         for (int column = 0; column < 9; column++) {
             this.addSlot(new Slot(playerInventory, column, 8 + column * 18, 142));
+        }
+    }
+
+    /** True for the 7-slot layout that includes the fishing-rod slot. */
+    public boolean hasRodSlot() {
+        return this.rodSlot;
+    }
+
+    /** The equipment slots of the original companion menus, each with its own item rule. */
+    private enum SlotRole {
+        WEAPON, BOW, HELMET, CHEST_PLATE, PANTS, SHOES, ROD;
+
+        boolean accepts(ItemStack stack) {
+            return switch (this) {
+                case WEAPON -> stack.getItem() instanceof net.minecraft.world.item.SwordItem
+                        || stack.getItem() instanceof net.minecraft.world.item.DiggerItem;
+                case BOW -> stack.getItem() instanceof net.minecraft.world.item.BowItem;
+                case HELMET -> armor(stack, EquipmentSlot.HEAD);
+                case CHEST_PLATE -> armor(stack, EquipmentSlot.CHEST);
+                case PANTS -> armor(stack, EquipmentSlot.LEGS);
+                case SHOES -> armor(stack, EquipmentSlot.FEET);
+                case ROD -> stack.getItem() instanceof net.minecraft.world.item.FishingRodItem;
+            };
+        }
+
+        private static boolean armor(ItemStack stack, EquipmentSlot slot) {
+            return stack.getItem() instanceof net.minecraft.world.item.ArmorItem item
+                    && item.getEquipmentSlot() == slot;
         }
     }
 
@@ -165,6 +183,11 @@ public final class CompanionInventoryMenu extends AbstractContainerMenu {
                             : companion.appearanceScale() + 0.25F
             );
             case BUTTON_MODE -> companion.setMode(companion.mode().next());
+            case BUTTON_STORAGE -> {
+                if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+                    companion.openStorageMenu(serverPlayer);
+                }
+            }
             case BUTTON_HOME -> {
                 companion.setHome(companion.blockPosition());
                 companion.setMode(CompanionMode.HOME);
@@ -205,13 +228,10 @@ public final class CompanionInventoryMenu extends AbstractContainerMenu {
         ItemStack stack = slot.getItem();
         ItemStack original = stack.copy();
         boolean moved;
-        if (index < COMPANION_SLOT_COUNT) {
-            moved = this.moveItemStackTo(stack, PLAYER_INVENTORY_START, PLAYER_HOTBAR_END, true);
+        if (index < this.companionSlotCount) {
+            moved = this.moveItemStackTo(stack, this.companionSlotCount, this.companionSlotCount + 36, true);
         } else {
-            moved = this.moveItemStackTo(stack, 2, 6, false);
-            if (!moved) {
-                moved = this.moveItemStackTo(stack, 6, COMPANION_SLOT_COUNT, false);
-            }
+            moved = this.moveItemStackTo(stack, 0, this.companionSlotCount, false);
         }
         if (!moved) {
             return ItemStack.EMPTY;

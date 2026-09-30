@@ -5,7 +5,14 @@ import com.trolmastercard.sexmod.data.CompanionOwnershipData;
 import com.trolmastercard.sexmod.entity.CompanionEntity;
 import com.trolmastercard.sexmod.entity.CompanionKind;
 import com.trolmastercard.sexmod.entity.CompanionMode;
+import com.trolmastercard.sexmod.menu.CompanionInventoryMenu;
 import net.minecraft.core.Registry;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.GameType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -192,6 +199,84 @@ public final class FapCraftGameTests {
             }
             entity.discard();
         }
+        helper.succeed();
+    }
+
+    private static CompanionEntity spawnKind(GameTestHelper helper, CompanionKind kind) {
+        EntityType<?> type = BuiltInRegistries.ENTITY_TYPE.get(id(kind.registryPath()));
+        Entity entity = type.create(helper.getLevel());
+        entity.moveTo(helper.absoluteVec(new Vec3(0.5, 1.0, 0.5)));
+        helper.getLevel().addFreshEntity(entity);
+        return (CompanionEntity) entity;
+    }
+
+    @GameTest(template = "empty")
+    public static void equipmentMenusMatchTheOriginal(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        CompanionEntity luna = spawnKind(helper, CompanionKind.LUNA);
+        CompanionEntity jenny = spawnKind(helper, CompanionKind.JENNY);
+
+        CompanionInventoryMenu lunaMenu = new CompanionInventoryMenu(1, player.getInventory(), luna);
+        CompanionInventoryMenu jennyMenu = new CompanionInventoryMenu(2, player.getInventory(), jenny);
+        if (lunaMenu.slots.size() != 7 + 36) {
+            helper.fail("Luna menu should have 7 companion slots, slots=" + lunaMenu.slots.size());
+        }
+        if (jennyMenu.slots.size() != 6 + 36) {
+            helper.fail("Jenny menu should have 6 companion slots, slots=" + jennyMenu.slots.size());
+        }
+        Slot weapon = jennyMenu.slots.get(0);
+        Slot bow = jennyMenu.slots.get(1);
+        Slot helmet = jennyMenu.slots.get(2);
+        Slot rod = lunaMenu.slots.get(6);
+        if (!weapon.mayPlace(new ItemStack(Items.IRON_SWORD)) || weapon.mayPlace(new ItemStack(Items.BOW))) {
+            helper.fail("weapon slot must take swords/tools only");
+        }
+        if (!bow.mayPlace(new ItemStack(Items.BOW)) || bow.mayPlace(new ItemStack(Items.IRON_SWORD))) {
+            helper.fail("bow slot must take bows only");
+        }
+        if (!helmet.mayPlace(new ItemStack(Items.IRON_HELMET)) || helmet.mayPlace(new ItemStack(Items.IRON_BOOTS))) {
+            helper.fail("helmet slot must take helmets only");
+        }
+        if (!rod.mayPlace(new ItemStack(Items.FISHING_ROD)) || rod.mayPlace(new ItemStack(Items.STICK))) {
+            helper.fail("rod slot must take fishing rods only");
+        }
+        luna.discard();
+        jenny.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void storageSurvivesSaveAndLoad(GameTestHelper helper) {
+        for (CompanionKind kind : CompanionKind.values()) {
+            boolean expected = kind == CompanionKind.KOBOLD || kind == CompanionKind.BEE;
+            if (kind.hasStorage() != expected) {
+                helper.fail(kind + " storage flag is wrong");
+            }
+        }
+        CompanionEntity kobold = spawnKind(helper, CompanionKind.KOBOLD);
+        kobold.storage().setItem(26, new ItemStack(Items.DIAMOND, 3));
+        CompoundTag tag = new CompoundTag();
+        kobold.addAdditionalSaveData(tag);
+        CompanionEntity copy = spawnKind(helper, CompanionKind.KOBOLD);
+        copy.readAdditionalSaveData(tag);
+        ItemStack loaded = copy.storage().getItem(26);
+        if (!loaded.is(Items.DIAMOND) || loaded.getCount() != 3) {
+            helper.fail("storage contents were not restored, got " + loaded
+                    + "; original=" + kobold.storage().getItem(26)
+                    + "; savedTag=" + tag.get("FapCraftStorage")
+                    + "; copyKind=" + copy.kind());
+        }
+        kobold.equipment().setItem(2, new ItemStack(Items.IRON_HELMET));
+        CompoundTag equipTag = new CompoundTag();
+        kobold.addAdditionalSaveData(equipTag);
+        CompanionEntity equipCopy = spawnKind(helper, CompanionKind.KOBOLD);
+        equipCopy.readAdditionalSaveData(equipTag);
+        if (!equipCopy.equipment().getItem(2).is(Items.IRON_HELMET) || !equipCopy.equipment().getItem(0).isEmpty()) {
+            helper.fail("helmet did not stay in slot 2 after reload");
+        }
+        equipCopy.discard();
+        kobold.discard();
+        copy.discard();
         helper.succeed();
     }
 }

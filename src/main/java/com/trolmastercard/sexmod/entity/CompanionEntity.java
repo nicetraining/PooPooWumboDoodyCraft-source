@@ -114,6 +114,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private final CompanionKind kind;
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
     private final SimpleContainer equipment = new SimpleContainer(7);
+    private final CompanionStorage storage = new CompanionStorage(this);
     private boolean summonedByGalathCoin;
     private boolean technicalProxy;
     private int scenePhaseTicks;
@@ -318,6 +319,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return this.technicalProxy;
     }
 
+    public SimpleContainer storage() {
+        return this.storage;
+    }
+
     public SimpleContainer equipment() {
         return this.equipment;
     }
@@ -402,6 +407,24 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 new SimpleMenuProvider(
                         (containerId, inventory, ignored) ->
                                 new CompanionInventoryMenu(containerId, inventory, this),
+                        this.getDisplayName()
+                ),
+                buffer -> buffer.writeVarInt(this.getId())
+        );
+        return true;
+    }
+
+    public boolean openStorageMenu(ServerPlayer player) {
+        if (!this.kind.hasStorage()
+                || !this.mayBeCommandedBy(player)
+                || player.distanceToSqr(this) > 64.0D) {
+            return false;
+        }
+        player.openMenu(
+                new SimpleMenuProvider(
+                        (containerId, inventory, ignored) -> new net.minecraft.world.inventory.ChestMenu(
+                                com.trolmastercard.sexmod.registry.ModMenus.COMPANION_STORAGE.get(),
+                                containerId, inventory, this.storage, 3),
                         this.getDisplayName()
                 ),
                 buffer -> buffer.writeVarInt(this.getId())
@@ -1131,6 +1154,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 this.spawnAtLocation(stack);
             }
         }
+        for (int slot = 0; slot < this.storage.getContainerSize(); slot++) {
+            ItemStack stack = this.storage.removeItemNoUpdate(slot);
+            if (!stack.isEmpty()) {
+                this.spawnAtLocation(stack);
+            }
+        }
         this.syncEquipmentSlots();
     }
 
@@ -1281,7 +1310,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             tag.putInt("FapCraftHomeY", home.getY());
             tag.putInt("FapCraftHomeZ", home.getZ());
         });
-        tag.put("FapCraftEquipment", this.equipment.createTag(this.registryAccess()));
+        tag.put("FapCraftEquipment", SlotNbt.save(this.equipment, this.registryAccess()));
+        tag.put("FapCraftStorage", SlotNbt.save(this.storage, this.registryAccess()));
         tag.putBoolean("FapCraftGalathCoinSummon", this.summonedByGalathCoin);
         tag.putBoolean("FapCraftTechnicalProxy", this.technicalProxy);
         tag.putBoolean("FapCraftRichReward", this.richRewardGranted);
@@ -1331,7 +1361,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         if (tag.contains("FapCraftEquipment", Tag.TAG_LIST)) {
-            this.equipment.fromTag(
+            SlotNbt.load(
+                    this.equipment,
                     tag.getList("FapCraftEquipment", Tag.TAG_COMPOUND),
                     this.registryAccess()
             );
@@ -1341,6 +1372,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     legacyInventory.getList("Items", Tag.TAG_COMPOUND),
                     this.registryAccess()
             );
+        }
+
+        if (tag.contains("FapCraftStorage", Tag.TAG_LIST)) {
+            SlotNbt.load(this.storage, tag.getList("FapCraftStorage", Tag.TAG_COMPOUND), this.registryAccess());
         }
 
         if (!this.hasCustomName() && tag.contains("sexmod:customname", Tag.TAG_STRING)) {
