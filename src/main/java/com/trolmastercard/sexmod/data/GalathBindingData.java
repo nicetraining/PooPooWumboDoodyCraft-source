@@ -8,8 +8,12 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,6 +36,12 @@ public final class GalathBindingData extends SavedData {
     );
 
     private final Map<UUID, UUID> activeByOwner = new HashMap<>();
+    /** Original v.i: players whose Galath has adopted a daughter (Manglelie); she is recreated on every summon. */
+    private final Set<UUID> mangOwners = new HashSet<>();
+    /** Original fq: spawn points of wild Manglelies (nether) and wild Galaths, to keep them 700 / 1000 blocks apart. */
+    private final List<net.minecraft.core.BlockPos> mangSpawns = new ArrayList<>();
+    private final List<net.minecraft.core.BlockPos> galathSpawns = new ArrayList<>();
+    private final Map<UUID, Long> lastCum = new HashMap<>();
 
     public static GalathBindingData get(MinecraftServer server) {
         return server.overworld()
@@ -56,7 +66,73 @@ public final class GalathBindingData extends SavedData {
             }
         }
 
+        for (Tag raw : tag.getList("MangOwners", Tag.TAG_STRING)) {
+            try {
+                data.mangOwners.add(UUID.fromString(raw.getAsString()));
+            } catch (IllegalArgumentException ignored) {
+                // skip a corrupt entry
+            }
+        }
+        for (long packed : tag.getLongArray("MangSpawns")) {
+            data.mangSpawns.add(net.minecraft.core.BlockPos.of(packed));
+        }
+        for (long packed : tag.getLongArray("GalathSpawns")) {
+            data.galathSpawns.add(net.minecraft.core.BlockPos.of(packed));
+        }
+        CompoundTag cum = tag.getCompound("LastCum");
+        for (String key : cum.getAllKeys()) {
+            try {
+                data.lastCum.put(UUID.fromString(key), cum.getLong(key));
+            } catch (IllegalArgumentException ignored) {
+                // skip a corrupt entry
+            }
+        }
         return data;
+    }
+
+    public boolean hasMang(UUID owner) {
+        return this.mangOwners.contains(owner);
+    }
+
+    public void setHasMang(UUID owner) {
+        if (this.mangOwners.add(owner)) {
+            this.setDirty();
+        }
+    }
+
+    public void recordCum(UUID player, long time) {
+        this.lastCum.put(player, time);
+        this.setDirty();
+    }
+
+    /** Original v.a(uuid, world): the morning scene is open to a Manglelie owner whose last dosage lies in the past. */
+    public boolean morningReady(UUID player, long time) {
+        Long last = this.lastCum.get(player);
+        return this.mangOwners.contains(player) && (last == null || time - last > 0L);
+    }
+
+    /** True when a Manglelie or Galath spawn point lies within {@code radius} blocks (original fq.c/fq.b). */
+    public boolean spawnNear(net.minecraft.core.BlockPos pos, double radius, boolean manglelie, boolean galath) {
+        if (manglelie) {
+            for (var other : this.mangSpawns) {
+                if (Math.sqrt(pos.distSqr(other)) < radius) {
+                    return true;
+                }
+            }
+        }
+        if (galath) {
+            for (var other : this.galathSpawns) {
+                if (Math.sqrt(pos.distSqr(other)) < radius) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public void addSpawn(net.minecraft.core.BlockPos pos, boolean manglelie) {
+        (manglelie ? this.mangSpawns : this.galathSpawns).add(pos.immutable());
+        this.setDirty();
     }
 
     public Optional<UUID> activeFor(UUID ownerId) {
@@ -100,6 +176,14 @@ public final class GalathBindingData extends SavedData {
         });
 
         tag.put(BINDINGS_TAG, bindings);
+        ListTag owners = new ListTag();
+        this.mangOwners.forEach(id -> owners.add(net.minecraft.nbt.StringTag.valueOf(id.toString())));
+        tag.put("MangOwners", owners);
+        tag.putLongArray("MangSpawns", this.mangSpawns.stream().mapToLong(net.minecraft.core.BlockPos::asLong).toArray());
+        tag.putLongArray("GalathSpawns", this.galathSpawns.stream().mapToLong(net.minecraft.core.BlockPos::asLong).toArray());
+        CompoundTag cum = new CompoundTag();
+        this.lastCum.forEach((id, time) -> cum.putLong(id.toString(), time));
+        tag.put("LastCum", cum);
         return tag;
     }
 }

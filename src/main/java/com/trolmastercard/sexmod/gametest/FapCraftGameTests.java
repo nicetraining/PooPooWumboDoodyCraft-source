@@ -680,6 +680,63 @@ public final class FapCraftGameTests {
         });
     }
 
+    @GameTest(template = "empty", timeoutTicks = 700, batch = "b_mang")
+    public static void galathAdoptsManglelieAndManglelieShoots(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        floor(helper, 14);
+        CompanionEntity galath = spawnKind(helper, CompanionKind.GALATH);
+        galath.moveTo(helper.absoluteVec(new Vec3(2.5, 1.0, 2.5)));
+        java.util.UUID owner = java.util.UUID.randomUUID();
+        galath.setMaster(owner);
+        CompanionEntity mang = spawnKind(helper, CompanionKind.MANGLELIE);
+        mang.moveTo(helper.absoluteVec(new Vec3(9.5, 1.0, 2.5)));
+        var bindings = com.trolmastercard.sexmod.data.GalathBindingData.get(level.getServer());
+        helper.runAfterDelay(450, () -> {
+            if (galath.familyId() == null || !mang.getUUID().equals(galath.familyId()) || !mang.mangRiding()
+                    || !galath.getUUID().equals(mang.familyId())) {
+                helper.fail("the tamed Galath ran to the wild Manglelie, hugged her and carries her (daughter " + galath.familyId()
+                        + ", riding " + mang.mangRiding() + ", action " + galath.action() + ")");
+                return;
+            }
+            if (!bindings.hasMang(owner)) {
+                helper.fail("her owner is now registered as having a daughter");
+                return;
+            }
+            double dy = mang.getY() - galath.getY();
+            if (dy < 1.8D || dy > 2.4D || mang.distanceToSqr(galath.getX(), mang.getY(), galath.getZ()) > 0.25D) {
+                helper.fail("Manglelie sits on Galath's head (dy " + dy + ")");
+                return;
+            }
+            // damage to the daughter goes to her mother
+            float galathHealth = galath.getHealth();
+            float mangHealth = mang.getHealth();
+            mang.hurt(level.damageSources().generic(), 4.0F);
+            if (mang.getHealth() != mangHealth || galath.getHealth() >= galathHealth) {
+                helper.fail("damage to Manglelie goes to Galath (" + mang.getHealth() + " / " + galath.getHealth() + ")");
+                return;
+            }
+            // a hostile mob in front of Galath within 15 blocks is shot
+            var zombie = EntityType.ZOMBIE.create(level);
+            double yaw = Math.toRadians(galath.getYRot());
+            zombie.moveTo(galath.getX() - Math.sin(yaw) * 8.0D, galath.getY(), galath.getZ() + Math.cos(yaw) * 8.0D);
+            zombie.setNoAi(true);
+            zombie.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_HELMET));
+            level.addFreshEntity(zombie);
+            helper.runAfterDelay(2, () -> galath.setYRot(galath.getYRot()));
+            helper.runAfterDelay(100, () -> {
+                if (!zombie.isAlive() || zombie.getHealth() < zombie.getMaxHealth() || mang.mangTargetId() != -1) {
+                    zombie.discard();
+                    galath.discard();
+                    mang.discard();
+                    helper.succeed();
+                } else {
+                    helper.fail("Manglelie shot at the zombie (target " + mang.mangTargetId() + ", health " + zombie.getHealth() + ")");
+                }
+            });
+        });
+    }
+
     @GameTest(template = "empty", batch = "a_first")
     public static void tribeSpawnClaimAndPersist(GameTestHelper helper) {
         var level = helper.getLevel();

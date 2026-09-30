@@ -78,4 +78,15 @@ public final class CompanionEvents {
             event.setNewDamage(companion.adjustIncomingDamage(event.getNewDamage()));
         }
     }
+
+    /** Original f8.b: arrows shot by Manglelie pass through every companion. */
+    @SubscribeEvent
+    public static void onArrowImpact(net.neoforged.neoforge.event.entity.ProjectileImpactEvent event) {
+        if (event.getProjectile() instanceof net.minecraft.world.entity.projectile.AbstractArrow arrow
+                && arrow.getOwner() instanceof CompanionEntity shooter && shooter.kind() == CompanionKind.MANGLELIE
+                && event.getRayTraceResult() instanceof net.minecraft.world.phys.EntityHitResult hit
+                && hit.getEntity() instanceof CompanionEntity) {
+            event.setCanceled(true);
+        }
+    }
 }

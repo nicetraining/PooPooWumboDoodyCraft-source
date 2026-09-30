@@ -131,6 +131,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_GALATH_BOOST =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Optional<UUID>> DATA_FAMILY =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Boolean> DATA_MANG_RIDING =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_MANG_TARGET =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Long> DATA_MANG_SHOT =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Boolean> DATA_FLYING =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
 
@@ -232,6 +240,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private com.trolmastercard.sexmod.tribe.KoboldBehavior koboldBehavior;
     private LunaFishing lunaFishing;
     private GoblinBehavior goblinBehavior;
+    private ManglelieBehavior manglelieBehavior;
+    /** Client: Manglelie's head turn towards the nearest player or her arrow target (original f8.af / W). */
+    public float mangLookYaw;
+    public float mangLookPitch;
     private CompanionScene queuedScene;
     /** A scene to queue after {@link #queuedScene} has started (Allie: prepare, then the chosen scene). */
     private CompanionScene chainedScene;
@@ -271,6 +283,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (kind == CompanionKind.GOBLIN && !technicalProxy) {
             this.goblinBehavior = new GoblinBehavior(this);
             this.configureGoblin();
+        }
+        if ((kind == CompanionKind.GALATH || kind == CompanionKind.MANGLELIE) && !technicalProxy) {
+            this.manglelieBehavior = new ManglelieBehavior(this);
         }
         if (this.getNavigation() instanceof GroundPathNavigation ground) {
             ground.setCanOpenDoors(true);
@@ -337,6 +352,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (!Mob.checkMobSpawnRules(type, level, spawnType, position, random)) {
             return false;
         }
+        if (type.getDescriptionId().endsWith("manglelie")
+                && (spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION)) {
+            // original f8.getCanSpawnHere: no Galath or Manglelie spawn point within 700 blocks, then this one is recorded
+            var data = GalathBindingData.get(level.getLevel().getServer());
+            if (data.spawnNear(position, 700.0D, true, true)) {
+                return false;
+            }
+            data.addSpawn(position, true);
+        }
         return true;
     }
 
@@ -356,7 +380,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.35D) {
             @Override
             public boolean canUse() {
-                return !CompanionEntity.this.fishingHoldsHer() && super.canUse();
+                return !CompanionEntity.this.fishingHoldsHer() && CompanionEntity.this.kind != CompanionKind.MANGLELIE && super.canUse();
             }
         });
 
@@ -364,18 +388,18 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.15D, true) {
             @Override
             public boolean canUse() {
-                return !CompanionEntity.this.kind.hasMasterAI() && super.canUse();
+                return !CompanionEntity.this.kind.hasMasterAI() && CompanionEntity.this.kind != CompanionKind.MANGLELIE && super.canUse();
             }
 
             @Override
             public boolean canContinueToUse() {
-                return !CompanionEntity.this.kind.hasMasterAI() && super.canContinueToUse();
+                return !CompanionEntity.this.kind.hasMasterAI() && CompanionEntity.this.kind != CompanionKind.MANGLELIE && super.canContinueToUse();
             }
         });
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this) {
             @Override
             public boolean canUse() {
-                return !CompanionEntity.this.kind.hasMasterAI() && super.canUse();
+                return !CompanionEntity.this.kind.hasMasterAI() && CompanionEntity.this.kind != CompanionKind.MANGLELIE && super.canUse();
             }
         });
     }
@@ -397,6 +421,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_SCENE_PARTNER, Optional.empty());
         builder.define(DATA_FLYING, false);
         builder.define(DATA_GALATH_BOOST, 0);
+        builder.define(DATA_FAMILY, Optional.empty());
+        builder.define(DATA_MANG_RIDING, false);
+        builder.define(DATA_MANG_TARGET, -1);
+        builder.define(DATA_MANG_SHOT, -1L);
         builder.define(DATA_ALLIE_USES, 0);
         builder.define(DATA_BEE_TAMED, false);
         builder.define(DATA_BEE_CHEST, false);
@@ -463,6 +491,45 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     public void setGoblinFade(float fade) {
         this.entityData.set(DATA_G_FADE, fade);
+    }
+
+    public ManglelieBehavior manglelie() {
+        return this.manglelieBehavior;
+    }
+
+    /** Manglelie: her mother. Galath: her daughter. */
+    public UUID familyId() {
+        return this.entityData.get(DATA_FAMILY).orElse(null);
+    }
+
+    public void setFamilyId(UUID id) {
+        this.entityData.set(DATA_FAMILY, Optional.ofNullable(id));
+    }
+
+    public boolean mangRiding() {
+        return this.entityData.get(DATA_MANG_RIDING);
+    }
+
+    public void setMangRiding(boolean riding) {
+        this.entityData.set(DATA_MANG_RIDING, riding);
+    }
+
+    public int mangTargetId() {
+        return this.entityData.get(DATA_MANG_TARGET);
+    }
+
+    public long mangShotStart() {
+        return this.entityData.get(DATA_MANG_SHOT);
+    }
+
+    public void setMangTarget(int id, long startTime) {
+        this.entityData.set(DATA_MANG_TARGET, id);
+        this.entityData.set(DATA_MANG_SHOT, startTime);
+    }
+
+    public Entity mangTarget() {
+        int id = this.mangTargetId();
+        return id == -1 ? null : this.level().getEntity(id);
     }
 
     public GoblinBehavior goblin() {
@@ -753,6 +820,59 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 this.entityData.set(DATA_GALATH_BOOST, 0);
             }
         }
+    }
+
+    /** Original f8.m (client, every 7 ticks): the daughter turns her head to the nearest player within 6 blocks or her arrow target. */
+    private void updateMangLook() {
+        CompanionEntity mother = null;
+        if (this.familyId() != null) {
+            for (CompanionEntity candidate : this.level().getEntitiesOfClass(CompanionEntity.class, this.getBoundingBox().inflate(4.0D),
+                    c -> c.kind == CompanionKind.GALATH && this.familyId().equals(c.getUUID()))) {
+                mother = candidate;
+            }
+        }
+        if (mother == null || !this.mangRiding()) {
+            return;
+        }
+        Entity look = this.mangTarget();
+        if (look == null) {
+            double best = 36.0D;
+            for (Player player : this.level().players()) {
+                double d = player.distanceToSqr(this);
+                if (d <= best) {
+                    best = d;
+                    look = player;
+                }
+            }
+        }
+        if (look == null) {
+            this.mangLookYaw = 0.0F;
+            this.mangLookPitch = 0.0F;
+            return;
+        }
+        Vec3 eyes = look.position().add(0.0D, look.getEyeHeight(), 0.0D);
+        Vec3 head = mother.position().add(0.0D, ManglelieBehavior.HEAD_HEIGHT + 0.4D, 0.0D);
+        Vec3 delta = head.subtract(eyes);
+        float yaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) + 90.0D) - mother.yHeadRot;
+        float wrapped = net.minecraft.util.Mth.wrapDegrees(yaw);
+        this.mangLookYaw = Math.abs(wrapped) < 80.0F ? -wrapped : 0.0F;
+        this.mangLookPitch = this.mangLookYaw == 0.0F ? 0.0F
+                : (float) net.minecraft.util.Mth.clamp(-delta.y / 2.0D, -0.75D, 0.75D);
+    }
+
+    /** Original f8.attackEntityFrom: while she has a mother, all damage (except the void and /kill) goes to the mother. */
+    @Override
+    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
+        if (this.kind == CompanionKind.MANGLELIE && this.level() instanceof ServerLevel serverLevel
+                && !source.is(net.minecraft.world.damagesource.DamageTypes.FELL_OUT_OF_WORLD)
+                && !source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL)) {
+            CompanionEntity mother = ManglelieBehavior.find(serverLevel, this.familyId());
+            if (mother != null) {
+                mother.hurt(source, amount);
+                return false;
+            }
+        }
+        return super.hurt(source, amount);
     }
 
     @Override
@@ -1800,6 +1920,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     /** Original e3.canBeCollidedWith: only a running, waiting or idle goblin that nobody carries can be hit or clicked. */
     @Override
     public boolean isPickable() {
+        if (this.kind == CompanionKind.MANGLELIE && this.familyId() != null) {
+            return false; // original f8.canBeCollidedWith: only while she has no mother
+        }
         if (this.goblinBehavior != null) {
             int st = this.goblinState();
             if (st == GoblinBehavior.THROWN) {
@@ -1878,6 +2001,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
         if (this.kind == CompanionKind.KOBOLD && this.level().isClientSide) {
             com.trolmastercard.sexmod.client.ClientHooks.koboldGreeting(this);
+        }
+        if (this.kind == CompanionKind.MANGLELIE && this.level().isClientSide && this.tickCount % 7 == 0) {
+            this.updateMangLook();
         }
         if (this.kind == CompanionKind.ALLIE && this.level().isClientSide) {
             if (this.tickCount == 1) {
@@ -1964,6 +2090,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if (this.goblinBehavior != null) {
             this.goblinBehavior.tick(serverLevel);
+        }
+        if (this.manglelieBehavior != null) {
+            this.manglelieBehavior.tick(serverLevel);
         }
         this.tickEllieHorny(serverLevel);
         this.tickTargetSanity();
@@ -2766,6 +2895,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.finishScene(false);
         }
 
+        if (reason.shouldDestroy() && this.kind == CompanionKind.GALATH && this.level() instanceof ServerLevel serverLevel
+                && this.familyId() != null) {
+            ManglelieBehavior.removeDaughter(serverLevel, this); // she leaves with her mother
+        }
         if (reason.shouldDestroy() && this.goblinBehavior != null) {
             this.goblinBehavior.dropItem();
         }
@@ -2857,6 +2990,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("FapCraftKind", this.kind.registryPath());
+        if (this.kind == CompanionKind.MANGLELIE && this.manglelieBehavior != null) {
+            tag.putString("sexmod:mommy", this.familyId() == null ? "" : this.familyId().toString());
+            tag.putBoolean("sexmod:iswild", this.manglelieBehavior.wild());
+        }
         tag.putString("girlID", this.girlId.toString());
         if (!this.kind.hasClothingToggle()) {
             tag.putString("FapCraftOutfit", this.outfit().serializedName());
@@ -2958,6 +3095,17 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             }
         }
 
+        if (this.kind == CompanionKind.MANGLELIE && this.manglelieBehavior != null) {
+            String mommy = tag.getString("sexmod:mommy");
+            if (!mommy.isEmpty()) {
+                try {
+                    this.manglelieBehavior.setPendingMother(UUID.fromString(mommy));
+                } catch (IllegalArgumentException ignored) {
+                    // a corrupt id leaves her wild
+                }
+            }
+            this.manglelieBehavior.setWild(tag.getBoolean("sexmod:iswild"));
+        }
         if (this.goblinBehavior != null) {
             this.setGoblinQueen(tag.getBoolean("isQueen"));
             String saved = tag.getString("model");
@@ -3065,6 +3213,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        if (this.kind == CompanionKind.MANGLELIE) {
+            // original f8 second controller: the angry face while she has an arrow target
+            controllers.add(new AnimationController<CompanionEntity>(this, "face", 0, state -> this.mangTargetId() == -1
+                    ? software.bernie.geckolib.animation.PlayState.STOP
+                    : state.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.manglelie.angry_face"))));
+        }
         controllers.add(new AnimationController<CompanionEntity>(this, "main", 0, this::animationPredicate)
                 .setSoundKeyframeHandler(event -> com.trolmastercard.sexmod.client.KeyframeEvents
                         .handle(this, event.getKeyframeData().getSound())));
@@ -3117,6 +3271,19 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return state.setAndContinue(this.entityData.get(DATA_GALATH_BOOST) > 0
                     ? software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.galath.boost")
                     : software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.galath.controlled_flight"));
+        }
+        if (this.kind == CompanionKind.GALATH && this.action() == CompanionAction.GALATH_HUG_MANG) {
+            return state.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin().thenPlayAndHold("animation.galath.hug_mang"));
+        }
+        if (this.kind == CompanionKind.MANGLELIE) {
+            // original f8 predicate: running / sitting on her mother's head, else walk or idle
+            return state.setAndContinue(switch (this.action()) {
+                case MANG_RUN -> software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.manglelie.running");
+                case MANG_RIDE -> software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.manglelie.sit_on_galath");
+                default -> this.isWalkingVisibly()
+                        ? software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.manglelie.walk")
+                        : software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.manglelie.idle");
+            });
         }
         if (this.koboldBehavior != null) {
             return state.setAndContinue(this.koboldAnimation());

@@ -81,6 +81,14 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
         if (entity.goblin() != null) {
             goblinPose(entity);
         }
+        if (entity.kind() == com.trolmastercard.sexmod.entity.CompanionKind.MANGLELIE && entity.mangRiding()) {
+            // original f8.af / W: she looks at the nearest player or her target while sitting on her mother's head
+            GeoBone head = this.bone("Head2");
+            if (head != null) {
+                head.setRotY(head.getRotY() + (float) Math.toRadians(entity.mangLookYaw));
+                head.setRotX(head.getRotX() + entity.mangLookPitch);
+            }
+        }
     }
 
     private GeoBone bone(String name) {
