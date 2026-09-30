@@ -282,6 +282,18 @@ public enum CompanionScene {
     }
 
     /**
+     * The original's per-state {@code useBoyCam} flag: in first person the view sits on the animated
+     * {@code boyCam} bone of the girl's model. Only the states that flag it (carry, prone doggy,
+     * Allie's deepthroat and reverse cowgirl) use it; others keep the player's own position.
+     */
+    public boolean usesBoyCam() {
+        return switch (this) {
+            case ELLIE_CARRY, BIA_PRONE, ALLIE_DEEPTHROAT, ALLIE_REVERSE_COWGIRL -> true;
+            default -> false;
+        };
+    }
+
+    /**
      * Kind whose texture, animation file and cosmetic bone rules this scene
      * borrows, or {@code null} when the companion's own assets are used.
      */

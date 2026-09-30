@@ -50,6 +50,26 @@ public final class ClientGameplayEvents {
             return;
         }
 
+        if (companion.currentScene().usesBoyCam()) {
+            software.bernie.geckolib.cache.object.GeoBone bone = CompanionRenderer.boyCam(companion.getId());
+            if (bone != null) {
+                org.joml.Vector3d position = bone.getWorldPosition();
+                if (position.lengthSquared() > 1.0E-6D) {
+                    cameraPlayer = player;
+                    savedPlayerPosition = player.position();
+                    savedPreviousPosition = new Vec3(player.xo, player.yo, player.zo);
+                    sceneCameraEye = null;
+                    sceneCameraTarget = null;
+                    double eyeY = position.y - player.getEyeHeight();
+                    player.setPos(position.x, eyeY, position.z);
+                    player.xo = position.x;
+                    player.yo = eyeY;
+                    player.zo = position.z;
+                    return;
+                }
+            }
+        }
+
         float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         Vec3 target = interpolatedSceneTarget(companion, partialTick);
         float yaw = Mth.rotLerp(partialTick, companion.yRotO, companion.getYRot());

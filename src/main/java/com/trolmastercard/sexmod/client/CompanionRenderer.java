@@ -16,6 +16,13 @@ import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> {
+    private static final java.util.Map<Integer, GeoBone> BOY_CAMS = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** The animated {@code boyCam} bone as of the last frame this entity was drawn, or null. */
+    public static GeoBone boyCam(int entityId) {
+        return BOY_CAMS.get(entityId);
+    }
+
     public CompanionRenderer(EntityRendererProvider.Context context) {
         super(context, new CompanionModel());
         this.shadowRadius = 0.2F;
@@ -66,6 +73,10 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
             int packedOverlay,
             int renderColor
     ) {
+        if (bone.getName().equals("boyCam")) {
+            bone.setTrackingMatrices(true);
+            BOY_CAMS.put(entity.getId(), bone);
+        }
         if (bone.getName().equalsIgnoreCase("steve")
                 && entity.currentScene() != null
                 && entity.currentScene().hasPartner()) {
