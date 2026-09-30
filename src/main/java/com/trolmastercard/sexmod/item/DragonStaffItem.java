@@ -2,7 +2,6 @@ package com.trolmastercard.sexmod.item;
 
 import com.trolmastercard.sexmod.entity.CompanionEntity;
 import com.trolmastercard.sexmod.entity.CompanionKind;
-import com.trolmastercard.sexmod.entity.CompanionMode;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -18,13 +17,16 @@ import java.util.List;
 public final class DragonStaffItem extends LegacyPurposeItem {
     private static final double COMMAND_RANGE = 48.0D;
     private static final String MODE_KEY = "FapCraftDragonStaffMode";
-    private static final List<CompanionMode> COMMAND_MODES = List.of(
-            CompanionMode.FOLLOW,
-            CompanionMode.STAY,
-            CompanionMode.GUARD,
-            CompanionMode.HOME,
-            CompanionMode.WANDER
-    );
+    /** Placeholder commands until the original's tribe radial menu is ported. */
+    private enum StaffCommand {
+        FOLLOW, STAY, HOME;
+
+        String serializedName() {
+            return this.name().toLowerCase(java.util.Locale.ROOT);
+        }
+    }
+
+    private static final List<StaffCommand> COMMAND_MODES = List.of(StaffCommand.values());
 
     public DragonStaffItem(Properties properties) {
         super(properties, "dragon_staff", 2);
@@ -48,7 +50,7 @@ public final class DragonStaffItem extends LegacyPurposeItem {
                 return InteractionResultHolder.success(stack);
             }
 
-            CompanionMode selectedMode = COMMAND_MODES.get(Math.floorMod(
+            StaffCommand selectedMode = COMMAND_MODES.get(Math.floorMod(
                     player.getPersistentData().getInt(MODE_KEY),
                     COMMAND_MODES.size()
             ));
@@ -56,15 +58,15 @@ public final class DragonStaffItem extends LegacyPurposeItem {
                     CompanionEntity.class,
                     player.getBoundingBox().inflate(COMMAND_RANGE),
                     companion -> companion.kind() == CompanionKind.KOBOLD
-                            && companion.mayBeCommandedBy(player)
+                            && companion.canUsePanel(player)
             );
 
             for (CompanionEntity kobold : kobolds) {
-                kobold.bondTo(player, selectedMode == CompanionMode.FOLLOW);
-                if (selectedMode == CompanionMode.STAY) {
-                    kobold.setHome(kobold.blockPosition());
+                switch (selectedMode) {
+                    case FOLLOW -> kobold.setMaster(player.getUUID());
+                    case STAY -> kobold.clearMaster();
+                    case HOME -> kobold.startGoHome();
                 }
-                kobold.setMode(selectedMode);
             }
 
             player.displayClientMessage(

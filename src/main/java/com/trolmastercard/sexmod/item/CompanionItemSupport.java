@@ -1,12 +1,10 @@
 package com.trolmastercard.sexmod.item;
 
-import com.trolmastercard.sexmod.data.CompanionOwnershipData;
 import com.trolmastercard.sexmod.entity.CompanionEntity;
 import com.trolmastercard.sexmod.entity.CompanionKind;
 import com.trolmastercard.sexmod.registry.ModEntities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -21,26 +19,6 @@ final class CompanionItemSupport {
         return player.blockPosition().relative(player.getDirection(), 2);
     }
 
-    static boolean hasCapacity(
-            ServerLevel level,
-            Player owner,
-            CompanionKind kind,
-            int amount
-    ) {
-        return CompanionOwnershipData.get(level.getServer())
-                .canClaim(owner.getUUID(), kind, amount);
-    }
-
-    static void showCapacityLimit(Player owner) {
-        owner.displayClientMessage(
-                Component.translatable(
-                        "message.sexmod.companion_limit",
-                        CompanionOwnershipData.MAX_TOTAL
-                ),
-                true
-        );
-    }
-
     static CompanionEntity spawn(
             ServerLevel level,
             CompanionKind kind,
@@ -48,11 +26,6 @@ final class CompanionItemSupport {
             Player owner,
             boolean following
     ) {
-        if (!hasCapacity(level, owner, kind, 1)) {
-            showCapacityLimit(owner);
-            return null;
-        }
-
         CompanionEntity companion = ModEntities.get(kind).spawn(
                 level,
                 position,
@@ -63,10 +36,8 @@ final class CompanionItemSupport {
             return null;
         }
 
-        if (!companion.bondTo(owner, following)) {
-            companion.discard();
-            showCapacityLimit(owner);
-            return null;
+        if (following) {
+            companion.setMaster(owner.getUUID());
         }
         level.sendParticles(
                 ParticleTypes.PORTAL,

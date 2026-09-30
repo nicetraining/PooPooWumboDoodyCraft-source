@@ -70,7 +70,7 @@ public final class GalathCoinItem extends LegacyPurposeItem {
     ) {
         if (!(target instanceof CompanionEntity companion)
                 || companion.kind() != CompanionKind.GALATH
-                || !companion.isOwnedBy(player)) {
+                || !companion.isMaster(player)) {
             return InteractionResult.PASS;
         }
 

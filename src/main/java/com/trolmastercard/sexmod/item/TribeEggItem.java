@@ -33,11 +33,6 @@ public final class TribeEggItem extends LegacyPurposeItem {
         }
 
         if (context.getLevel() instanceof ServerLevel serverLevel) {
-            if (!CompanionItemSupport.hasCapacity(serverLevel, player, CompanionKind.KOBOLD, OFFSETS.length)) {
-                CompanionItemSupport.showCapacityLimit(player);
-                return InteractionResult.FAIL;
-            }
-
             BlockPos origin = context.getClickedPos().relative(context.getClickedFace());
             List<CompanionEntity> spawned = new ArrayList<>(OFFSETS.length);
 

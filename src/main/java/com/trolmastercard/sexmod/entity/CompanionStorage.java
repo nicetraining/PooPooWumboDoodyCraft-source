@@ -19,6 +19,6 @@ public final class CompanionStorage extends SimpleContainer {
         return this.owner.isAlive()
                 && !this.owner.isRemoved()
                 && player.distanceToSqr(this.owner) <= 64.0D
-                && this.owner.mayBeCommandedBy(player);
+                && this.owner.canUsePanel(player);
     }
 }

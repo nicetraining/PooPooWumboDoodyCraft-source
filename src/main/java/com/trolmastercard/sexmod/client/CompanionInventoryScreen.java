@@ -24,7 +24,6 @@ public final class CompanionInventoryScreen extends AbstractContainerScreen<Comp
     private Button outfit;
     private Button variant;
     private Button scale;
-    private Button mode;
     private Button home;
     private Button storage;
 
@@ -76,12 +75,8 @@ public final class CompanionInventoryScreen extends AbstractContainerScreen<Comp
                 "editor.sexmod.scale", x + 118, y + 169, 54, 20,
                 CompanionInventoryMenu.BUTTON_SCALE
         ));
-        this.mode = this.addRenderableWidget(this.button(
-                "editor.sexmod.movement", x + 4, y + 192, 82, 20,
-                CompanionInventoryMenu.BUTTON_MODE
-        ));
         this.home = this.addRenderableWidget(this.button(
-                "editor.sexmod.home", x + 89, y + 192, 83, 20,
+                "editor.sexmod.home", x + 4, y + 192, 168, 20,
                 CompanionInventoryMenu.BUTTON_HOME
         ));
         if (this.menu.companion() != null && this.menu.companion().kind().hasStorage()) {
@@ -132,7 +127,6 @@ public final class CompanionInventoryScreen extends AbstractContainerScreen<Comp
         this.outfit.active = !active;
         this.variant.active = !active;
         this.scale.active = !active;
-        this.mode.active = !active;
         this.home.active = !active;
     }
 

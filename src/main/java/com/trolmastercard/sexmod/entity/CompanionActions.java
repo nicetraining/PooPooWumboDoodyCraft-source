@@ -34,7 +34,7 @@ public final class CompanionActions {
         List<CompanionScene> all = menu == null ? CompanionScene.forKind(companion.kind()) : menu.actions();
         List<CompanionScene> result = new ArrayList<>();
         for (CompanionScene scene : all) {
-            if (scene == CompanionScene.KOBOLD_MATING_PRESS && !companion.isOwnedBy(player)) {
+            if (scene == CompanionScene.KOBOLD_MATING_PRESS && !companion.isMaster(player)) {
                 continue;
             }
             result.add(scene);
@@ -58,7 +58,7 @@ public final class CompanionActions {
     /** What this player actually has to pay: Kobold prices are waived for its owner and while it is under the horny effect. */
     public static ItemStack costFor(CompanionEntity companion, Player player, CompanionScene scene) {
         if (scene.kind() == CompanionKind.KOBOLD
-                && (companion.isOwnedBy(player) || companion.hasEffect(ModPotions.HORNY_EFFECT))) {
+                && (companion.isMaster(player) || companion.hasEffect(ModPotions.HORNY_EFFECT))) {
             return ItemStack.EMPTY;
         }
         return costOf(scene);

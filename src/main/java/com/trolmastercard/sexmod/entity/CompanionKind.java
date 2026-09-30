@@ -107,6 +107,8 @@ public enum CompanionKind {
     private final String animationPath;
     private final RawAnimation idleAnimation;
     private final RawAnimation walkAnimation;
+    private final String animationPrefix;
+    private final java.util.Map<String, RawAnimation> stateAnimations = new java.util.concurrent.ConcurrentHashMap<>();
     private final float width;
     private final float height;
     private final double maxHealth;
@@ -136,6 +138,7 @@ public enum CompanionKind {
         this.animationPath = animationPath;
         this.idleAnimation = RawAnimation.begin().thenLoop(idleAnimation);
         this.walkAnimation = RawAnimation.begin().thenLoop(walkAnimation);
+        this.animationPrefix = idleAnimation.substring(0, idleAnimation.lastIndexOf('.') + 1);
         this.width = width;
         this.height = height;
         this.maxHealth = maxHealth;
@@ -255,6 +258,30 @@ public enum CompanionKind {
     /** Kinds with the original 27-slot storage chest (Kobold and Bee). */
     public boolean hasStorage() {
         return this == KOBOLD || this == BEE;
+    }
+
+    /**
+     * Jenny, Ellie, Bia and Luna share the original's master logic: follow, fight, get downed, heal,
+     * go home. The other kinds have their own AI in the original and get it when they are ported.
+     */
+    public boolean hasMasterAI() {
+        return this == JENNY || this == ELLIE || this == BIA || this == LUNA;
+    }
+
+    /** Translation key of the line said when she is following somebody else (Luna is never busy). */
+    public String busyDialogue() {
+        return switch (this) {
+            case JENNY -> "jenny.dialogue.busy";
+            case ELLIE -> "ellie.dialogue.busy";
+            case BIA -> "bia.dialogue.busy";
+            default -> null;
+        };
+    }
+
+    /** Looping animation of this kind for a base state such as "downed" or "fastwalk". */
+    public RawAnimation stateAnimation(String suffix) {
+        return this.stateAnimations.computeIfAbsent(
+                suffix, key -> RawAnimation.begin().thenLoop(this.animationPrefix + key));
     }
 
     /** The original let any player open a Kobold's (paid) action menu, owned or not. */

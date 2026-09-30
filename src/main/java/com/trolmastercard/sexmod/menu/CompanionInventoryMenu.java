@@ -1,7 +1,6 @@
 package com.trolmastercard.sexmod.menu;
 
 import com.trolmastercard.sexmod.entity.CompanionEntity;
-import com.trolmastercard.sexmod.entity.CompanionMode;
 import com.trolmastercard.sexmod.entity.CompanionScene;
 import com.trolmastercard.sexmod.entity.OutfitMode;
 import com.trolmastercard.sexmod.registry.ModMenus;
@@ -30,7 +29,6 @@ public final class CompanionInventoryMenu extends AbstractContainerMenu {
     public static final int BUTTON_OUTFIT = 6;
     public static final int BUTTON_VARIANT = 7;
     public static final int BUTTON_SCALE = 8;
-    public static final int BUTTON_MODE = 9;
     public static final int BUTTON_HOME = 10;
     public static final int BUTTON_STORAGE = 11;
 
@@ -146,7 +144,7 @@ public final class CompanionInventoryMenu extends AbstractContainerMenu {
         return companion != null
                 && companion.isAlive()
                 && player.distanceToSqr(companion) <= 64.0D
-                && companion.mayBeCommandedBy(player);
+                && companion.canUsePanel(player);
     }
 
     @Override
@@ -182,7 +180,6 @@ public final class CompanionInventoryMenu extends AbstractContainerMenu {
                             ? 0.75F
                             : companion.appearanceScale() + 0.25F
             );
-            case BUTTON_MODE -> companion.setMode(companion.mode().next());
             case BUTTON_STORAGE -> {
                 if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
                     companion.openStorageMenu(serverPlayer);
@@ -190,7 +187,6 @@ public final class CompanionInventoryMenu extends AbstractContainerMenu {
             }
             case BUTTON_HOME -> {
                 companion.setHome(companion.blockPosition());
-                companion.setMode(CompanionMode.HOME);
                 player.displayClientMessage(Component.translatable("message.sexmod.home_set"), true);
             }
             default -> {

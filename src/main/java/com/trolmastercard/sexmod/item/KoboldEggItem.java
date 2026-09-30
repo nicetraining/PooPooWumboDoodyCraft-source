@@ -1,6 +1,5 @@
 package com.trolmastercard.sexmod.item;
 
-import com.trolmastercard.sexmod.data.CompanionOwnershipData;
 import com.trolmastercard.sexmod.entity.CompanionKind;
 import com.trolmastercard.sexmod.entity.KoboldEggEntity;
 import com.trolmastercard.sexmod.registry.ModEntities;
@@ -25,11 +24,6 @@ public final class KoboldEggItem extends LegacyPurposeItem {
         if (!(context.getLevel() instanceof ServerLevel serverLevel)) {
             return InteractionResult.SUCCESS;
         }
-        if (!CompanionItemSupport.hasCapacity(serverLevel, player, CompanionKind.KOBOLD, 1)) {
-            CompanionItemSupport.showCapacityLimit(player);
-            return InteractionResult.FAIL;
-        }
-
         BlockPos position = context.getClickedPos().relative(context.getClickedFace());
         KoboldEggEntity egg = ModEntities.KOBOLD_EGG.get().create(serverLevel);
         if (egg == null) {
@@ -40,13 +34,7 @@ public final class KoboldEggItem extends LegacyPurposeItem {
         egg.setYRot(player.getYRot());
         egg.setOwnerId(player.getUUID());
         egg.setTribeId(egg.getUUID());
-        CompanionOwnershipData ownership = CompanionOwnershipData.get(serverLevel.getServer());
-        if (!ownership.claim(player.getUUID(), egg.getUUID(), CompanionKind.KOBOLD)) {
-            CompanionItemSupport.showCapacityLimit(player);
-            return InteractionResult.FAIL;
-        }
         if (!serverLevel.addFreshEntity(egg)) {
-            ownership.release(player.getUUID(), egg.getUUID());
             return InteractionResult.FAIL;
         }
 

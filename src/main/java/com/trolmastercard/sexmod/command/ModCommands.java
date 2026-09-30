@@ -5,7 +5,6 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.trolmastercard.sexmod.FapCraft;
 import com.trolmastercard.sexmod.entity.CompanionEntity;
-import com.trolmastercard.sexmod.entity.CompanionMode;
 import com.trolmastercard.sexmod.entity.CompanionScene;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -27,15 +26,6 @@ public final class ModCommands {
     @SubscribeEvent
     public static void register(RegisterCommandsEvent event) {
         event.getDispatcher().register(Commands.literal("fapcraft")
-                .then(Commands.literal("mode")
-                        .then(Commands.argument("target", EntityArgument.entity())
-                                .then(Commands.argument("mode", StringArgumentType.word())
-                                        .suggests((context, builder) -> SharedSuggestionProvider.suggest(
-                                                Arrays.stream(CompanionMode.values())
-                                                        .map(CompanionMode::serializedName),
-                                                builder
-                                        ))
-                                        .executes(ModCommands::setMode))))
                 .then(Commands.literal("home")
                         .then(Commands.argument("target", EntityArgument.entity())
                                 .executes(ModCommands::setHome)))
@@ -52,34 +42,6 @@ public final class ModCommands {
                         .then(Commands.argument("target", EntityArgument.entity())
                                 .executes(ModCommands::stopScene))));
     }
-    private static int setMode(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        CompanionEntity companion = target(context);
-        if (companion == null) {
-            return 0;
-        }
-
-        String value = StringArgumentType.getString(context, "mode");
-        CompanionMode mode = Arrays.stream(CompanionMode.values())
-                .filter(candidate -> candidate.serializedName().equalsIgnoreCase(value))
-                .findFirst()
-                .orElse(null);
-        if (mode == null) {
-            context.getSource().sendFailure(Component.translatable("command.sexmod.invalid_mode", value));
-            return 0;
-        }
-
-        companion.setMode(mode);
-        context.getSource().sendSuccess(
-                () -> Component.translatable(
-                        "command.sexmod.mode_set",
-                        companion.getDisplayName(),
-                        Component.translatable("mode.sexmod." + mode.serializedName())
-                ),
-                false
-        );
-        return 1;
-    }
-
     private static int setHome(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CompanionEntity companion = target(context);
         if (companion == null) {
@@ -87,7 +49,6 @@ public final class ModCommands {
         }
 
         companion.setHome(companion.blockPosition());
-        companion.setMode(CompanionMode.HOME);
         context.getSource().sendSuccess(
                 () -> Component.translatable("command.sexmod.home_set", companion.getDisplayName()),
                 false
@@ -146,7 +107,7 @@ public final class ModCommands {
             return null;
         }
 
-        if (!companion.mayBeCommandedBy(context.getSource().getPlayerOrException())) {
+        if (!context.getSource().hasPermission(2)) {
             context.getSource().sendFailure(Component.translatable(
                     "message.sexmod.editor_denied",
                     companion.getDisplayName()

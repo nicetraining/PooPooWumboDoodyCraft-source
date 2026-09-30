@@ -1,6 +1,5 @@
 package com.trolmastercard.sexmod.entity;
 
-import com.trolmastercard.sexmod.data.CompanionOwnershipData;
 import com.trolmastercard.sexmod.data.GalathBindingData;
 import com.trolmastercard.sexmod.menu.CompanionInventoryMenu;
 import com.trolmastercard.sexmod.registry.ModEntities;
@@ -72,6 +71,13 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
+import net.minecraft.world.entity.ai.goal.TemptGoal;
+import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.projectile.ThrownEnderpearl;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.component.ItemAttributeModifiers;
 
 /**
  * Shared 1.21.1 implementation for the eleven original companion entity IDs.
@@ -88,12 +94,18 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private static final int SCENE_CONTROL_COOLDOWN = 5;
     private static final int SCENE_ENVIRONMENT_CHECK_INTERVAL = 20;
     private static final double SCENE_PRIVACY_RADIUS = 12.0D;
-    private static final EntityDataAccessor<Optional<UUID>> DATA_OWNER =
+    /** The player she is following right now (original "master"); transient, never saved. */
+    private static final EntityDataAccessor<Optional<UUID>> DATA_MASTER =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
-    private static final EntityDataAccessor<Boolean> DATA_FOLLOWING =
-            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<String> DATA_MODE =
+    private static final EntityDataAccessor<String> DATA_ACTION =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Boolean> DATA_DOWNED =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    /** 0 walk, 1 fast walk, 2 run: picks the movement animation. */
+    private static final EntityDataAccessor<Integer> DATA_SPEED_CLASS =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_ATTACK_VARIANT =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<String> DATA_OUTFIT =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> DATA_VARIANT =
@@ -127,11 +139,21 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private float sceneAnchorYaw;
     private boolean scenePreviousNoAi;
     private boolean scenePreviousNoGravity;
-    private CompanionMode scenePreviousMode;
     private String lastAnimationKey = "";
     private int rangedAttackCooldown;
     private boolean richRewardGranted;
-    private boolean ownershipTracked;
+    /** Stable identity of this girl (original "girlID"); packets and saves address her by it. */
+    private UUID girlId = UUID.randomUUID();
+    private FollowState followState = FollowState.IDLE;
+    private int followLinger;
+    private int idleTimer;
+    private int swingCooldown;
+    private int reaggroCooldown;
+    private int attackAnimTicks;
+    private boolean pinned;
+    private Vec3 pinPosition;
+    private float pinYaw;
+    private int goHomeTicks = -1;
 
     public CompanionEntity(EntityType<? extends CompanionEntity> entityType, Level level, CompanionKind kind) {
         this(entityType, level, kind, false);
@@ -147,6 +169,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.kind = kind;
         this.technicalProxy = technicalProxy;
         this.xpReward = 0;
+        if (this.getNavigation() instanceof GroundPathNavigation ground) {
+            ground.setCanOpenDoors(true);
+        }
         this.equipment.addListener(ignored -> this.syncEquipmentSlots());
         for (EquipmentSlot slot : new EquipmentSlot[]{
                 EquipmentSlot.MAINHAND,
@@ -177,6 +202,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 .add(Attributes.ATTACK_DAMAGE, switch (kind) {
                     case GALATH, MANGLELIE -> 7.0D;
                     case KOBOLD, GOBLIN -> 4.0D;
+                    // Jenny, Ellie, Bia and Luna hit for exactly what their weapon adds (as in the original).
+                    case JENNY, ELLIE, BIA, LUNA -> 0.0D;
                     default -> 3.0D;
                 })
                 .add(Attributes.ARMOR, kind == CompanionKind.GALATH ? 4.0D : 0.0D)
@@ -198,7 +225,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return serverLevel.getEntitiesOfClass(
                     CompanionEntity.class,
                     area,
-                    companion -> companion.ownerId().isEmpty() && !companion.isTechnicalProxy()
+                    companion -> !companion.hasMaster() && !companion.isTechnicalProxy()
             ).size() < 2;
         }
         return true;
@@ -206,34 +233,43 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     protected void registerGoals() {
+        // Same priorities as the original base entity.
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(1, new FollowOwnerGoal());
-        this.goalSelector.addGoal(2, new ReturnHomeGoal());
-        this.goalSelector.addGoal(3, new MeleeAttackGoal(this, 1.15D, true));
-        this.goalSelector.addGoal(5, new ModeWanderGoal());
-        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(1, new MasterGoal());
+        this.goalSelector.addGoal(2, new TemptGoal(
+                this, 0.4D, Ingredient.of(Items.EMERALD, Items.DIAMOND, Items.GOLD_INGOT, Items.ENDER_PEARL), false));
+        this.goalSelector.addGoal(3, new OpenDoorGoal(this, true));
+        this.goalSelector.addGoal(5, new IdleLookGoal());
+        this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.35D));
 
-        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(
-                2,
-                new NearestAttackableTargetGoal<>(
-                        this,
-                        Monster.class,
-                        10,
-                        true,
-                        false,
-                        target -> this.mode() == CompanionMode.GUARD && !this.isAlliedTo(target)
-                )
-        );
+        // Kinds without the master/combat logic keep the old generic fighting until each one is ported.
+        this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.15D, true) {
+            @Override
+            public boolean canUse() {
+                return !CompanionEntity.this.kind.hasMasterAI() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !CompanionEntity.this.kind.hasMasterAI() && super.canContinueToUse();
+            }
+        });
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this) {
+            @Override
+            public boolean canUse() {
+                return !CompanionEntity.this.kind.hasMasterAI() && super.canUse();
+            }
+        });
     }
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(DATA_OWNER, Optional.empty());
-        builder.define(DATA_FOLLOWING, false);
-        builder.define(DATA_MODE, CompanionMode.WANDER.serializedName());
+        builder.define(DATA_MASTER, Optional.empty());
+        builder.define(DATA_ACTION, CompanionAction.NONE.name());
+        builder.define(DATA_DOWNED, false);
+        builder.define(DATA_SPEED_CLASS, 0);
+        builder.define(DATA_ATTACK_VARIANT, 0);
         builder.define(DATA_OUTFIT, OutfitMode.DEFAULT.serializedName());
         builder.define(DATA_VARIANT, 0);
         builder.define(DATA_SCALE, 1.0F);
@@ -244,32 +280,93 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_FLYING, false);
     }
 
-    public Optional<UUID> ownerId() {
-        return this.entityData.get(DATA_OWNER);
+    public Optional<UUID> masterId() {
+        return this.entityData.get(DATA_MASTER);
+    }
+
+    public boolean hasMaster() {
+        return this.masterId().isPresent();
+    }
+
+    public boolean isMaster(Player player) {
+        return this.masterId().map(player.getUUID()::equals).orElse(false);
+    }
+
+    /** Sets (or with null clears) the follow target. Nothing is saved: after a reload she follows nobody. */
+    public void setMaster(UUID master) {
+        this.entityData.set(DATA_MASTER, Optional.ofNullable(master));
+        if (master == null) {
+            this.entityData.set(DATA_SPEED_CLASS, 0);
+        }
+    }
+
+    /** The original's x(): stop following and go back to walking speed. */
+    public void clearMaster() {
+        this.setMaster(null);
     }
 
     public boolean isFollowing() {
-        return this.mode() == CompanionMode.FOLLOW;
+        return this.hasMaster();
     }
 
-    public void setFollowing(boolean following) {
-        this.setMode(following ? CompanionMode.FOLLOW : CompanionMode.STAY);
+    public UUID girlId() {
+        return this.girlId;
     }
 
-    public CompanionMode mode() {
-        return CompanionMode.byName(this.entityData.get(DATA_MODE));
+    public boolean isDowned() {
+        return this.entityData.get(DATA_DOWNED);
     }
 
-    public void setMode(CompanionMode mode) {
-        CompanionMode safeMode = mode == null ? CompanionMode.STAY : mode;
-        this.entityData.set(DATA_MODE, safeMode.serializedName());
-        this.entityData.set(DATA_FOLLOWING, safeMode == CompanionMode.FOLLOW);
-        if (safeMode == CompanionMode.STAY || safeMode == CompanionMode.WANDER) {
-            this.getNavigation().stop();
-            if (safeMode == CompanionMode.STAY) {
-                this.setTarget(null);
-            }
+    public CompanionAction action() {
+        return CompanionAction.byName(this.entityData.get(DATA_ACTION));
+    }
+
+    /** Same rule as the original: setting the current action again does nothing, and an attack never interrupts another action. */
+    public void setAction(CompanionAction action) {
+        CompanionAction next = action == null ? CompanionAction.NONE : action;
+        CompanionAction current = this.action();
+        if (next == current || (next == CompanionAction.ATTACK && current != CompanionAction.NONE)) {
+            return;
         }
+        this.entityData.set(DATA_ACTION, next.name());
+    }
+
+    private void setDowned(boolean downed) {
+        this.entityData.set(DATA_DOWNED, downed);
+        if (downed) {
+            this.entityData.set(DATA_ACTION, CompanionAction.DOWNED.name());
+            this.getNavigation().stop();
+        } else if (this.action() == CompanionAction.DOWNED) {
+            this.entityData.set(DATA_ACTION, CompanionAction.NONE.name());
+        }
+    }
+
+    /** Called by the damage event: lethal damage while following leaves her downed at 1 HP; downed she takes no damage. */
+    public float adjustIncomingDamage(float amount) {
+        if (!this.kind.hasMasterAI() || this.technicalProxy) {
+            return amount;
+        }
+        if (this.isDowned()) {
+            return 0.0F;
+        }
+        if (this.hasMaster() && this.getHealth() - amount < 0.0F) {
+            this.setDowned(true);
+            return Math.max(0.0F, this.getHealth() - 1.0F);
+        }
+        return amount;
+    }
+
+    @Override
+    public void heal(float amount) {
+        super.heal(amount);
+        if (this.isDowned() && this.getHealth() >= this.getMaxHealth()) {
+            this.setDowned(false);
+        }
+    }
+
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return false;
     }
 
     public OutfitMode outfit() {
@@ -348,56 +445,75 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return scene == null ? null : scene.phase(this.currentScenePhase());
     }
 
-    public boolean isOwnedBy(Player player) {
-        return this.ownerId().map(player.getUUID()::equals).orElse(false);
+    /**
+     * The panel is offered when she follows nobody or follows this player (the scene check
+     * happens where the panel opens).
+     */
+    public boolean canUsePanel(Player player) {
+        return !this.hasMaster() || this.isMaster(player);
     }
 
-    /** Owners and operators, plus anyone for kinds whose scene menu is public (Kobold). */
+    /** Kobolds sell their scene menu to anyone. */
     public boolean mayUseSceneActions(Player player) {
-        return this.kind.opensMenuToStrangers() || this.mayBeCommandedBy(player);
+        return this.kind.opensMenuToStrangers() || this.canUsePanel(player);
     }
 
-    public boolean mayBeCommandedBy(Player player) {
-        return this.isOwnedBy(player) || player.hasPermissions(2);
+    /** The original's go-home routine: throw an ender pearl home, then teleport there. */
+    public void startGoHome() {
+        this.clearMaster();
+        if (this.action() == CompanionAction.THROW_PEARL || this.isInScene() || this.isDowned()) {
+            return;
+        }
+        BlockPos home = this.homePos().orElse(this.blockPosition());
+        float yaw = (float) (Mth.atan2(this.getZ() - home.getZ(), this.getX() - home.getX()) * 57.29578D) + 90.0F;
+        this.setAction(CompanionAction.THROW_PEARL);
+        this.getNavigation().stop();
+        this.setYRot(yaw);
+        this.yBodyRot = yaw;
+        this.yHeadRot = yaw;
+        this.pinned = true;
+        this.pinPosition = this.position();
+        this.pinYaw = yaw;
+        this.goHomeTicks = 0;
     }
 
-    public boolean bondTo(Player player, boolean following) {
-        return this.bondTo(player.getUUID(), following);
-    }
-
-    public boolean bondTo(UUID owner, boolean following) {
-        if (!this.technicalProxy && this.level() instanceof ServerLevel serverLevel) {
-            CompanionOwnershipData ownership = CompanionOwnershipData.get(serverLevel.getServer());
-            Optional<UUID> previousOwner = this.ownerId();
-            if (previousOwner.isEmpty() || !previousOwner.get().equals(owner)) {
-                if (!ownership.canClaim(owner, this.kind, 1)) {
-                    return false;
-                }
-                previousOwner.ifPresent(oldOwner -> ownership.release(oldOwner, this.getUUID()));
+    private void tickGoHome(ServerLevel serverLevel) {
+        if (this.pinned && this.pinPosition != null) {
+            this.setPos(this.pinPosition.x, this.pinPosition.y, this.pinPosition.z);
+            this.setYRot(this.pinYaw);
+            this.yHeadRot = this.pinYaw;
+            this.setDeltaMovement(Vec3.ZERO);
+        }
+        if (this.goHomeTicks < 0) {
+            return;
+        }
+        if (this.action() != CompanionAction.THROW_PEARL) {
+            this.pinned = false;
+            this.goHomeTicks = -1;
+            return;
+        }
+        BlockPos home = this.homePos().orElse(this.blockPosition());
+        Vec3 target = new Vec3(home.getX() + 0.5D, home.getY(), home.getZ() + 0.5D);
+        this.goHomeTicks++;
+        // The throw animation fires its "pearl" event at 0.96 s and again at 2.88 s.
+        if (this.goHomeTicks == 19) {
+            ThrownEnderpearl pearl = new ThrownEnderpearl(EntityType.ENDER_PEARL, serverLevel);
+            pearl.setPos(this.getX(), this.getEyeY() - 0.1D, this.getZ());
+            Vec3 aim = target.subtract(this.position());
+            pearl.shoot(aim.x, aim.y, aim.z, (float) Math.min(4.0D, aim.length() * 0.1D), 0.0F);
+            serverLevel.addFreshEntity(pearl);
+        } else if (this.goHomeTicks >= 58) {
+            for (int burst = 0; burst < 32; burst++) {
+                serverLevel.sendParticles(ParticleTypes.PORTAL, this.getX(), this.getY() + 1.0D, this.getZ(),
+                        1, 0.2D, 0.2D, 0.2D, 0.5D);
             }
-            if (!ownership.claim(owner, this.getUUID(), this.kind)) {
-                return false;
-            }
-            this.ownershipTracked = true;
+            this.pinned = false;
+            this.goHomeTicks = -1;
+            this.teleportTo(target.x, target.y, target.z);
+            this.fallDistance = 0.0F;
+            this.setAction(CompanionAction.NONE);
+            this.clearMaster();
         }
-
-        this.entityData.set(DATA_OWNER, Optional.of(owner));
-        this.setPersistenceRequired();
-        if (this.homePos().isEmpty()) {
-            this.setHome(this.blockPosition());
-        }
-        this.setMode(following ? CompanionMode.FOLLOW : CompanionMode.STAY);
-        return true;
-    }
-
-    public void bondToReserved(UUID owner, boolean following) {
-        this.entityData.set(DATA_OWNER, Optional.of(owner));
-        this.ownershipTracked = true;
-        this.setPersistenceRequired();
-        if (this.homePos().isEmpty()) {
-            this.setHome(this.blockPosition());
-        }
-        this.setMode(following ? CompanionMode.FOLLOW : CompanionMode.STAY);
     }
 
     public void markSummonedByGalathCoin() {
@@ -405,7 +521,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     public boolean openControlMenu(ServerPlayer player) {
-        if (!this.mayBeCommandedBy(player) || player.distanceToSqr(this) > 64.0D) {
+        if (!this.canUsePanel(player) || player.distanceToSqr(this) > 64.0D) {
             return false;
         }
         player.openMenu(
@@ -424,25 +540,25 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.isInScene()) {
             return;
         }
-        boolean commander = this.mayBeCommandedBy(player);
+        boolean commander = this.canUsePanel(player);
         switch (action) {
             case "followme" -> {
                 if (commander) {
-                    this.setFollowing(true);
+                    this.setMaster(player.getUUID());
                     player.displayClientMessage(
                             Component.translatable("message.sexmod.following", this.getDisplayName()), true);
                 }
             }
             case "stopfollowme" -> {
                 if (commander) {
-                    this.setFollowing(false);
+                    this.clearMaster();
                     player.displayClientMessage(
                             Component.translatable("message.sexmod.staying", this.getDisplayName()), true);
                 }
             }
             case "gohome" -> {
-                if (commander && this.homePos().isPresent()) {
-                    this.setMode(CompanionMode.HOME);
+                if (commander) {
+                    this.startGoHome();
                 }
             }
             case "setnewhome" -> {
@@ -475,7 +591,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     public boolean openStorageMenu(ServerPlayer player) {
         if (!this.kind.hasStorage()
-                || !this.mayBeCommandedBy(player)
+                || !this.canUsePanel(player)
                 || player.distanceToSqr(this) > 64.0D) {
             return false;
         }
@@ -514,12 +630,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
         this.getNavigation().stop();
         this.setTarget(null);
-        this.scenePreviousMode = this.mode();
         this.scenePreviousNoAi = this.isNoAi();
         this.scenePreviousNoGravity = this.isNoGravity();
         this.sceneAnchorPosition = anchor.position();
         this.sceneAnchorYaw = anchor.yaw();
-        this.setMode(CompanionMode.STAY);
         this.setNoAi(true);
         this.setNoGravity(true);
         this.entityData.set(DATA_FLYING, false);
@@ -697,13 +811,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return true;
         }
 
-        if (other instanceof Player player && this.isOwnedBy(player)) {
+        if (other instanceof Player player && this.isMaster(player)) {
             return true;
         }
 
         if (other instanceof CompanionEntity companion) {
-            Optional<UUID> owner = this.ownerId();
-            return owner.isPresent() && owner.equals(companion.ownerId());
+            Optional<UUID> master = this.masterId();
+            return master.isPresent() && master.equals(companion.masterId());
         }
 
         return false;
@@ -722,15 +836,6 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return;
         }
 
-        if (!this.ownershipTracked && !this.technicalProxy) {
-            this.ownerId().ifPresent(owner -> {
-                CompanionOwnershipData.get(serverLevel.getServer())
-                        .trackExisting(owner, this.getUUID(), this.kind);
-                this.setPersistenceRequired();
-            });
-            this.ownershipTracked = true;
-        }
-
         if (this.tickCount == 1 && this.getHealth() > this.getMaxHealth()) {
             this.setHealth(this.getMaxHealth());
         }
@@ -743,7 +848,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         this.tickScene(serverLevel);
-        this.tickOwnerCombat();
+        this.tickTargetSanity();
+        this.tickGoHome(serverLevel);
+        this.tickHealing(serverLevel);
         this.tickRangedCombat(serverLevel);
         this.tickFlight();
 
@@ -751,17 +858,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.syncEquipmentSlots();
         }
 
-        if (this.tickCount % 160 == 0
-                && this.getHealth() < this.getMaxHealth()
-                && this.getTarget() == null
-                && !this.isInScene()) {
-            this.heal(1.0F);
-        }
-
         if (this.kind == CompanionKind.GALATH
                 && this.summonedByGalathCoin
                 && (this.tickCount == 1 || this.tickCount % 20 == 0)) {
-            Optional<UUID> owner = this.ownerId();
+            Optional<UUID> owner = this.masterId();
             if (owner.isEmpty()
                     || !GalathBindingData.get(serverLevel.getServer())
                     .isActive(owner.get(), this.getUUID())) {
@@ -1006,11 +1106,6 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.setDeltaMovement(Vec3.ZERO);
         this.setNoAi(this.scenePreviousNoAi);
         this.setNoGravity(this.scenePreviousNoGravity);
-        if (this.scenePreviousMode != null) {
-            CompanionMode previousMode = this.scenePreviousMode;
-            this.scenePreviousMode = null;
-            this.setMode(previousMode);
-        }
     }
 
     /**
@@ -1031,7 +1126,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     private void grantAllieRichReward(ServerPlayer player, ServerLevel serverLevel) {
         if (this.richRewardGranted
-                || !this.isOwnedBy(player)
+                || !this.isMaster(player)
                 || player.getPersistentData().getBoolean(ALLIE_RICH_REWARD_KEY)) {
             return;
         }
@@ -1090,36 +1185,40 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
     }
 
-    private void tickOwnerCombat() {
+    private void tickTargetSanity() {
+        if (this.attackAnimTicks > 0 && --this.attackAnimTicks == 0 && this.action() == CompanionAction.ATTACK) {
+            this.setAction(CompanionAction.NONE);
+        }
         if (this.isInScene()) {
             this.setTarget(null);
             return;
         }
-
         if (this.getTarget() != null
                 && (!this.getTarget().isAlive() || this.isAlliedTo(this.getTarget()))) {
             this.setTarget(null);
         }
+    }
 
-        if (this.getTarget() != null || this.mode() == CompanionMode.STAY) {
+    /** Original regeneration (Jenny, Ellie, Bia, Luna): every 80 ticks, more while nothing hostile is near. */
+    private void tickHealing(ServerLevel serverLevel) {
+        if (!this.kind.hasMasterAI()
+                || this.technicalProxy
+                || this.tickCount % 80 != 0
+                || this.getHealth() >= this.getMaxHealth()) {
             return;
         }
-
-        Player owner = this.ownerPlayer().orElse(null);
-        if (owner == null) {
-            return;
+        if (!this.hasMaster()) {
+            this.heal(1.0F);
+        } else {
+            AABB box = this.getBoundingBox().inflate(7.0D, 1.0D, 7.0D);
+            boolean hostileNear = !serverLevel.getEntitiesOfClass(Monster.class, box).isEmpty();
+            float amount = hostileNear ? 1.0F : 4.0F;
+            this.heal(amount);
+            serverLevel.sendParticles(ParticleTypes.HEART, this.getX(), this.getY() + 1.0D + this.random.nextDouble(),
+                    this.getZ(), (int) amount, 1.0D, 1.0D, 1.0D, 0.02D);
         }
-
-        LivingEntity candidate = owner.getLastHurtByMob();
-        if (candidate == null || !candidate.isAlive() || this.isAlliedTo(candidate)) {
-            candidate = owner.getLastHurtMob();
-        }
-
-        if (candidate != null
-                && candidate.isAlive()
-                && !this.isAlliedTo(candidate)
-                && this.distanceToSqr(candidate) <= 1024.0D) {
-            this.setTarget(candidate);
+        if (this.isDowned() && !this.hasMaster()) {
+            this.setDowned(false);
         }
     }
 
@@ -1157,8 +1256,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         LivingEntity destination = this.getTarget();
-        if (destination == null && this.mode() == CompanionMode.FOLLOW) {
-            destination = this.ownerPlayer().orElse(null);
+        if (destination == null && this.hasMaster() && !this.kind.hasMasterAI()) {
+            destination = this.masterPlayer().orElse(null);
         }
 
         if (destination == null) {
@@ -1207,10 +1306,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             boolean recentlyHit
     ) {
         super.dropCustomDeathLoot(level, damageSource, recentlyHit);
+        // The original drops one plain item of each filled slot 0-5 and never the extra slot.
         for (int slot = 0; slot < this.equipment.getContainerSize(); slot++) {
             ItemStack stack = this.equipment.removeItemNoUpdate(slot);
-            if (!stack.isEmpty()) {
-                this.spawnAtLocation(stack);
+            if (!stack.isEmpty() && slot < 6) {
+                this.spawnAtLocation(new ItemStack(stack.getItem(), 1));
             }
         }
         for (int slot = 0; slot < this.storage.getContainerSize(); slot++) {
@@ -1229,11 +1329,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         if (reason.shouldDestroy() && this.level() instanceof ServerLevel serverLevel) {
-            this.ownerId().ifPresent(owner -> CompanionOwnershipData
-                    .get(serverLevel.getServer())
-                    .release(owner, this.getUUID()));
             if (this.kind == CompanionKind.GALATH && this.summonedByGalathCoin) {
-                this.ownerId().ifPresent(owner -> GalathBindingData
+                this.masterId().ifPresent(owner -> GalathBindingData
                         .get(serverLevel.getServer())
                         .clearIfMatches(owner, this.getUUID()));
             }
@@ -1246,99 +1343,27 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack heldItem = player.getItemInHand(hand);
 
-        if (isGift(heldItem)) {
-            if (!this.level().isClientSide) {
-                if (this.ownerId().isPresent()
-                        && !this.isOwnedBy(player)
-                        && !player.hasPermissions(2)) {
-                    player.displayClientMessage(
-                            Component.translatable("message.sexmod.already_bonded", this.getDisplayName()),
-                            true
-                    );
-                    return InteractionResult.CONSUME;
-                }
-
-                if (!this.bondTo(player, true)) {
-                    player.displayClientMessage(
-                            Component.translatable(
-                                    "message.sexmod.companion_limit",
-                                    CompanionOwnershipData.MAX_TOTAL
-                            ),
-                            true
-                    );
-                    return InteractionResult.CONSUME;
-                }
-
-                if (!player.getAbilities().instabuild) {
-                    heldItem.shrink(1);
-                }
-
-                this.heal(4.0F);
-                this.playSound(SoundEvents.PLAYER_LEVELUP, 0.45F, 1.6F);
-
-                if (this.level() instanceof ServerLevel serverLevel) {
-                    serverLevel.sendParticles(
-                            ParticleTypes.HEART,
-                            this.getX(),
-                            this.getY() + this.getBbHeight() * 0.75D,
-                            this.getZ(),
-                            7,
-                            0.35D,
-                            0.45D,
-                            0.35D,
-                            0.02D
-                    );
-                }
-
-                player.displayClientMessage(
-                        Component.translatable("message.sexmod.gift_accepted", this.getDisplayName()),
-                        true
-                );
+        if (heldItem.isEmpty() && player.isShiftKeyDown()) {
+            if (!this.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
+                this.openControlMenu(serverPlayer);
             }
 
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
 
-        if (heldItem.isEmpty()) {
-            if (player.isShiftKeyDown()) {
-                if (!this.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                    this.openControlMenu(serverPlayer);
-                }
-
-                return InteractionResult.sidedSuccess(this.level().isClientSide);
+        // Like the original, whatever the player holds, right-click opens the panel.
+        if (this.level().isClientSide) {
+            if (!this.isInScene() && this.mayUseSceneActions(player)) {
+                com.trolmastercard.sexmod.client.ClientHooks.openActionPanel(this);
+            } else if (this.kind.busyDialogue() != null) {
+                player.sendSystemMessage(Component.literal("<")
+                        .append(this.getDisplayName())
+                        .append("> ")
+                        .append(Component.translatable(this.kind.busyDialogue())));
             }
-
-            if (this.level().isClientSide) {
-                if (this.mayUseSceneActions(player)) {
-                    com.trolmastercard.sexmod.client.ClientHooks.openActionPanel(this);
-                }
-            } else {
-                if (this.kind.opensMenuToStrangers()) {
-                    // The Kobold's menu is open to everyone; nothing to say here.
-                } else if (this.ownerId().isEmpty() && !player.hasPermissions(2)) {
-                    player.displayClientMessage(
-                            Component.translatable("message.sexmod.gift_required", this.getDisplayName()),
-                            true
-                    );
-                } else if (!this.mayBeCommandedBy(player)) {
-                    player.displayClientMessage(
-                            Component.translatable("message.sexmod.already_bonded", this.getDisplayName()),
-                            true
-                    );
-                }
-            }
-
-            return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
 
-        return super.mobInteract(player, hand);
-    }
-
-    private static boolean isGift(ItemStack stack) {
-        return stack.is(Items.DIAMOND)
-                || stack.is(Items.EMERALD)
-                || stack.is(Items.GOLD_INGOT)
-                || stack.is(Items.GOLD_BLOCK);
+        return InteractionResult.sidedSuccess(this.level().isClientSide);
     }
 
     @Override
@@ -1354,16 +1379,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putString("FapCraftKind", this.kind.registryPath());
-        this.ownerId().ifPresent(owner -> tag.putUUID("FapCraftOwner", owner));
-        tag.putString("FapCraftMode", this.mode().serializedName());
-        tag.putBoolean("FapCraftFollowing", this.mode() == CompanionMode.FOLLOW);
+        tag.putString("girlID", this.girlId.toString());
         tag.putString("FapCraftOutfit", this.outfit().serializedName());
         tag.putInt("FapCraftVariant", this.appearanceVariant());
         tag.putFloat("FapCraftScale", this.appearanceScale());
         this.homePos().ifPresent(home -> {
-            tag.putInt("FapCraftHomeX", home.getX());
-            tag.putInt("FapCraftHomeY", home.getY());
-            tag.putInt("FapCraftHomeZ", home.getZ());
+            tag.putDouble("homeX", home.getX());
+            tag.putDouble("homeY", home.getY());
+            tag.putDouble("homeZ", home.getZ());
         });
         tag.put("FapCraftEquipment", SlotNbt.save(this.equipment, this.registryAccess()));
         tag.put("FapCraftStorage", SlotNbt.save(this.storage, this.registryAccess()));
@@ -1376,24 +1399,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
 
-        if (tag.hasUUID("FapCraftOwner")) {
-            this.entityData.set(DATA_OWNER, Optional.of(tag.getUUID("FapCraftOwner")));
-        } else {
-            readLegacyOwner(tag).ifPresent(owner ->
-                    this.entityData.set(DATA_OWNER, Optional.of(owner)));
+        if (tag.contains("girlID", Tag.TAG_STRING)) {
+            try {
+                this.girlId = UUID.fromString(tag.getString("girlID"));
+            } catch (IllegalArgumentException ignored) {
+                this.girlId = UUID.randomUUID();
+            }
         }
-        if (this.ownerId().isPresent()) {
-            this.setPersistenceRequired();
-        }
-        this.ownershipTracked = false;
-
-        if (tag.contains("FapCraftMode", Tag.TAG_STRING)) {
-            this.setMode(CompanionMode.byName(tag.getString("FapCraftMode")));
-        } else {
-            this.setMode(tag.getBoolean("FapCraftFollowing")
-                    ? CompanionMode.FOLLOW
-                    : CompanionMode.STAY);
-        }
+        // Like the original: nothing about who she follows is saved.
+        this.setMaster(null);
 
         this.setOutfit(OutfitMode.byName(tag.getString("FapCraftOutfit")));
         this.setAppearanceVariant(tag.getInt("FapCraftVariant"));
@@ -1407,7 +1421,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     tag.getInt("FapCraftHomeY"),
                     tag.getInt("FapCraftHomeZ")
             ));
-        } else if (tag.contains("homeX", Tag.TAG_DOUBLE)) {
+        } else if (tag.contains("homeX", Tag.TAG_ANY_NUMERIC)) {
             this.setHome(BlockPos.containing(
                     tag.getDouble("homeX"),
                     tag.getDouble("homeY"),
@@ -1455,24 +1469,6 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.syncEquipmentSlots();
     }
 
-    private static Optional<UUID> readLegacyOwner(CompoundTag tag) {
-        for (String key : List.of("Owner", "owner", "master", "Master")) {
-            if (tag.hasUUID(key)) {
-                return Optional.of(tag.getUUID(key));
-            }
-
-            if (tag.contains(key, Tag.TAG_STRING)) {
-                try {
-                    return Optional.of(UUID.fromString(tag.getString(key)));
-                } catch (IllegalArgumentException ignored) {
-                    // Try the next known legacy key.
-                }
-            }
-        }
-
-        return Optional.empty();
-    }
-
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "main", 0, this::animationPredicate));
@@ -1484,6 +1480,22 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         CompanionScene.Phase sceneAnimation = this.currentSceneAnimation();
         if (sceneAnimation != null) {
             return state.setAndContinue(sceneAnimation.rawAnimation());
+        }
+
+        if (this.kind.hasMasterAI()) {
+            CompanionAction action = this.action();
+            if (action != CompanionAction.NONE) {
+                return state.setAndContinue(this.kind.stateAnimation(
+                        action.animationSuffix(this.entityData.get(DATA_ATTACK_VARIANT))));
+            }
+            if (state.isMoving()) {
+                String suffix = switch (this.entityData.get(DATA_SPEED_CLASS)) {
+                    case 2 -> "run";
+                    case 1 -> "fastwalk";
+                    default -> "walk";
+                };
+                return state.setAndContinue(this.kind.stateAnimation(suffix));
+            }
         }
 
         if (state.getData(DataTickets.ENTITY) != null && state.isMoving()) {
@@ -1498,164 +1510,257 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return this.animationCache;
     }
 
-    private Optional<Player> ownerPlayer() {
-        if (!(this.level() instanceof ServerLevel serverLevel)) {
-            return Optional.empty();
-        }
-
-        return this.ownerId().map(serverLevel::getPlayerByUUID);
+    private Optional<Player> masterPlayer() {
+        return this.masterId().map(this.level()::getPlayerByUUID);
     }
 
-    private final class ReturnHomeGoal extends Goal {
-        private BlockPos home;
-        private int recalculatePathTicks;
+    private enum FollowState {
+        ATTACK, FOLLOW, IDLE, RIDE, DOWNED
+    }
 
-        private ReturnHomeGoal() {
+    /** Looks at nearby players only while she is idle, like the original watch goal. */
+    private final class IdleLookGoal extends LookAtPlayerGoal {
+        private IdleLookGoal() {
+            super(CompanionEntity.this, Player.class, 3.0F, 1.0F);
+        }
+
+        @Override
+        public boolean canUse() {
+            return (!CompanionEntity.this.hasMaster() || CompanionEntity.this.followState == FollowState.IDLE)
+                    && super.canUse();
+        }
+    }
+
+    /**
+     * The original follow/fight goal of Jenny, Ellie, Bia and Luna. It runs while she has a master and
+     * ends (dropping the master) when that player is gone.
+     */
+    private final class MasterGoal extends Goal {
+        private int repathTicks;
+        private FollowState previous = FollowState.IDLE;
+
+        private MasterGoal() {
             this.setFlags(EnumSet.of(Flag.MOVE));
         }
 
         @Override
         public boolean canUse() {
-            if (CompanionEntity.this.mode() != CompanionMode.HOME
-                    || CompanionEntity.this.isInScene()) {
-                return false;
-            }
-
-            this.home = CompanionEntity.this.homePos().orElse(null);
-            return this.home != null
-                    && !this.isAtHome();
+            return CompanionEntity.this.kind.hasMasterAI()
+                    && !CompanionEntity.this.technicalProxy
+                    && CompanionEntity.this.hasMaster();
         }
 
         @Override
         public boolean canContinueToUse() {
-            return CompanionEntity.this.mode() == CompanionMode.HOME
-                    && !CompanionEntity.this.isInScene()
-                    && this.home != null
-                    && !this.isAtHome();
+            return CompanionEntity.this.kind.hasMasterAI()
+                    && CompanionEntity.this.masterPlayer().isPresent();
+        }
+
+        @Override
+        public boolean requiresUpdateEveryTick() {
+            return true;
         }
 
         @Override
         public void start() {
-            this.recalculatePathTicks = 0;
-            this.moveHome();
+            this.previous = FollowState.IDLE;
+            this.repathTicks = 0;
+            CompanionEntity.this.followState = FollowState.IDLE;
         }
 
         @Override
         public void stop() {
-            CompanionEntity.this.getNavigation().stop();
-            this.home = null;
+            CompanionEntity self = CompanionEntity.this;
+            self.getNavigation().stop();
+            self.followState = FollowState.IDLE;
+            self.followLinger = 0;
+            if (self.action() != CompanionAction.THROW_PEARL && !self.isDowned()) {
+                self.setAction(CompanionAction.NONE);
+            }
+            self.setMaster(null);
         }
 
         @Override
         public void tick() {
-            if (--this.recalculatePathTicks <= 0) {
-                this.moveHome();
-            }
-        }
-
-        private boolean isAtHome() {
-            return this.home != null
-                    && this.home.distToCenterSqr(CompanionEntity.this.position()) <= 4.0D;
-        }
-
-        private void moveHome() {
-            if (this.home == null) {
+            CompanionEntity self = CompanionEntity.this;
+            Player master = self.masterPlayer().orElse(null);
+            if (master == null) {
                 return;
             }
-
-            this.recalculatePathTicks = 20;
-            CompanionEntity.this.getNavigation().moveTo(
-                    this.home.getX() + 0.5D,
-                    this.home.getY(),
-                    this.home.getZ() + 0.5D,
-                    1.0D
-            );
-        }
-    }
-
-    private final class ModeWanderGoal extends WaterAvoidingRandomStrollGoal {
-        private ModeWanderGoal() {
-            super(CompanionEntity.this, 1.0D);
-        }
-
-        @Override
-        public boolean canUse() {
-            return CompanionEntity.this.mode() == CompanionMode.WANDER
-                    && !CompanionEntity.this.isInScene()
-                    && super.canUse();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return CompanionEntity.this.mode() == CompanionMode.WANDER
-                    && !CompanionEntity.this.isInScene()
-                    && super.canContinueToUse();
-        }
-    }
-
-    private final class FollowOwnerGoal extends Goal {
-        private Player owner;
-        private int recalculatePathTicks;
-
-        private FollowOwnerGoal() {
-            this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
-        }
-
-        @Override
-        public boolean canUse() {
-            if (!CompanionEntity.this.isFollowing()) {
-                return false;
+            if (self.swingCooldown > 0) {
+                self.swingCooldown--;
+            }
+            if (self.reaggroCooldown > 0) {
+                self.reaggroCooldown--;
             }
 
-            this.owner = CompanionEntity.this.ownerPlayer().orElse(null);
-            return this.owner != null
-                    && !this.owner.isSpectator()
-                    && CompanionEntity.this.distanceToSqr(this.owner) > 9.0D;
+            FollowState next = this.decide(master);
+            if (this.previous == FollowState.ATTACK && next != FollowState.ATTACK) {
+                self.reaggroCooldown = 60;
+                self.setTarget(null);
+            }
+            self.followState = next;
+            switch (next) {
+                case ATTACK -> this.attack(self.getTarget());
+                case FOLLOW -> this.follow(master);
+                case IDLE -> this.idle(master);
+                default -> self.getNavigation().stop();
+            }
+            this.previous = next;
         }
 
-        @Override
-        public boolean canContinueToUse() {
-            return CompanionEntity.this.isFollowing()
-                    && this.owner != null
-                    && this.owner.isAlive()
-                    && CompanionEntity.this.distanceToSqr(this.owner) > 4.0D;
+        private FollowState decide(Player master) {
+            CompanionEntity self = CompanionEntity.this;
+            if (self.isDowned() || self.isInScene()) {
+                return FollowState.DOWNED;
+            }
+            if (this.validTarget(self.getTarget(), master)) {
+                return FollowState.ATTACK;
+            }
+            if (self.getTarget() != null) {
+                self.setTarget(null);
+            }
+            LivingEntity attacker = self.getLastHurtByMob();
+            if (this.validTarget(attacker, master)) {
+                self.setTarget(attacker);
+                return FollowState.ATTACK;
+            }
+            LivingEntity revenge = master.getLastHurtByMob();
+            if (revenge != null
+                    && master.tickCount - master.getLastHurtByMobTimestamp() < 140
+                    && this.validTarget(revenge, master)) {
+                self.setTarget(revenge);
+                return FollowState.ATTACK;
+            }
+            if (this.previous != FollowState.FOLLOW) {
+                LivingEntity nearest = self.level().getEntitiesOfClass(
+                                Monster.class,
+                                self.getBoundingBox().inflate(5.0D, 2.0D, 5.0D),
+                                monster -> !(monster instanceof Creeper) && this.validTarget(monster, master))
+                        .stream()
+                        .min(java.util.Comparator.comparingDouble(monster -> self.distanceToSqr(monster)))
+                        .orElse(null);
+                if (nearest != null) {
+                    self.setTarget(nearest);
+                    return FollowState.ATTACK;
+                }
+            }
+            if (self.distanceTo(master) > 5.0F) {
+                self.followLinger = 60;
+                return FollowState.FOLLOW;
+            }
+            if (this.previous == FollowState.FOLLOW && self.followLinger > 0) {
+                self.followLinger--;
+                return FollowState.FOLLOW;
+            }
+            return FollowState.IDLE;
         }
 
-        @Override
-        public void start() {
-            this.recalculatePathTicks = 0;
+        private boolean validTarget(LivingEntity target, Player master) {
+            CompanionEntity self = CompanionEntity.this;
+            return target != null
+                    && !(target instanceof CompanionEntity)
+                    && self.reaggroCooldown <= 0
+                    && target != self
+                    && target != master
+                    && target.isAlive()
+                    && !target.isRemoved()
+                    && target.distanceToSqr(master) <= 225.0D
+                    && self.distanceToSqr(target) <= 400.0D
+                    && !(target instanceof Player player && (player.isCreative() || player.isSpectator()));
         }
 
-        @Override
-        public void stop() {
-            CompanionEntity.this.getNavigation().stop();
-            this.owner = null;
-        }
-
-        @Override
-        public void tick() {
-            if (this.owner == null) {
+        private void attack(LivingEntity target) {
+            CompanionEntity self = CompanionEntity.this;
+            if (target == null) {
                 return;
             }
-
-            CompanionEntity.this.getLookControl().setLookAt(this.owner, 10.0F, 30.0F);
-            if (--this.recalculatePathTicks > 0) {
-                return;
-            }
-
-            this.recalculatePathTicks = 10;
-            double distance = CompanionEntity.this.distanceToSqr(this.owner);
-
-            if (distance > 400.0D) {
-                CompanionEntity.this.teleportTo(
-                        this.owner.getX(),
-                        this.owner.getY(),
-                        this.owner.getZ()
-                );
-                CompanionEntity.this.getNavigation().stop();
+            self.getLookControl().setLookAt(target, 30.0F, 30.0F);
+            double distance = self.distanceTo(target);
+            double speed = distance < 2.0D ? 0.5D : 0.7D;
+            self.entityData.set(DATA_SPEED_CLASS, distance < 2.0D ? 0 : 2);
+            if (--this.repathTicks <= 0) {
+                this.repathTicks = 5;
+                self.getNavigation().moveTo(target, speed);
             } else {
-                CompanionEntity.this.getNavigation().moveTo(this.owner, 1.1D);
+                self.getNavigation().setSpeedModifier(speed);
+            }
+            if (distance < 1.9D && self.swingCooldown <= 0) {
+                self.entityData.set(DATA_ATTACK_VARIANT, self.random.nextInt(3));
+                self.setAction(CompanionAction.ATTACK);
+                self.attackAnimTicks = 10;
+                self.swing(InteractionHand.MAIN_HAND);
+                self.doHurtTarget(target);
+                self.swingCooldown = self.weaponSwingDelay();
             }
         }
+
+        private void follow(Player master) {
+            CompanionEntity self = CompanionEntity.this;
+            double distance = self.distanceTo(master);
+            double bonus = Math.floor(distance / 5.0D) * 0.2D;
+            boolean sprinting = master.isSprinting();
+            double speed = (sprinting ? 0.7D : 0.5D) + bonus;
+            self.entityData.set(DATA_SPEED_CLASS, sprinting ? 2 : (bonus > 0.0D ? 1 : 0));
+            if (distance < self.getAttributeValue(Attributes.FOLLOW_RANGE)) {
+                if (--this.repathTicks <= 0) {
+                    this.repathTicks = 5;
+                    self.getNavigation().moveTo(master, speed);
+                } else {
+                    self.getNavigation().setSpeedModifier(speed);
+                }
+            } else {
+                self.catchUpTeleport(master);
+            }
+            self.idleTimer = 300;
+        }
+
+        private void idle(Player master) {
+            CompanionEntity self = CompanionEntity.this;
+            self.entityData.set(DATA_SPEED_CLASS, 0);
+            if (--self.idleTimer <= 0) {
+                self.idleTimer = 200 + self.random.nextInt(100);
+                self.getNavigation().moveTo(
+                        master.getX() + 1 + self.random.nextInt(4),
+                        master.getY(),
+                        master.getZ() + 1 + self.random.nextInt(4),
+                        0.5D
+                );
+            }
+        }
+    }
+
+    /** Ticks per swing derived from the held weapon's attack speed, like the original. */
+    private int weaponSwingDelay() {
+        ItemAttributeModifiers modifiers = this.getMainHandItem().getOrDefault(
+                net.minecraft.core.component.DataComponents.ATTRIBUTE_MODIFIERS, ItemAttributeModifiers.EMPTY);
+        double speed = 0.0D;
+        for (ItemAttributeModifiers.Entry entry : modifiers.modifiers()) {
+            if (entry.attribute().is(Attributes.ATTACK_SPEED)) {
+                speed = entry.modifier().amount();
+            }
+        }
+        return Math.max(1, (int) Math.round(Math.abs(speed) / 3.373494D * 20.0D));
+    }
+
+    /** The original's catch-up teleport: a safe spot within ten blocks east/south of the master. */
+    private void catchUpTeleport(Player master) {
+        for (int attempt = 0; attempt < 20; attempt++) {
+            double x = master.getX() + this.random.nextInt(10);
+            double z = master.getZ() + this.random.nextInt(10);
+            BlockPos pos = BlockPos.containing(x, master.getY(), z);
+            if (!this.level().getBlockState(pos.below()).isAir()
+                    && this.level().getFluidState(pos).isEmpty()
+                    && this.level().noCollision(this, this.getBoundingBox()
+                    .move(x - this.getX(), master.getY() - this.getY(), z - this.getZ()))) {
+                this.teleportTo(x, master.getY(), z);
+                this.getNavigation().stop();
+                this.setDeltaMovement(Vec3.ZERO);
+                return;
+            }
+        }
+        this.teleportTo(master.getX(), master.getY(), master.getZ());
+        this.getNavigation().stop();
+        this.setDeltaMovement(Vec3.ZERO);
     }
 }

@@ -1,12 +1,11 @@
 package com.trolmastercard.sexmod.gametest;
 
 import com.trolmastercard.sexmod.FapCraft;
-import com.trolmastercard.sexmod.data.CompanionOwnershipData;
 import com.trolmastercard.sexmod.entity.CompanionActions;
 import com.trolmastercard.sexmod.entity.CompanionEntity;
 import com.trolmastercard.sexmod.entity.CompanionScene;
 import com.trolmastercard.sexmod.entity.CompanionKind;
-import com.trolmastercard.sexmod.entity.CompanionMode;
+import com.trolmastercard.sexmod.entity.CompanionAction;
 import com.trolmastercard.sexmod.menu.CompanionInventoryMenu;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
@@ -107,73 +106,6 @@ public final class FapCraftGameTests {
                 .count();
         if (count != EXPECTED_SOUND_EVENTS) {
             helper.fail("Expected " + EXPECTED_SOUND_EVENTS + " sound events, found " + count);
-        }
-        helper.succeed();
-    }
-
-    @GameTest(template = "empty")
-    public static void companionModesCycleAndParse(GameTestHelper helper) {
-        CompanionMode[] expected = {CompanionMode.WANDER, CompanionMode.FOLLOW, CompanionMode.STAY,
-                CompanionMode.GUARD, CompanionMode.HOME};
-        CompanionMode mode = CompanionMode.WANDER;
-        for (int i = 0; i < expected.length; i++) {
-            if (mode != expected[i]) {
-                helper.fail("Mode order changed at step " + i + ": got " + mode);
-            }
-            mode = mode.next();
-        }
-        if (mode != CompanionMode.WANDER) {
-            helper.fail("Mode cycle did not return to WANDER, got " + mode);
-        }
-        if (CompanionMode.byName("Follow") != CompanionMode.FOLLOW) {
-            helper.fail("byName should ignore case");
-        }
-        if (CompanionMode.byName("not-a-mode") != CompanionMode.STAY) {
-            helper.fail("Unknown mode names should fall back to STAY");
-        }
-        helper.succeed();
-    }
-
-    @GameTest(template = "empty")
-    public static void ownershipLimitsHold(GameTestHelper helper) {
-        CompanionOwnershipData data = new CompanionOwnershipData();
-        UUID owner = UUID.randomUUID();
-
-        UUID firstJenny = UUID.randomUUID();
-        if (!data.claim(owner, firstJenny, CompanionKind.JENNY)) {
-            helper.fail("First Jenny should be claimable");
-        }
-        if (data.claim(owner, UUID.randomUUID(), CompanionKind.JENNY)) {
-            helper.fail("A second Jenny must be refused (one of each kind)");
-        }
-
-        for (int i = 0; i < 4; i++) {
-            if (!data.claim(owner, UUID.randomUUID(), CompanionKind.KOBOLD)) {
-                helper.fail("Kobold " + (i + 1) + " of 4 should be claimable");
-            }
-        }
-        if (data.claim(owner, UUID.randomUUID(), CompanionKind.KOBOLD)) {
-            helper.fail("A fifth Kobold must be refused");
-        }
-
-        CompanionKind[] fillers = {CompanionKind.ELLIE, CompanionKind.BIA, CompanionKind.LUNA};
-        for (CompanionKind kind : fillers) {
-            if (!data.claim(owner, UUID.randomUUID(), kind)) {
-                helper.fail(kind + " should be claimable while under the total limit");
-            }
-        }
-        if (data.claim(owner, UUID.randomUUID(), CompanionKind.SLIME)) {
-            helper.fail("A ninth companion must be refused (total limit is " + CompanionOwnershipData.MAX_TOTAL + ")");
-        }
-
-        data.release(owner, firstJenny);
-        if (!data.claim(owner, UUID.randomUUID(), CompanionKind.SLIME)) {
-            helper.fail("Releasing a companion should free a slot");
-        }
-
-        UUID otherOwner = UUID.randomUUID();
-        if (!data.claim(otherOwner, UUID.randomUUID(), CompanionKind.JENNY)) {
-            helper.fail("Limits must be tracked per owner");
         }
         helper.succeed();
     }
@@ -352,8 +284,20 @@ public final class FapCraftGameTests {
         if (!CompanionKind.KOBOLD.opensMenuToStrangers() || CompanionKind.JENNY.opensMenuToStrangers()) {
             helper.fail("only the Kobold menu is public");
         }
-        if (!kobold.mayUseSceneActions(player) || jenny.mayUseSceneActions(player)) {
-            helper.fail("strangers may use Kobold actions, not Jenny's");
+        if (!kobold.mayUseSceneActions(player) || !jenny.mayUseSceneActions(player)) {
+            helper.fail("a girl who follows nobody is open to every player");
+        }
+        jenny.setMaster(UUID.randomUUID());
+        if (jenny.mayUseSceneActions(player) || jenny.canUsePanel(player)) {
+            helper.fail("a girl following someone else is busy for everybody else");
+        }
+        kobold.setMaster(UUID.randomUUID());
+        if (!kobold.mayUseSceneActions(player)) {
+            helper.fail("the Kobold's scene menu stays public even when it has a master");
+        }
+        jenny.setMaster(player.getUUID());
+        if (!jenny.canUsePanel(player)) {
+            helper.fail("her master gets the panel");
         }
         if (CompanionActions.actionsFor(luna, player).size() != 3) {
             helper.fail("Luna offers three actions");
@@ -367,5 +311,97 @@ public final class FapCraftGameTests {
         kobold.discard();
         luna.discard();
         helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void masterIsTransientAndGirlIdSurvives(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        CompanionEntity jenny = spawnKind(helper, CompanionKind.JENNY);
+        jenny.setMaster(player.getUUID());
+        if (!jenny.isMaster(player) || !jenny.isFollowing()) {
+            helper.fail("setMaster should make her follow the player");
+        }
+        CompoundTag tag = new CompoundTag();
+        jenny.addAdditionalSaveData(tag);
+        for (String key : List.of("FapCraftOwner", "FapCraftMode", "FapCraftFollowing", "master")) {
+            if (tag.contains(key)) {
+                helper.fail("the original saves no owner or follow state, found " + key);
+            }
+        }
+        if (!tag.contains("girlID")) {
+            helper.fail("girlID must be saved");
+        }
+        CompanionEntity copy = spawnKind(helper, CompanionKind.JENNY);
+        copy.readAdditionalSaveData(tag);
+        if (copy.hasMaster()) {
+            helper.fail("after a reload she follows nobody");
+        }
+        if (!copy.girlId().equals(jenny.girlId())) {
+            helper.fail("girlID must survive a reload");
+        }
+        jenny.discard();
+        copy.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty")
+    public static void lethalDamageLeavesAFollowingGirlDowned(GameTestHelper helper) {
+        CompanionEntity bia = spawnKind(helper, CompanionKind.BIA);
+        bia.hurt(bia.damageSources().generic(), 1000.0F);
+        if (!bia.isDeadOrDying()) {
+            helper.fail("without a master lethal damage kills her");
+        }
+
+        CompanionEntity jenny = spawnKind(helper, CompanionKind.JENNY);
+        jenny.setMaster(UUID.randomUUID());
+        jenny.hurt(jenny.damageSources().generic(), 1000.0F);
+        if (jenny.isDeadOrDying() || !jenny.isDowned() || jenny.action() != CompanionAction.DOWNED) {
+            helper.fail("with a master lethal damage leaves her downed; health=" + jenny.getHealth());
+        }
+        if (Math.abs(jenny.getHealth() - 1.0F) > 0.01F) {
+            helper.fail("downed at 1 HP, got " + jenny.getHealth());
+        }
+        float before = jenny.getHealth();
+        jenny.invulnerableTime = 0;
+        jenny.hurt(jenny.damageSources().generic(), 5.0F);
+        if (jenny.getHealth() != before) {
+            helper.fail("a downed girl takes no damage");
+        }
+        jenny.heal(2.0F);
+        if (!jenny.isDowned()) {
+            helper.fail("she stays downed until she is fully healed");
+        }
+        jenny.heal(1000.0F);
+        if (jenny.isDowned() || jenny.action() != CompanionAction.NONE) {
+            helper.fail("full health ends the downed state");
+        }
+        bia.discard();
+        jenny.discard();
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 200)
+    public static void goHomeThrowsAPearlAndTeleports(GameTestHelper helper) {
+        CompanionEntity jenny = spawnKind(helper, CompanionKind.JENNY);
+        net.minecraft.core.BlockPos home = helper.absolutePos(new net.minecraft.core.BlockPos(5, 1, 5));
+        jenny.setHome(home);
+        jenny.setMaster(UUID.randomUUID());
+        jenny.startGoHome();
+        if (jenny.hasMaster()) {
+            helper.fail("going home ends the following");
+        }
+        if (jenny.action() != CompanionAction.THROW_PEARL) {
+            helper.fail("she starts with the pearl throw, action=" + jenny.action());
+        }
+        helper.runAfterDelay(90, () -> {
+            if (jenny.action() != CompanionAction.NONE) {
+                helper.fail("the routine ends after the teleport, action=" + jenny.action());
+            }
+            if (jenny.position().distanceTo(Vec3.atBottomCenterOf(home)) > 1.5D) {
+                helper.fail("she should stand at home, is at " + jenny.position() + " home " + home);
+            }
+            jenny.discard();
+            helper.succeed();
+        });
     }
 }

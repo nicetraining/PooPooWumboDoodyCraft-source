@@ -1,6 +1,5 @@
 package com.trolmastercard.sexmod.entity;
 
-import com.trolmastercard.sexmod.data.CompanionOwnershipData;
 import com.trolmastercard.sexmod.registry.ModEntities;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -129,28 +128,10 @@ public final class KoboldEggEntity extends PathfinderMob implements GeoEntity {
         kobold.setYRot(this.getYRot());
         kobold.setAppearanceVariant(this.deterministicVariant());
 
-        Optional<UUID> owner = this.ownerId();
-        if (owner.isPresent()) {
-            CompanionOwnershipData ownership = CompanionOwnershipData.get(level.getServer());
-            if (!ownership.transfer(
-                    owner.get(),
-                    this.getUUID(),
-                    kobold.getUUID(),
-                    CompanionKind.KOBOLD
-            )) {
-                this.hatching = false;
-                return;
-            }
-            kobold.bondToReserved(owner.get(), true);
-        }
+        // The hatchling joins whoever placed the egg: it follows that player from the start.
+        this.ownerId().ifPresent(kobold::setMaster);
 
         if (!level.addFreshEntity(kobold)) {
-            owner.ifPresent(ownerId -> CompanionOwnershipData.get(level.getServer()).transfer(
-                    ownerId,
-                    kobold.getUUID(),
-                    this.getUUID(),
-                    CompanionKind.KOBOLD
-            ));
             this.hatching = false;
             return;
         }
@@ -183,16 +164,6 @@ public final class KoboldEggEntity extends PathfinderMob implements GeoEntity {
         int hash = 31 + this.eggColor().strip().toUpperCase(Locale.ROOT).hashCode();
         hash = 31 * hash + this.tribeId().map(UUID::hashCode).orElse(0);
         return Math.floorMod(hash, CompanionKind.KOBOLD.appearanceVariants());
-    }
-
-    @Override
-    public void remove(Entity.RemovalReason reason) {
-        if (reason.shouldDestroy() && this.level() instanceof ServerLevel serverLevel) {
-            this.ownerId().ifPresent(owner -> CompanionOwnershipData
-                    .get(serverLevel.getServer())
-                    .release(owner, this.getUUID()));
-        }
-        super.remove(reason);
     }
 
     @Override

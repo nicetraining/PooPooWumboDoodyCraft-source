@@ -50,7 +50,7 @@ public final class CompanionActionScreen extends Screen {
         super(companion.getDisplayName());
         this.companion = companion;
         this.showFixed = CompanionActions.showsFixedButtons(companion.kind())
-                && companion.mayBeCommandedBy(Minecraft.getInstance().player);
+                && companion.canUsePanel(Minecraft.getInstance().player);
         this.scenes = CompanionActions.actionsFor(companion, Minecraft.getInstance().player);
     }
 
