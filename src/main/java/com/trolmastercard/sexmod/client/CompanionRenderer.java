@@ -56,6 +56,10 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
         );
 
         float baseScale = entity.kind() == CompanionKind.KOBOLD ? 0.75F + entity.koboldSize() : 1.0F;
+        if (entity.goblin() != null) {
+            // original dy.a(): a caught goblin is drawn at half size; a vanishing robber shrinks with its fade
+            baseScale = (entity.goblinState() == com.trolmastercard.sexmod.entity.GoblinBehavior.CATCH ? 0.5F : 1.0F) * entity.goblinFade();
+        }
         float scale = baseScale * entity.appearanceScale();
         poseStack.scale(scale, scale, scale);
     }
@@ -100,6 +104,9 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
         if (entity.kind() == CompanionKind.KOBOLD) {
             renderColor = koboldTint(entity, bone.getName(), renderColor);
         }
+        if (entity.goblin() != null) {
+            renderColor = goblinLook(entity, bone, renderColor);
+        }
 
         super.renderRecursively(
                 poseStack,
@@ -114,6 +121,65 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
                 packedOverlay,
                 renderColor
         );
+    }
+
+    private static final java.util.Map<String, int[]> GOBLIN_FIELDS = new java.util.HashMap<>();
+    private static final java.util.Set<String> GOBLIN_SKIN = java.util.Set.of("meatTorso", "meatCheekR", "meatCheekL", "meatFootR",
+            "meatFootL", "meatShinR", "meatShinL", "meatLegL", "meatLegR", "nippleR", "nippleL", "preggy", "shoeL", "shoeR",
+            "frontAndInside", "Lside", "Rside", "cheekR", "cheekL", "fuckhole", "head", "nose", "neck", "armL", "lowerArmL",
+            "armR", "lowerArmR", "torso", "LegL", "LegR", "shinL", "shinR");
+    private static final java.util.Set<String> GOBLIN_LASHES = java.util.Set.of("lashR", "lashL", "closedR", "closedL", "browL", "browR");
+
+    /** Original dy: ears, hair and crown pick their bones from the model string; every bone is tinted by name. */
+    private static int goblinLook(CompanionEntity entity, GeoBone bone, int renderColor) {
+        int[] fields = GOBLIN_FIELDS.computeIfAbsent(entity.goblinModel(), com.trolmastercard.sexmod.entity.GoblinModel::parse);
+        String name = bone.getName();
+        if (fields.length >= 10) {
+            switch (name) {
+                case "earL" -> goblinEar(bone, fields[0], fields[1], fields[3]);
+                case "earR" -> goblinEar(bone, fields[0], fields[2], fields[4]);
+                case "hair" -> goblinSelect(bone, fields[5]);
+                default -> {
+                }
+            }
+            if (name.contains("crown")) {
+                bone.setHidden(fields[9] == 0);
+            }
+        }
+        int rgb = com.trolmastercard.sexmod.entity.GoblinModel.tint(name, fields, GOBLIN_SKIN, GOBLIN_LASHES);
+        return rgb < 0 ? renderColor : (renderColor & 0xFF000000) | rgb;
+    }
+
+    /** Original d6.a(bone, index): children sorted by pivot height, only the chosen one is shown. */
+    private static GeoBone goblinSelect(GeoBone parent, int index) {
+        java.util.List<GeoBone> sorted = new java.util.ArrayList<>(parent.getChildBones());
+        sorted.sort(java.util.Comparator.comparingDouble(GeoBone::getPivotY));
+        GeoBone chosen = null;
+        for (int i = 0; i < sorted.size(); i++) {
+            boolean show = i == index;
+            sorted.get(i).setHidden(!show);
+            if (show) {
+                chosen = sorted.get(i);
+            }
+        }
+        return chosen;
+    }
+
+    private static void goblinEar(GeoBone ear, int group, int sub, int accessories) {
+        GeoBone groupBone = goblinSelect(ear, group);
+        GeoBone subBone = groupBone == null ? null : goblinSelect(groupBone, sub);
+        if (subBone == null) {
+            return;
+        }
+        java.util.List<GeoBone> children = subBone.getChildBones();
+        for (GeoBone child : children) {
+            child.setHidden(true);
+        }
+        for (int index : com.trolmastercard.sexmod.entity.GoblinModel.subset(children.size(), accessories)) {
+            if (index < children.size()) {
+                children.get(index).setHidden(false);
+            }
+        }
     }
 
     private static final java.util.Set<String> BODY_BONES = java.util.Set.of("colorSpots", "neck", "head", "snout", "midSectionR",

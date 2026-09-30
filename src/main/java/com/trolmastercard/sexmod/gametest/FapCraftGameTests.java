@@ -1062,7 +1062,7 @@ public final class FapCraftGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty", timeoutTicks = 500, batch = "b_hall")
+    @GameTest(template = "empty", timeoutTicks = 700, batch = "b_hall")
     public static void goblinHallIsCarvedIntoACave(GameTestHelper helper) {
         var level = helper.getLevel();
         forceArena(helper);
@@ -1091,6 +1091,29 @@ public final class FapCraftGameTests {
             return;
         }
         var queen = queens.get(0);
+        // the far test arenas do not always entity-tick, so drive the goblins by hand (the queen and her guards)
+        helper.onEachTick(() -> level.getEntitiesOfClass(CompanionEntity.class, new net.minecraft.world.phys.AABB(base).inflate(30.0D),
+                e -> e.goblin() != null && e.tickCount < 2000 && !level.isPositionEntityTicking(e.blockPosition())).forEach(CompanionEntity::tick));
+        java.util.concurrent.atomic.AtomicBoolean sawScene = new java.util.concurrent.atomic.AtomicBoolean();
+            java.util.concurrent.atomic.AtomicBoolean sawGuards = new java.util.concurrent.atomic.AtomicBoolean();
+            java.util.concurrent.atomic.AtomicBoolean sawAwait = new java.util.concurrent.atomic.AtomicBoolean();
+            helper.onEachTick(() -> {
+                if (level.getEntitiesOfClass(CompanionEntity.class, new net.minecraft.world.phys.AABB(base).inflate(20.0D),
+                        e -> e.goblin() != null && !e.goblinQueen()
+                                && e.goblinState() == com.trolmastercard.sexmod.entity.GoblinBehavior.AWAIT_PICK_UP).size() == 2) {
+                    sawAwait.set(true);
+                }
+                if (queen.currentScene() == com.trolmastercard.sexmod.entity.CompanionScene.GOBLIN_BREEDING) {
+                    sawScene.set(true);
+                    queen.goblin().impregnationTick = level.getGameTime(); queen.setGoblinPreggo(true); // the cut-short scene never reaches the pregnancy phase; stop her starting over
+                    var found = level.getEntitiesOfClass(CompanionEntity.class, new net.minecraft.world.phys.AABB(base).inflate(20.0D),
+                            e -> e.goblin() != null && !e.goblinQueen());
+                    if (found.stream().anyMatch(g -> g.goblinState() == com.trolmastercard.sexmod.entity.GoblinBehavior.BREED_A)
+                            && found.stream().anyMatch(g -> g.goblinState() == com.trolmastercard.sexmod.entity.GoblinBehavior.BREED_B)) {
+                        sawGuards.set(true);
+                    }
+                }
+            });
         helper.runAfterDelay(300, () -> {
             if (queen.goblinState() != com.trolmastercard.sexmod.entity.GoblinBehavior.SIT
                     || queen.position().distanceTo(queen.goblin().thronePos) > 0.01D) {
@@ -1102,8 +1125,56 @@ public final class FapCraftGameTests {
                 helper.fail("open air is not a goblin hall");
                 return;
             }
-            queen.discard();
-            helper.succeed();
+            // a player walks in: the queen and two guards jump, then the breeding scene starts
+            var visitor = serverPlayer(helper);
+            visitor.moveTo(queen.goblin().thronePos.x + 2.0D, queen.goblin().thronePos.y - 1.0D, queen.goblin().thronePos.z - 3.0D);
+            visitor.setOnGround(true);
+            helper.runAfterDelay(15, () -> {
+                if (queen.goblinState() != com.trolmastercard.sexmod.entity.GoblinBehavior.JUMP) {
+                    helper.fail("a visitor in the hall makes the queen jump, state " + queen.goblinState());
+                }
+            });
+            
+            // (the test player is not in the player list, so the engine ends the scene at once; the ending still runs)
+            helper.runAfterDelay(120, () -> {
+                var guards = level.getEntitiesOfClass(CompanionEntity.class, new net.minecraft.world.phys.AABB(base).inflate(20.0D),
+                        e -> e.goblin() != null && !e.goblinQueen());
+                if (!sawScene.get() || !sawGuards.get() || guards.size() != 2
+                        || !sawAwait.get()) {
+                    helper.fail("breeding: scene " + sawScene + " guards in scene " + sawGuards + "; afterwards guards " + guards.size()
+                            + " " + guards.stream().map(g -> g.goblinState()).toList() + " queen " + queen.goblinState());
+                    return;
+                }
+                guards.forEach(Entity::discard);
+                queen.discard();
+                level.removePlayerImmediately(visitor, Entity.RemovalReason.DISCARDED);
+                helper.succeed();
+            });
         });
+    }
+
+    @GameTest(template = "empty")
+    public static void goblinModelStringsFollowTheOriginalRules(GameTestHelper helper) {
+        var random = helper.getLevel().getRandom();
+        for (int n = 0; n < 200; n++) {
+            int[] wild = com.trolmastercard.sexmod.entity.GoblinModel.parse(com.trolmastercard.sexmod.entity.GoblinModel.random(random));
+            int[] queen = com.trolmastercard.sexmod.entity.GoblinModel.parse(com.trolmastercard.sexmod.entity.GoblinModel.queen(random));
+            int[] robber = com.trolmastercard.sexmod.entity.GoblinModel.parse(com.trolmastercard.sexmod.entity.GoblinModel.withBodyColor(random, 3));
+            if (wild.length != 10 || queen.length != 10 || robber.length != 10
+                    || wild[9] != 0 || queen[9] != 1 || queen[3] != 7 || queen[4] != 7 || robber[7] != 3 || robber[9] != 0
+                    || wild[0] > 3 || wild[1] > 2 || wild[5] > 5 || wild[6] > 7 || wild[7] > 4 || wild[8] > 5) {
+                helper.fail("goblin model strings have ten fields inside the original ranges");
+                return;
+            }
+        }
+        var all = com.trolmastercard.sexmod.entity.GoblinModel.subset(2, 0);
+        if (!all.isEmpty() || com.trolmastercard.sexmod.entity.GoblinModel.subset(2, 1).size() != 1
+                || com.trolmastercard.sexmod.entity.GoblinModel.subset(2, 1).get(0) != 1
+                || com.trolmastercard.sexmod.entity.GoblinModel.subset(2, 3).size() != 2
+                || com.trolmastercard.sexmod.entity.GoblinModel.subset(4, 15).size() != 4) {
+            helper.fail("accessory subsets count in binary with child 0 as the high bit");
+            return;
+        }
+        helper.succeed();
     }
 }

@@ -211,6 +211,16 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_G_QUEEN =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<String> DATA_G_MODEL =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Float> DATA_G_FADE =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Integer> DATA_G_PHASE =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_G_PREGGO =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private Vec3 forcedSceneAnchor;
+    private float forcedSceneAnchorYaw;
     private int attackAnimTicks;
     private boolean pinned;
     private Vec3 pinPosition;
@@ -416,6 +426,46 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_G_ITEM, ItemStack.EMPTY);
         builder.define(DATA_G_TAMED, false);
         builder.define(DATA_G_QUEEN, false);
+        builder.define(DATA_G_MODEL, "");
+        builder.define(DATA_G_FADE, 1.0F);
+        builder.define(DATA_G_PHASE, 0);
+        builder.define(DATA_G_PREGGO, false);
+    }
+
+    /** Breeding scene phase mirrored onto the guards (0 intro, 1 slow, 2 fast, 3 finish). */
+    public int goblinPhase() {
+        return this.entityData.get(DATA_G_PHASE);
+    }
+
+    public void setGoblinPhase(int phase) {
+        this.entityData.set(DATA_G_PHASE, phase);
+    }
+
+    public void setGoblinPreggo(boolean preggo) {
+        this.entityData.set(DATA_G_PREGGO, preggo);
+    }
+
+    /** The next scene starts here instead of at the usual anchor (queen's breeding spot). */
+    public void setForcedSceneAnchor(Vec3 position, float yaw) {
+        this.forcedSceneAnchor = position;
+        this.forcedSceneAnchorYaw = yaw;
+    }
+
+    /** Original e4 model string (ears, hair, colours, crown); empty until the server has rolled one. */
+    public String goblinModel() {
+        return this.entityData.get(DATA_G_MODEL);
+    }
+
+    public void setGoblinModel(String model) {
+        this.entityData.set(DATA_G_MODEL, model);
+    }
+
+    public float goblinFade() {
+        return this.entityData.get(DATA_G_FADE);
+    }
+
+    public void setGoblinFade(float fade) {
+        this.entityData.set(DATA_G_FADE, fade);
     }
 
     public GoblinBehavior goblin() {
@@ -467,7 +517,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     /** Original e3.ap(): pregnant queen (breeding is not ported yet). */
     public boolean isPreggo() {
-        return false;
+        return this.entityData.get(DATA_G_PREGGO);
     }
 
     /** The goblin is held by a player (catch, pick-up, shoulder, throw). */
@@ -1356,7 +1406,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 || scene.kind() != this.kind
                 || this.isInScene()
                 || !this.mayUseSceneActions(player)
-                || player.distanceToSqr(this) > (scene.isWaitScene() ? 1024.0D : 64.0D)
+                || (scene != CompanionScene.GOBLIN_BREEDING && player.distanceToSqr(this) > (scene.isWaitScene() ? 1024.0D : 64.0D))
                 || !this.isSceneEnvironmentValid(serverLevel, player, scene, true)) {
             return false;
         }
@@ -1400,7 +1450,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             scene = CompanionScene.JENNY_STRIP;
         }
 
-        SceneAnchor anchor = scene == CompanionScene.ELLIE_HUG
+        SceneAnchor anchor = this.forcedSceneAnchor != null
+                ? new SceneAnchor(this.forcedSceneAnchor, this.forcedSceneAnchorYaw)
+                : scene == CompanionScene.ELLIE_HUG
                 || scene == CompanionScene.GOBLIN_PAIZURI || scene == CompanionScene.GOBLIN_NELSON
                 ? new SceneAnchor(player.position(), Mth.wrapDegrees(player.getYRot() + 180.0F))
                 : this.bedSpotPosition != null
@@ -1413,6 +1465,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             );
         }
 
+        this.forcedSceneAnchor = null;
         this.getNavigation().stop();
         this.setTarget(null);
         this.scenePreviousNoAi = this.isNoAi();
@@ -2442,6 +2495,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     private void tickFlight() {
+        if (this.noPhysics) {
+            return; // breeding guards are held in place by their queen
+        }
         if (this.beeBehavior != null) {
             return; // the bee flies by navigation, see BeeBehavior
         }
@@ -2658,7 +2714,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             });
         }
         if (this.goblinBehavior != null) {
+            tag.putString("model", this.goblinModel());
             tag.putBoolean("isQueen", this.goblinQueen());
+            if (this.goblinQueen()) {
+                tag.putBoolean("preggo", this.isPreggo());
+                tag.putLong("impregnationTick", this.goblinBehavior.impregnationTick);
+                for (int i = 0; i < this.goblinBehavior.guards.size(); i++) {
+                    tag.putString("guard" + i, this.goblinBehavior.guards.get(i).toString());
+                }
+            }
             tag.putBoolean("isTamed", this.goblinTamed());
             tag.putInt("robTicks", this.goblinBehavior.robTicks);
             if (this.goblinBehavior.thronePos != null) {
@@ -2718,7 +2782,25 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
         if (this.goblinBehavior != null) {
             this.setGoblinQueen(tag.getBoolean("isQueen"));
+            String saved = tag.getString("model");
+            int[] fields = GoblinModel.parse(saved);
+            // original legacy fix: old goblins with accessory values above 7 get a new look
+            if (fields.length >= 10 && fields[3] <= 7 && fields[4] <= 7) {
+                this.setGoblinModel(saved);
+            }
             this.setGoblinTamed(tag.getBoolean("isTamed"));
+            this.setGoblinPreggo(tag.getBoolean("preggo"));
+            if (tag.contains("impregnationTick", Tag.TAG_ANY_NUMERIC)) {
+                this.goblinBehavior.impregnationTick = tag.getLong("impregnationTick");
+            }
+            this.goblinBehavior.guards.clear();
+            for (int i = 0; tag.contains("guard" + i, Tag.TAG_STRING); i++) {
+                try {
+                    this.goblinBehavior.guards.add(UUID.fromString(tag.getString("guard" + i)));
+                } catch (IllegalArgumentException ignored) {
+                    break;
+                }
+            }
             if (tag.contains("robTicks", Tag.TAG_ANY_NUMERIC)) {
                 this.goblinBehavior.robTicks = tag.getInt("robTicks");
             }
@@ -2893,6 +2975,20 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             case GoblinBehavior.STAND_UP -> raw.thenPlayAndHold("animation.goblin.stand_up");
             case GoblinBehavior.SIT -> raw.thenLoop("animation.goblin.sit");
             case GoblinBehavior.AWAIT_PICK_UP -> raw.thenLoop("animation.goblin.await_pick_up");
+            case GoblinBehavior.JUMP -> raw.thenPlayAndHold("animation.goblin.jump_1");
+            case GoblinBehavior.JUMP_A -> raw.thenPlayAndHold("animation.goblin.jump_2");
+            case GoblinBehavior.JUMP_B -> raw.thenPlayAndHold("animation.goblin.jump_3");
+            case GoblinBehavior.BREED_A -> switch (this.goblinPhase()) {
+                case 0 -> raw.thenPlayAndHold("animation.goblin.breeding_intro_2");
+                case 3 -> raw.thenPlayAndHold("animation.goblin.breeding_cum_2");
+                default -> raw.thenLoop("animation.goblin.breeding_2");
+            };
+            case GoblinBehavior.BREED_B -> switch (this.goblinPhase()) {
+                case 0 -> raw.thenPlayAndHold("animation.goblin.breeding_intro_3");
+                case 1 -> raw.thenLoop("animation.goblin.breeding_slow_3");
+                case 2 -> raw.thenLoop("animation.goblin.breeding_fast_3");
+                default -> raw.thenPlayAndHold("animation.goblin.breeding_cum_3");
+            };
             default -> this.isWalkingVisibly() ? raw.thenLoop("animation.goblin.walk") : raw.thenLoop("animation.goblin.idle");
         };
     }

@@ -1,6 +1,7 @@
 package com.trolmastercard.sexmod.entity;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -32,6 +33,11 @@ public final class GoblinBehavior {
     public static final int SIT = 10;
     public static final int AWAIT_PICK_UP = 11;
     public static final int VANISH = 12;
+    public static final int JUMP = 13;
+    public static final int JUMP_A = 14;
+    public static final int JUMP_B = 15;
+    public static final int BREED_A = 16;
+    public static final int BREED_B = 17;
 
     private static final int ROB_PERIOD = 32000;
     private static final int PICK_UP_TICKS = 45;
@@ -40,6 +46,12 @@ public final class GoblinBehavior {
     private static final int CATCH_DIALOGUE_END = 170; // catchDone at 8.5 s
     private static final int CATCH_BJ_END = 28; // catchBjDone at 1.4167 s
     private static final int SCENE_FADE = 15;
+    private static final int PREGNANCY_TICKS = 8400;
+    private static final int NAG_COOLDOWN = 1200;
+    private static final int JUMP_TICKS = 26;
+    /** Throne offsets by throne yaw (original aM, U, aB, ao) and the breeding spot relative to the throne (af, au, W, at). */
+    private static final Vec3[] THRONE = {new Vec3(5, 1, 1), new Vec3(9, 1, 5), new Vec3(5, 1, 9), new Vec3(1, 1, 5)};
+    private static final Vec3[] BREED_SPOT = {new Vec3(3, -1, 6), new Vec3(-6, -1, 3), new Vec3(-3, -1, -6), new Vec3(6, -1, -3)};
 
     private static final Set<Item> VALUABLES = Set.of(Items.GOLD_INGOT, Items.GOLD_NUGGET, Items.GOLDEN_APPLE, Items.GOLDEN_CARROT,
             Items.GOLDEN_HORSE_ARMOR, Items.GOLDEN_SWORD, Items.GOLDEN_PICKAXE, Items.GOLDEN_SHOVEL, Items.GOLDEN_AXE,
@@ -62,6 +74,14 @@ public final class GoblinBehavior {
     private int pendingTicks;
     private UUID pendingPlayer;
     private boolean sceneSeen;
+    /** Queen: her two guards, when she was last impregnated (game time) and the breeding progress (0 idle, 1 jumping, 2 in scene). */
+    public final List<UUID> guards = new java.util.ArrayList<>();
+    public long impregnationTick = -PREGNANCY_TICKS - 1L;
+    private int breedStage;
+    private int breedTicks;
+    private UUID breedPlayer;
+    private long lastNag = -NAG_COOLDOWN;
+    private int lastPhase = -1;
 
     public GoblinBehavior(CompanionEntity k) {
         this.k = k;
@@ -170,17 +190,25 @@ public final class GoblinBehavior {
     public void tick(ServerLevel level) {
         if (this.k.isInScene()) {
             this.sceneSeen = true;
+            if (this.queen && this.breedStage == 2) {
+                this.mirrorGuards(level);
+            }
             return;
         }
         if (this.sceneSeen) {
             this.sceneSeen = false;
             this.afterScene();
+        } else if (this.queen && this.breedStage == 2) {
+            this.endBreeding(level); // the scene ended before we ever saw it running
         }
         if (this.pendingScene != null) {
             this.tickPending(level);
             return;
         }
         this.stateTicks++;
+        if (this.k.goblinModel().isEmpty()) {
+            this.k.setGoblinModel(this.queen ? GoblinModel.queen(this.k.getRandom()) : GoblinModel.random(this.k.getRandom()));
+        }
         if (this.queen) {
             this.tickQueen(level);
             return;
@@ -245,6 +273,7 @@ public final class GoblinBehavior {
                     }
                 } else if (!this.k.goblinTamed() && this.queenId != null) {
                     this.fade -= 0.05F;
+                    this.k.setGoblinFade(Math.max(0.0F, this.fade));
                     if (this.fade <= 0.0F) {
                         this.k.discard();
                     }
@@ -257,6 +286,7 @@ public final class GoblinBehavior {
             }
             case VANISH -> {
                 this.fade -= 0.05F;
+                this.k.setGoblinFade(Math.max(0.0F, this.fade));
                 if (this.fade <= 0.0F) {
                     this.k.discard();
                 }
@@ -350,9 +380,17 @@ public final class GoblinBehavior {
     // ---------------------------------------------------------------- queen
 
     private void tickQueen(ServerLevel level) {
+        if (this.breedStage == 1) {
+            this.tickJump(level);
+            return;
+        }
         if (this.k.goblinState() != SIT) {
             this.setState(SIT);
         }
+        if (this.k.isPreggo() && level.getGameTime() > this.impregnationTick + PREGNANCY_TICKS) {
+            this.k.setGoblinPreggo(false);
+        }
+        this.tickGuards(level);
         if (this.thronePos != null) {
             // original m(): while nobody is with her she stays on the throne
             this.k.getNavigation().stop();
@@ -363,7 +401,8 @@ public final class GoblinBehavior {
             this.k.yBodyRot = this.throneRot;
             this.k.yHeadRot = this.throneRot;
         }
-        if (this.k.goblinTamed() || this.k.isPreggo()) {
+        this.tickBreedingTrigger(level);
+        if (this.k.goblinTamed() || this.k.isPreggo() || this.breedStage != 0) {
             return;
         }
         if (++this.robTicks < ROB_PERIOD) {
@@ -397,6 +436,7 @@ public final class GoblinBehavior {
         robber.moveTo(behind.x, behind.y, behind.z, best.getYHeadRot(), 0.0F);
         robber.goblin().queenId = this.k.getUUID();
         robber.setGoblinItem(stolen);
+        robber.setGoblinModel(GoblinModel.withBodyColor(robber.getRandom(), GoblinModel.bodyColorIndex(this.k.goblinModel())));
         level.addFreshEntity(robber);
         robber.goblin().setState(RUN);
         best.getInventory().setItem(slot, ItemStack.EMPTY);
@@ -413,6 +453,216 @@ public final class GoblinBehavior {
             }
         }
         return -1;
+    }
+
+    // ---------------------------------------------------------------- breeding (queen + two guards)
+
+    private int throneIndex() {
+        float yaw = Mth.wrapDegrees(this.throneRot);
+        if (Math.abs(yaw) < 45.0F) {
+            return 0;
+        }
+        if (yaw >= 45.0F && yaw < 135.0F) {
+            return 1;
+        }
+        if (yaw <= -45.0F && yaw > -135.0F) {
+            return 3;
+        }
+        return 2;
+    }
+
+    /** Original rotation of a throne-relative vector (entity-local x to the left, z forward). */
+    private static Vec3 rotate(Vec3 v, float yaw) {
+        double r = Math.toRadians(yaw);
+        double cos = Math.cos(r);
+        double sin = Math.sin(r);
+        return new Vec3(v.x * cos - v.z * sin, v.y, v.x * sin + v.z * cos);
+    }
+
+    /** The hall's interior as a box (original E(): throne minus its offset in the hall template). */
+    private net.minecraft.world.phys.AABB hallBox() {
+        Vec3 origin = this.thronePos.subtract(0.5D, 0.0D, 0.5D).subtract(THRONE[this.throneIndex()]);
+        return new net.minecraft.world.phys.AABB(origin, origin.add(11.0D, 6.0D, 11.0D));
+    }
+
+    private void tickBreedingTrigger(ServerLevel level) {
+        if (this.thronePos == null || this.breedStage != 0 || this.k.goblinTamed()) {
+            return;
+        }
+        for (Player player : level.getEntitiesOfClass(Player.class, this.hallBox())) {
+            if (!player.onGround() || player.isSpectator() || player.getAbilities().flying) {
+                continue;
+            }
+            if (this.k.isPreggo()) {
+                if (level.getGameTime() - this.lastNag >= NAG_COOLDOWN) {
+                    this.lastNag = level.getGameTime();
+                    player.sendSystemMessage(Component.literal("The Queen is still pregnant - so no breeding for you uwu"));
+                }
+                return;
+            }
+            this.startBreeding(level, player);
+            return;
+        }
+    }
+
+    private void startBreeding(ServerLevel level, Player player) {
+        List<CompanionEntity> alive = this.aliveGuards(level);
+        if (alive.size() != 2) {
+            alive.forEach(CompanionEntity::discard);
+            this.guards.clear();
+            int colour = GoblinModel.bodyColorIndex(this.k.goblinModel());
+            for (int i = 0; i < 2; i++) {
+                CompanionEntity guard = com.trolmastercard.sexmod.registry.ModEntities.get(CompanionKind.GOBLIN).create(level);
+                if (guard == null || guard.goblin() == null) {
+                    return;
+                }
+                guard.goblin().queenId = this.k.getUUID();
+                guard.setGoblinModel(GoblinModel.withBodyColor(guard.getRandom(), colour));
+                guard.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot() + 180.0F, 0.0F);
+                level.addFreshEntity(guard);
+                this.guards.add(guard.getUUID());
+                alive.add(guard);
+            }
+        }
+        this.breedPlayer = player.getUUID();
+        this.breedStage = 1;
+        this.breedTicks = 0;
+        this.setState(JUMP);
+        this.k.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot() + 180.0F, 0.0F);
+        for (int i = 0; i < alive.size(); i++) {
+            CompanionEntity guard = alive.get(i);
+            guard.goblin().setState(i == 0 ? JUMP_A : JUMP_B);
+            guard.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot() + 180.0F, 0.0F);
+            guard.noPhysics = true;
+            guard.setNoGravity(true);
+        }
+    }
+
+    private List<CompanionEntity> aliveGuards(ServerLevel level) {
+        List<CompanionEntity> result = new java.util.ArrayList<>();
+        for (UUID id : this.guards) {
+            if (level.getEntity(id) instanceof CompanionEntity guard && guard.isAlive() && guard.goblin() != null) {
+                result.add(guard);
+            }
+        }
+        return result;
+    }
+
+    /** Original t(): after 26 ticks of jumping the three go to the breeding spot and the scene begins. */
+    private void tickJump(ServerLevel level) {
+        Player player = this.breedPlayer == null ? null : level.getPlayerByUUID(this.breedPlayer);
+        List<CompanionEntity> guards = this.aliveGuards(level);
+        if (player == null || guards.size() != 2) {
+            this.abortBreeding(guards);
+            return;
+        }
+        this.k.getNavigation().stop();
+        this.k.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot() + 180.0F, 0.0F);
+        for (CompanionEntity guard : guards) {
+            guard.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot() + 180.0F, 0.0F);
+        }
+        if (++this.breedTicks < JUMP_TICKS) {
+            return;
+        }
+        Vec3 spot = this.thronePos.add(BREED_SPOT[this.throneIndex()]);
+        this.k.setForcedSceneAnchor(spot, this.throneRot);
+        this.setState(SIT);
+        if (!this.k.startScene(player, CompanionScene.GOBLIN_BREEDING)) {
+            this.abortBreeding(guards);
+            return;
+        }
+        this.breedStage = 2;
+        this.lastPhase = -1;
+        for (int i = 0; i < guards.size(); i++) {
+            CompanionEntity guard = guards.get(i);
+            guard.goblin().setState(i == 0 ? BREED_A : BREED_B);
+            guard.noPhysics = true;
+            guard.setNoGravity(true);
+            guard.setGoblinPhase(0);
+            guard.moveTo(spot.x, spot.y, spot.z, this.throneRot, 0.0F);
+        }
+    }
+
+    private void abortBreeding(List<CompanionEntity> guards) {
+        this.breedStage = 0;
+        guards.forEach(CompanionEntity::discard);
+        this.guards.clear();
+        this.setState(SIT);
+    }
+
+    /** While the scene runs the guards stand in the same spot and play the animation of the current phase. */
+    private void mirrorGuards(ServerLevel level) {
+        List<CompanionEntity> guards = this.aliveGuards(level);
+        int phase = this.k.currentScenePhase();
+        Vec3 spot = this.thronePos.add(BREED_SPOT[this.throneIndex()]);
+        for (CompanionEntity guard : guards) {
+            guard.setPos(spot);
+            guard.setYRot(this.throneRot);
+            guard.yBodyRot = this.throneRot;
+            guard.yHeadRot = this.throneRot;
+            guard.setDeltaMovement(Vec3.ZERO);
+            guard.setGoblinPhase(phase);
+        }
+        if (phase == 3 && this.lastPhase != 3) {
+            // original BREEDING_CUM_0: she is pregnant from now on
+            this.k.setGoblinPreggo(true);
+            this.impregnationTick = level.getGameTime();
+        }
+        this.lastPhase = phase;
+    }
+
+    /** Original b(): the guards line up in front of the throne, the player is put opposite and must pick one. */
+    private void endBreeding(ServerLevel level) {
+        this.breedStage = 0;
+        Player player = this.breedPlayer == null ? null : level.getPlayerByUUID(this.breedPlayer);
+        List<CompanionEntity> guards = this.aliveGuards(level);
+        float yaw = this.throneRot + 180.0F;
+        Vec3[] stands = {new Vec3(1, -1, -3), new Vec3(-1, -1, -3)};
+        for (int i = 0; i < guards.size() && i < 2; i++) {
+            CompanionEntity guard = guards.get(i);
+            Vec3 at = this.thronePos.add(rotate(stands[i], yaw));
+            guard.moveTo(at.x, at.y, at.z, yaw, 0.0F);
+            guard.noPhysics = false;
+            guard.setNoGravity(false);
+            guard.goblin().setState(AWAIT_PICK_UP);
+            guard.setGoblinPhase(0);
+        }
+        this.setState(SIT);
+        if (player instanceof ServerPlayer sp) {
+            Vec3 at = this.thronePos.add(rotate(new Vec3(0, -1, -4), yaw));
+            sp.teleportTo(at.x, at.y, at.z);
+            sp.setYRot(yaw);
+            sp.setXRot(30.0F);
+            sp.sendSystemMessage(Component.literal("<").append(this.k.getDisplayName()).append("> Thanks to you, my clan is soon going to get a few new members! In return I will bear of one of my guards to serve as your personal Onahole. Choose wisely~"));
+        }
+    }
+
+    /** Original d(): once a guard has been picked the queen says goodbye and the other guards vanish. */
+    private void tickGuards(ServerLevel level) {
+        if (this.guards.isEmpty() || this.breedStage != 0) {
+            return;
+        }
+        List<CompanionEntity> guards = this.aliveGuards(level);
+        boolean picked = false;
+        for (CompanionEntity guard : guards) {
+            if (guard.goblinTamed()) {
+                picked = true;
+            }
+        }
+        if (!picked) {
+            return;
+        }
+        Player player = this.breedPlayer == null ? null : level.getPlayerByUUID(this.breedPlayer);
+        if (player != null) {
+            player.sendSystemMessage(Component.literal("<").append(this.k.getDisplayName())
+                    .append("> Farewell my knight. You are welcome once I am breedable again."));
+        }
+        for (CompanionEntity guard : guards) {
+            if (!guard.goblinTamed()) {
+                guard.goblin().setState(VANISH);
+            }
+        }
+        this.guards.clear();
     }
 
     // ---------------------------------------------------------------- scene hand-off
@@ -440,6 +690,12 @@ public final class GoblinBehavior {
 
     /** Original D(): after the scene the robber is gone and the tamed goblin is free again. */
     private void afterScene() {
+        if (this.queen) {
+            if (this.breedStage == 2 && this.k.level() instanceof ServerLevel level) {
+                this.endBreeding(level);
+            }
+            return;
+        }
         this.k.setGoblinItem(ItemStack.EMPTY);
         this.k.noPhysics = false;
         this.k.setNoGravity(false);
