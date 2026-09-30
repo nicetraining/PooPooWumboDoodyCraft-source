@@ -132,6 +132,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private int scenePhaseTicks;
     private int sceneControlCooldown;
     private int sceneEnvironmentTicks;
+    /** Bed walk (original fg.a()/b()): the spot beside the bed she is walking to, while walking. */
+    private BedWalk bedWalk;
+    private int bedWalkTicks;
+    /** The spot beside the bed, kept from arrival until the chained scenes end; used as the scene anchor. */
+    private Vec3 bedSpotPosition;
+    private float bedSpotYaw;
+    private int attachCountdown = -1;
+    private int waitTicks;
     private Vec3 scenePartnerReturnPosition;
     private float scenePartnerReturnYaw;
     private float scenePartnerReturnPitch;
@@ -237,6 +245,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     protected void registerGoals() {
         // Same priorities as the original base entity.
         this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(0, new BedWalkGoal());
         this.goalSelector.addGoal(1, new MasterGoal());
         this.goalSelector.addGoal(2, new TemptGoal(
                 this, 0.4D, Ingredient.of(Items.EMERALD, Items.DIAMOND, Items.GOLD_INGOT, Items.ENDER_PEARL), false));
@@ -647,9 +656,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 || scene.kind() != this.kind
                 || this.isInScene()
                 || !this.mayUseSceneActions(player)
-                || player.distanceToSqr(this) > 64.0D
+                || player.distanceToSqr(this) > (scene.isWaitScene() ? 1024.0D : 64.0D)
                 || !this.isSceneEnvironmentValid(serverLevel, player, scene, true)) {
             return false;
+        }
+
+        if (this.kind == CompanionKind.BIA && scene.requiresBed() && this.bedSpotPosition == null) {
+            // Like the original: find a bed, walk to it, wait for the player there, then start.
+            return this.beginBedWalk(serverLevel, player, scene);
         }
 
         this.queuedScene = null;
@@ -661,9 +675,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             scene = CompanionScene.JENNY_STRIP;
         }
 
-        SceneAnchor anchor = scene.anchorsOnBed()
-                ? this.bedSceneAnchor(serverLevel).orElse(null)
-                : null;
+        SceneAnchor anchor = this.bedSpotPosition != null
+                ? new SceneAnchor(this.bedSpotPosition, this.bedSpotYaw)
+                : scene.anchorsOnBed() ? this.bedSceneAnchor(serverLevel).orElse(null) : null;
         if (anchor == null) {
             anchor = new SceneAnchor(
                     this.findGroundedSceneAnchor(serverLevel),
@@ -929,7 +943,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (controller == null
                 || !controller.isAlive()
                 || controller.level() != this.level()
-                || controller.distanceToSqr(this) > 64.0D) {
+                || controller.distanceToSqr(this) > (scene.isWaitScene() ? 1024.0D : 64.0D)) {
             this.finishScene(false);
             return;
         }
@@ -959,6 +973,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         this.scenePhaseTicks++;
+        if (scene.isWaitScene()) {
+            this.tickWaitForPartner(controller, scene);
+            return;
+        }
         if (scene.isClothingToggle() && this.scenePhaseTicks == 60) {
             this.toggleClothing();
         }
@@ -1045,7 +1063,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return false;
         }
 
-        if (scene.requiresBed() && !this.hasNearbyBed(serverLevel)) {
+        if (scene.requiresBed() && this.kind != CompanionKind.BIA && !this.hasNearbyBed(serverLevel)) {
             if (notify) {
                 controller.displayClientMessage(Component.translatable("message.sexmod.scene_bed_required"), true);
             }
@@ -1114,6 +1132,188 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         });
     }
 
+    // ---- Bed walk (original fg.a() / fg.b() and the ANAL_WAIT / SITDOWNIDLE attach) ----
+
+    private record BedWalk(CompanionScene scene, UUID player, Vec3 target, float yaw) {
+    }
+
+    /** Bed side tables from the original: direction from the bed to her spot, and her facing there. */
+    private static final int[][] BED_SIDES = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+    private static final float[] BED_SIDE_YAW = {0.0F, 180.0F, -90.0F, 90.0F};
+    private static final int BED_SEARCH_RADIUS = 10;
+
+    public boolean isBedWalking() {
+        return this.bedWalk != null;
+    }
+
+    public Vec3 bedWalkTarget() {
+        return this.bedWalk == null ? null : this.bedWalk.target();
+    }
+
+    private boolean beginBedWalk(ServerLevel serverLevel, Player player, CompanionScene scene) {
+        BlockPos center = this.blockPosition();
+        boolean anyBed = false;
+        BedWalk best = null;
+        double bestDistance = Double.MAX_VALUE;
+        boolean doggy = scene == CompanionScene.BIA_PRONE;
+
+        for (BlockPos bed : BlockPos.betweenClosed(
+                center.offset(-BED_SEARCH_RADIUS, -4, -BED_SEARCH_RADIUS),
+                center.offset(BED_SEARCH_RADIUS, 4, BED_SEARCH_RADIUS))) {
+            if (!serverLevel.getBlockState(bed).is(BlockTags.BEDS)) {
+                continue;
+            }
+            anyBed = true;
+            for (int side = 0; side < 4; side++) {
+                int dx = BED_SIDES[side][0];
+                int dz = BED_SIDES[side][1];
+                BlockPos stand = bed.offset(dx, 0, dz);
+                if (!serverLevel.getBlockState(stand).isAir() || !serverLevel.getBlockState(stand.above()).isAir()) {
+                    continue;
+                }
+                if (doggy && !serverLevel.getBlockState(bed.offset(-dx, 0, -dz)).is(BlockTags.BEDS)) {
+                    continue;
+                }
+                Vec3 target = new Vec3(stand.getX() + 0.5D, stand.getY(), stand.getZ() + 0.5D);
+                double distance = this.position().distanceToSqr(target);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    best = new BedWalk(scene, player.getUUID(), target, BED_SIDE_YAW[side]);
+                }
+            }
+        }
+
+        if (best == null) {
+            this.refuseBed(serverLevel, anyBed ? "jenny.dialogue.bedobscured" : "jenny.dialogue.nobedinsight");
+            return false;
+        }
+
+        this.bedWalk = best;
+        this.bedWalkTicks = 0;
+        this.setTarget(null);
+        return true;
+    }
+
+    private void refuseBed(ServerLevel serverLevel, String dialogueKey) {
+        com.trolmastercard.sexmod.registry.ModSounds.find("girls.bia.breath.breath2")
+                .ifPresent(sound -> this.playSound(sound.get(), 1.0F, 1.0F));
+        this.sayNearby(serverLevel, Component.translatable(dialogueKey));
+    }
+
+    /** A line she "says": local chat for players within 40 blocks, like the original's chat broadcast. */
+    private void sayNearby(ServerLevel serverLevel, Component line) {
+        Component message = Component.literal("<").append(this.getDisplayName()).append("> ").append(line);
+        for (ServerPlayer player : serverLevel.players()) {
+            if (player.distanceToSqr(this) <= 40.0D * 40.0D) {
+                player.sendSystemMessage(message);
+            }
+        }
+    }
+
+    private final class BedWalkGoal extends Goal {
+        BedWalkGoal() {
+            this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            return CompanionEntity.this.bedWalk != null;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return CompanionEntity.this.bedWalk != null;
+        }
+
+        @Override
+        public boolean isInterruptable() {
+            return false;
+        }
+
+        @Override
+        public void start() {
+            CompanionEntity.this.bedWalkTicks = 0;
+            this.navigate();
+        }
+
+        private void navigate() {
+            Vec3 target = CompanionEntity.this.bedWalk.target();
+            CompanionEntity.this.getNavigation().moveTo(target.x, target.y, target.z, 0.35D);
+        }
+
+        @Override
+        public void tick() {
+            CompanionEntity self = CompanionEntity.this;
+            BedWalk walk = self.bedWalk;
+            if (walk == null || !(self.level() instanceof ServerLevel serverLevel)) {
+                return;
+            }
+            ServerPlayer player = serverLevel.getServer().getPlayerList().getPlayer(walk.player());
+            if (player == null || !player.isAlive() || player.level() != self.level() || self.isInScene()) {
+                self.bedWalk = null;
+                return;
+            }
+
+            self.bedWalkTicks++;
+            if (self.bedWalkTicks == 60 || self.bedWalkTicks == 120) {
+                this.navigate();
+            }
+            if (self.position().distanceTo(walk.target()) < 0.6D || self.bedWalkTicks > 200) {
+                self.bedWalk = null;
+                self.arriveAtBed(player, walk);
+            }
+        }
+    }
+
+    /** She is at the bed: pin her there, play the wait animation and remember the scene to start afterwards. */
+    private void arriveAtBed(ServerPlayer player, BedWalk walk) {
+        this.getNavigation().stop();
+        this.bedSpotPosition = walk.target();
+        this.bedSpotYaw = walk.yaw();
+        this.setPos(walk.target().x, walk.target().y, walk.target().z);
+        CompanionScene wait = walk.scene().waitScene();
+        if (wait == null || !this.startScene(player, wait)) {
+            this.bedSpotPosition = null;
+            return;
+        }
+        this.queuedScene = walk.scene();
+        this.waitTicks = 0;
+    }
+
+    /**
+     * Original state ANAL_WAIT / SITDOWNIDLE: once the wait animation reached its idle loop and the
+     * player stands within one block, the transition wipe starts and 22 ticks later the player is
+     * attached and the chosen scene begins. The wait is capped so she cannot stand there forever.
+     */
+    private void tickWaitForPartner(ServerPlayer controller, CompanionScene scene) {
+        this.waitTicks++;
+        CompanionScene.Phase phase = scene.phase(this.currentScenePhase());
+        if (phase != null && this.scenePhaseTicks >= phase.durationTicks()) {
+            if (phase.loop()) {
+                this.scenePhaseTicks = 0; // keep the idle loop going
+            } else if (this.currentScenePhase() + 1 < scene.phases().size()) {
+                this.enterScenePhase(this.currentScenePhase() + 1);
+            }
+        }
+        if (this.waitTicks > 2400) {
+            this.finishScene(false);
+            return;
+        }
+        if (this.currentScenePhase() < 1) {
+            return;
+        }
+        if (this.attachCountdown < 0) {
+            if (controller.distanceToSqr(this) <= 1.0D) {
+                this.attachCountdown = 22;
+                net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+                        controller, new com.trolmastercard.sexmod.network.TransitionPayload());
+            }
+        } else if (--this.attachCountdown <= 0) {
+            this.attachCountdown = -1;
+            this.finishScene(true);
+        }
+    }
+
     private record SceneAnchor(Vec3 position, float yaw) {
     }
 
@@ -1167,8 +1367,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.setDeltaMovement(Vec3.ZERO);
         this.setNoAi(this.scenePreviousNoAi);
         this.setNoGravity(this.scenePreviousNoGravity);
+        this.attachCountdown = -1;
+        this.waitTicks = 0;
         if (next != null && controller != null && controller.isAlive()) {
             this.startScene(controller, next);
+        }
+        if (!this.isInScene()) {
+            this.bedSpotPosition = null;
         }
     }
 

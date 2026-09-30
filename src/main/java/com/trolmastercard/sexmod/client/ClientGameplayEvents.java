@@ -116,6 +116,39 @@ public final class ClientGameplayEvents {
         restorePlayerAfterSceneCamera();
     }
 
+    /** The original's movement lock (d3.a(false)): during the transition wipe and while Bia's Talk plays. */
+    @SubscribeEvent
+    public static void lockControls(net.neoforged.neoforge.client.event.MovementInputUpdateEvent event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || minecraft.player == null) {
+            return;
+        }
+        boolean locked = TransitionOverlay.isActive();
+        if (!locked) {
+            UUID id = minecraft.player.getUUID();
+            for (Entity loaded : minecraft.level.entitiesForRendering()) {
+                if (loaded instanceof CompanionEntity companion
+                        && companion.isInScene()
+                        && companion.currentScene().locksControls()
+                        && companion.scenePartnerId().filter(id::equals).isPresent()) {
+                    locked = true;
+                    break;
+                }
+            }
+        }
+        if (locked) {
+            net.minecraft.client.player.Input input = event.getInput();
+            input.up = false;
+            input.down = false;
+            input.left = false;
+            input.right = false;
+            input.jumping = false;
+            input.shiftKeyDown = false;
+            input.forwardImpulse = 0.0F;
+            input.leftImpulse = 0.0F;
+        }
+    }
+
     @SubscribeEvent
     public static void hideScenePartner(RenderPlayerEvent.Pre event) {
         if (event.getEntity().level() instanceof ClientLevel level

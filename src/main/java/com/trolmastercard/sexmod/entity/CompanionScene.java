@@ -113,9 +113,20 @@ public enum CompanionScene {
             CompanionKind.BIA, "headpat", true,
             phase("animation.bia.headpat", 155)
     ),
+    /** She has reached the bed and waits for the player to step up to her (original ANAL_PREPARE / ANAL_WAIT). */
+    BIA_ANAL_WAIT(
+            CompanionKind.BIA, "anal_wait", false,
+            phase("animation.bia.anal_prepare", 111),
+            loop("animation.bia.anal_wait", 92)
+    ),
+    /** Same for the doggy route (original SITDOWN / SITDOWNIDLE). */
+    BIA_SIT_WAIT(
+            CompanionKind.BIA, "sit_wait", false,
+            phase("animation.bia.sitdown", 111),
+            loop("animation.bia.sitdownidle", 81)
+    ),
     BIA_ANAL(
             CompanionKind.BIA, "anal", true,
-            phase("animation.bia.anal_prepare", 111),
             phase("animation.bia.anal_start", 57),
             loop("animation.bia.anal_slow", 90),
             loop("animation.bia.anal_fast", 74),
@@ -329,7 +340,26 @@ public enum CompanionScene {
 
     /** Scenes that only lead into something else: no reward, no afterglow, no completion message. */
     public boolean isPrelude() {
-        return this.isClothingToggle() || this == BIA_TALK;
+        return this.isClothingToggle() || this == BIA_TALK || this.isWaitScene();
+    }
+
+    /** Scenes that only wait beside the bed until the player steps up, then hand over to the chosen scene. */
+    public boolean isWaitScene() {
+        return this == BIA_ANAL_WAIT || this == BIA_SIT_WAIT;
+    }
+
+    /** The wait scene played on arrival at the bed for a bed scene, or null. */
+    public CompanionScene waitScene() {
+        return switch (this) {
+            case BIA_ANAL -> BIA_ANAL_WAIT;
+            case BIA_PRONE -> BIA_SIT_WAIT;
+            default -> null;
+        };
+    }
+
+    /** Scenes during which the local player's movement keys are locked without attaching them (original d3.a(false)). */
+    public boolean locksControls() {
+        return this == BIA_TALK;
     }
 
     /** Label on the action panel; Bia's second menu uses the original's plain "Anal" / "Doggy". */

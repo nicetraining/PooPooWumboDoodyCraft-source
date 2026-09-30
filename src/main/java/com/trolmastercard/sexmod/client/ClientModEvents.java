@@ -10,6 +10,7 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 
 @EventBusSubscriber(modid = FapCraft.MOD_ID, value = Dist.CLIENT)
@@ -34,5 +35,12 @@ public final class ClientModEvents {
     public static void registerMenuScreens(RegisterMenuScreensEvent event) {
         event.register(ModMenus.COMPANION_INVENTORY.get(), CompanionInventoryScreen::new);
         event.register(ModMenus.COMPANION_STORAGE.get(), net.minecraft.client.gui.screens.inventory.ContainerScreen::new);
+    }
+
+    @SubscribeEvent
+    public static void registerGuiLayers(RegisterGuiLayersEvent event) {
+        event.registerAboveAll(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, "transition"),
+                TransitionOverlay::render);
     }
 }

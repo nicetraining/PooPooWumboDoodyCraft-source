@@ -471,4 +471,42 @@ public final class FapCraftGameTests {
         bia.discard();
         helper.succeed();
     }
+
+    @GameTest(template = "empty")
+    public static void biaWalksToABedBeforeTheScene(GameTestHelper helper) {
+        Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        CompanionEntity bia = spawnKind(helper, CompanionKind.BIA);
+
+        if (bia.startScene(player, CompanionScene.BIA_ANAL) || bia.isBedWalking()) {
+            helper.fail("with no bed she refuses (nobedinsight) and does not walk");
+        }
+
+        net.minecraft.core.BlockPos foot = new net.minecraft.core.BlockPos(3, 1, 2);
+        net.minecraft.core.BlockPos head = new net.minecraft.core.BlockPos(3, 1, 3);
+        net.minecraft.world.level.block.state.BlockState bed = net.minecraft.world.level.block.Blocks.RED_BED.defaultBlockState()
+                .setValue(net.minecraft.world.level.block.BedBlock.FACING, net.minecraft.core.Direction.SOUTH);
+        helper.setBlock(foot, bed.setValue(net.minecraft.world.level.block.BedBlock.PART,
+                net.minecraft.world.level.block.state.properties.BedPart.FOOT));
+        helper.setBlock(head, bed.setValue(net.minecraft.world.level.block.BedBlock.PART,
+                net.minecraft.world.level.block.state.properties.BedPart.HEAD));
+
+        if (!bia.startScene(player, CompanionScene.BIA_ANAL) || !bia.isBedWalking()) {
+            helper.fail("with a bed she starts walking to it instead of starting the scene");
+        }
+        if (bia.isInScene()) {
+            helper.fail("no scene animation plays before she has reached the bed");
+        }
+        Vec3 target = bia.bedWalkTarget();
+        Vec3 bedCenter = helper.absoluteVec(new Vec3(3.5, 1.0, 2.5));
+        if (target == null || target.distanceTo(bedCenter) > 2.6D || target.distanceTo(bedCenter) < 0.9D) {
+            helper.fail("her spot is on a side of the bed, got " + target);
+        }
+        if (!CompanionScene.BIA_ANAL.waitScene().isWaitScene()
+                || CompanionScene.BIA_PRONE.waitScene() != CompanionScene.BIA_SIT_WAIT
+                || !CompanionScene.BIA_TALK.locksControls()) {
+            helper.fail("wait scenes and the talk control lock exist");
+        }
+        bia.discard();
+        helper.succeed();
+    }
 }
