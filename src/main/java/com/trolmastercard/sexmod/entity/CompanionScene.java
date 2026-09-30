@@ -293,6 +293,10 @@ public enum CompanionScene {
             phase("animation.goblin.nelson_cum", 35)
     ),
 
+    /** Not real scenes: the two entries of the goblin catch menu ("use her" -> paizuri, "take ur stuff back"). */
+    GOBLIN_USE_HER(CompanionKind.GOBLIN, "use_her", false, loop("animation.goblin.idle", 20)),
+    GOBLIN_TAKE_BACK(CompanionKind.GOBLIN, "take_back", false, loop("animation.goblin.idle", 20)),
+
     /** Not a real scene: the "ride" entry of Galath's menu (mounts her and starts controlled flight). */
     GALATH_RIDE(
             CompanionKind.GALATH, "ride", false,
@@ -468,6 +472,8 @@ public enum CompanionScene {
             case ELLIE_COWGIRL, GALATH_COWGIRL -> "action.names.cowgirl";
             case GALATH_ANAL -> "action.names.anal";
             case GALATH_RIDE -> "action.names.ride";
+            case GOBLIN_USE_HER -> "action.names.goblin_use_her";
+            case GOBLIN_TAKE_BACK -> "action.names.goblin_take_back";
             case ELLIE_MISSIONARY -> "action.names.missionary";
             case ALLIE_RICH -> "action.names.makemerichallie";
             case ALLIE_DEEPTHROAT -> "action.names.deepthroat";

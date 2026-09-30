@@ -923,4 +923,106 @@ public final class FapCraftGameTests {
             helper.succeed();
         });
     }
+
+    @GameTest(template = "empty", timeoutTicks = 500, batch = "b_goblin")
+    public static void goblinIsCaughtAndThrownBack(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        floor(helper, 14);
+        var player = serverPlayer(helper);
+        player.moveTo(helper.absoluteVec(new Vec3(5.5, 1.0, 5.5)));
+        var goblin = com.trolmastercard.sexmod.registry.ModEntities.get(CompanionKind.GOBLIN).create(level);
+        goblin.moveTo(helper.absoluteVec(new Vec3(8.5, 1.0, 8.5)));
+        goblin.goblin().queenId = UUID.randomUUID();
+        goblin.setGoblinItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.GOLD_INGOT, 3));
+        level.addFreshEntity(goblin);
+        goblin.goblin().setState(com.trolmastercard.sexmod.entity.GoblinBehavior.RUN);
+        helper.runAfterDelay(5, () -> {
+            goblin.goblin().interact(player); // too far: nothing happens
+            if (goblin.goblinState() != com.trolmastercard.sexmod.entity.GoblinBehavior.RUN) {
+                helper.fail("a robber further than 3.5 blocks cannot be caught");
+                return;
+            }
+            goblin.moveTo(player.getX() + 1.0D, player.getY(), player.getZ());
+            goblin.goblin().interact(player);
+            if (goblin.goblinState() != com.trolmastercard.sexmod.entity.GoblinBehavior.CATCH
+                    || goblin.goblinCarrier().isEmpty()) {
+                helper.fail("a robber in reach is caught, state " + goblin.goblinState());
+            }
+        });
+        helper.runAfterDelay(5 + 170 + 28 + 5, () -> {
+            if (goblin.goblinState() != com.trolmastercard.sexmod.entity.GoblinBehavior.CATCH_BJ_IDLE) {
+                helper.fail("catch -> bj -> bj idle, state " + goblin.goblinState());
+                return;
+            }
+            goblin.goblin().choose(player, 0);
+            if (goblin.goblinState() != com.trolmastercard.sexmod.entity.GoblinBehavior.THROWING
+                    || player.getInventory().countItem(net.minecraft.world.item.Items.GOLD_INGOT) != 3) {
+                helper.fail("take back returns the stolen item and starts the throw");
+            }
+        });
+        helper.runAfterDelay(5 + 170 + 28 + 5 + 50, () -> {
+            if (goblin.goblinState() != com.trolmastercard.sexmod.entity.GoblinBehavior.THROWN
+                    && goblin.goblinState() != com.trolmastercard.sexmod.entity.GoblinBehavior.STAND_UP) {
+                helper.fail("thrown goblin, state " + goblin.goblinState());
+            }
+        });
+        helper.runAfterDelay(5 + 170 + 28 + 5 + 160, () -> {
+            if (goblin.isAlive()) {
+                helper.fail("an untamed robber disappears after the scene, state " + goblin.goblinState());
+                return;
+            }
+            level.removePlayerImmediately(player, Entity.RemovalReason.DISCARDED);
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 300, batch = "b_goblin")
+    public static void goblinPickUpAndThrow(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        floor(helper, 14);
+        var player = serverPlayer(helper);
+        player.moveTo(helper.absoluteVec(new Vec3(5.5, 1.0, 5.5)));
+        var goblin = com.trolmastercard.sexmod.registry.ModEntities.get(CompanionKind.GOBLIN).create(level);
+        goblin.moveTo(helper.absoluteVec(new Vec3(6.5, 1.0, 5.5)));
+        level.addFreshEntity(goblin);
+        helper.runAfterDelay(5, () -> goblin.goblin().interact(player));
+        helper.runAfterDelay(70, () -> {
+            if (goblin.goblinState() != com.trolmastercard.sexmod.entity.GoblinBehavior.SHOULDER || !goblin.goblinTamed()) {
+                helper.fail("picked up goblin sits on the shoulder and is tamed, state " + goblin.goblinState());
+                return;
+            }
+            var other = com.trolmastercard.sexmod.registry.ModEntities.get(CompanionKind.GOBLIN).create(level);
+            other.moveTo(player.getX() + 1.0D, player.getY(), player.getZ());
+            level.addFreshEntity(other);
+            other.goblin().interact(player);
+            if (other.goblinState() != com.trolmastercard.sexmod.entity.GoblinBehavior.NULL) {
+                helper.fail("you can carry only one goblin");
+            }
+            other.discard();
+            goblin.goblin().choose(player, 0);
+        });
+        helper.runAfterDelay(200, () -> {
+            if (!goblin.isAlive() || goblin.goblinState() != com.trolmastercard.sexmod.entity.GoblinBehavior.NULL
+                    || goblin.goblinCarrier().isPresent()) {
+                helper.fail("thrown goblin lands, stands up and is free, state " + goblin.goblinState());
+                return;
+            }
+            goblin.discard();
+            level.removePlayerImmediately(player, Entity.RemovalReason.DISCARDED);
+            helper.succeed();
+        });
+    }
+
+    /** A real ServerPlayer (NeoForge fake player) registered in the test level, so getPlayerByUUID finds it. */
+    private static net.minecraft.server.level.ServerPlayer serverPlayer(GameTestHelper helper) {
+        var level = helper.getLevel();
+        var player = net.neoforged.neoforge.common.util.FakePlayerFactory.get(level,
+                new com.mojang.authlib.GameProfile(UUID.randomUUID(), "goblin_tester"));
+        if (!level.players().contains(player)) {
+            level.addNewPlayer(player);
+        }
+        return player;
+    }
 }

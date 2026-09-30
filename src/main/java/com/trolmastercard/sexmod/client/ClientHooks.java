@@ -46,4 +46,12 @@ public final class ClientHooks {
     public static void openActionPanel(CompanionEntity companion) {
         Minecraft.getInstance().setScreen(new CompanionActionScreen(companion));
     }
+
+    /** Animation choice: the carrier sees the first-person catch/pick-up/throw animations, everybody else the third-person ones. */
+    public static boolean isCarrierFirstPerson(CompanionEntity goblin) {
+        Minecraft minecraft = Minecraft.getInstance();
+        return minecraft.player != null
+                && minecraft.options.getCameraType().isFirstPerson()
+                && goblin.goblinCarrier().filter(minecraft.player.getUUID()::equals).isPresent();
+    }
 }

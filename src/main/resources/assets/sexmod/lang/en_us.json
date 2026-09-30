@@ -358,5 +358,9 @@
   "scene.sexmod.allie_summon_sand": "Allie: Sand",
   "scene.sexmod.allie_rich_normal": "Allie: Make me rich (repeat wish)",
   "scene.sexmod.allie_prepare": "Allie: Prepare",
-  "scene.sexmod.allie_prepare_normal": "Allie: Prepare (repeat wish)"
+  "scene.sexmod.allie_prepare_normal": "Allie: Prepare (repeat wish)",
+  "action.names.goblin_use_her": "use her",
+  "action.names.goblin_take_back": "take ur stuff back",
+  "key.sexmod.goblin_wheel": "Goblin menu",
+  "key.categories.sexmod": "FapCraft"
 }

@@ -201,6 +201,16 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_K_CHOP =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_G_STATE =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Optional<UUID>> DATA_G_CARRIER =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<ItemStack> DATA_G_ITEM =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.ITEM_STACK);
+    private static final EntityDataAccessor<Boolean> DATA_G_TAMED =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_G_QUEEN =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private int attackAnimTicks;
     private boolean pinned;
     private Vec3 pinPosition;
@@ -211,6 +221,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private BeeBehavior beeBehavior;
     private com.trolmastercard.sexmod.tribe.KoboldBehavior koboldBehavior;
     private LunaFishing lunaFishing;
+    private GoblinBehavior goblinBehavior;
     private CompanionScene queuedScene;
     /** A scene to queue after {@link #queuedScene} has started (Allie: prepare, then the chosen scene). */
     private CompanionScene chainedScene;
@@ -246,6 +257,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if (kind == CompanionKind.LUNA && !technicalProxy) {
             this.lunaFishing = new LunaFishing(this);
+        }
+        if (kind == CompanionKind.GOBLIN && !technicalProxy) {
+            this.goblinBehavior = new GoblinBehavior(this);
         }
         if (this.getNavigation() instanceof GroundPathNavigation ground) {
             ground.setCanOpenDoors(true);
@@ -397,6 +411,73 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_FISH_STATE, 0);
         builder.define(DATA_FISH_CAST, false);
         builder.define(DATA_FISH_ITEM, ItemStack.EMPTY);
+        builder.define(DATA_G_STATE, 0);
+        builder.define(DATA_G_CARRIER, Optional.empty());
+        builder.define(DATA_G_ITEM, ItemStack.EMPTY);
+        builder.define(DATA_G_TAMED, false);
+        builder.define(DATA_G_QUEEN, false);
+    }
+
+    public GoblinBehavior goblin() {
+        return this.goblinBehavior;
+    }
+
+    public int goblinState() {
+        return this.entityData.get(DATA_G_STATE);
+    }
+
+    public void setGoblinState(int state) {
+        this.entityData.set(DATA_G_STATE, state);
+    }
+
+    public Optional<UUID> goblinCarrier() {
+        return this.entityData.get(DATA_G_CARRIER);
+    }
+
+    public void setGoblinCarrier(UUID carrier) {
+        this.entityData.set(DATA_G_CARRIER, Optional.ofNullable(carrier));
+    }
+
+    public ItemStack goblinItem() {
+        return this.entityData.get(DATA_G_ITEM);
+    }
+
+    public void setGoblinItem(ItemStack stack) {
+        this.entityData.set(DATA_G_ITEM, stack.copy());
+    }
+
+    public boolean goblinTamed() {
+        return this.entityData.get(DATA_G_TAMED);
+    }
+
+    public void setGoblinTamed(boolean tamed) {
+        this.entityData.set(DATA_G_TAMED, tamed);
+    }
+
+    public boolean goblinQueen() {
+        return this.entityData.get(DATA_G_QUEEN);
+    }
+
+    public void setGoblinQueen(boolean queen) {
+        this.entityData.set(DATA_G_QUEEN, queen);
+        if (this.goblinBehavior != null) {
+            this.goblinBehavior.queen = queen;
+        }
+    }
+
+    /** Original e3.ap(): pregnant queen (breeding is not ported yet). */
+    public boolean isPreggo() {
+        return false;
+    }
+
+    /** The goblin is held by a player (catch, pick-up, shoulder, throw). */
+    public boolean goblinHeld() {
+        if (this.goblinBehavior == null) {
+            return false;
+        }
+        int st = this.goblinState();
+        return st == GoblinBehavior.CATCH || st == GoblinBehavior.CATCH_BJ || st == GoblinBehavior.CATCH_BJ_IDLE
+                || st == GoblinBehavior.PICK_UP || st == GoblinBehavior.SHOULDER || st == GoblinBehavior.THROWING;
     }
 
     public int fishState() {
@@ -594,6 +675,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
+        if (this.goblinHeld() && !source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL)) {
+            return true; // a carried goblin takes no damage except /kill
+        }
         if (this.kind == CompanionKind.GALATH
                 && (source.is(net.minecraft.tags.DamageTypeTags.IS_FIRE)
                 || source.is(net.minecraft.tags.DamageTypeTags.IS_FALL)
@@ -1253,6 +1337,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     public boolean startScene(Player player, CompanionScene scene) {
+        if (scene == CompanionScene.GOBLIN_USE_HER || scene == CompanionScene.GOBLIN_TAKE_BACK) {
+            if (this.goblinBehavior == null) {
+                return false;
+            }
+            this.goblinBehavior.choose(player, scene == CompanionScene.GOBLIN_TAKE_BACK ? 0 : 1);
+            return true;
+        }
         if (scene == CompanionScene.GALATH_RIDE) {
             return this.kind == CompanionKind.GALATH
                     && !this.isInScene()
@@ -1310,6 +1401,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         SceneAnchor anchor = scene == CompanionScene.ELLIE_HUG
+                || scene == CompanionScene.GOBLIN_PAIZURI || scene == CompanionScene.GOBLIN_NELSON
                 ? new SceneAnchor(player.position(), Mth.wrapDegrees(player.getYRot() + 180.0F))
                 : this.bedSpotPosition != null
                 ? new SceneAnchor(this.bedSpotPosition, this.bedSpotYaw)
@@ -1615,6 +1707,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public boolean isPushable() {
+        if (this.goblinBehavior != null) {
+            int st = this.goblinState();
+            return !this.isInScene() && (st == GoblinBehavior.RUN || st == GoblinBehavior.AWAIT_PICK_UP
+                    || st == GoblinBehavior.NULL) && super.isPushable();
+        }
         return !this.isInScene() && super.isPushable();
     }
 
@@ -1670,6 +1767,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if (this.lunaFishing != null) {
             this.lunaFishing.tick(serverLevel);
+        }
+        if (this.goblinBehavior != null) {
+            this.goblinBehavior.tick(serverLevel);
         }
         this.tickEllieHorny(serverLevel);
         this.tickTargetSanity();
@@ -2435,6 +2535,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.finishScene(false);
         }
 
+        if (reason.shouldDestroy() && this.goblinBehavior != null) {
+            this.goblinBehavior.dropItem();
+        }
         if (reason.shouldDestroy() && this.level() instanceof ServerLevel serverLevel) {
             if (this.kind == CompanionKind.GALATH && this.summonedByGalathCoin) {
                 this.masterId().ifPresent(owner -> GalathBindingData
@@ -2476,6 +2579,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if (this.slimeBehavior != null) {
             return InteractionResult.PASS; // original Slime: no menu, scenes start when you walk into her
+        }
+        if (this.goblinBehavior != null) {
+            if (!this.level().isClientSide && !this.isInScene()) {
+                this.goblinBehavior.interact(player);
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
         if (this.koboldBehavior != null) {
             InteractionResult result = this.koboldInteract(player, heldItem);
@@ -2548,6 +2657,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 tag.putString("tribeName", this.tribeName());
             });
         }
+        if (this.goblinBehavior != null) {
+            tag.putBoolean("isQueen", this.goblinQueen());
+            tag.putBoolean("isTamed", this.goblinTamed());
+            tag.putInt("robTicks", this.goblinBehavior.robTicks);
+        }
         tag.putBoolean("FapCraftTechnicalProxy", this.technicalProxy);
     }
 
@@ -2593,6 +2707,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.setHealth(Math.min(this.getHealth(), this.getMaxHealth()));
             if (this.koboldBehavior != null) {
                 this.koboldBehavior.onLoaded();
+            }
+        }
+
+        if (this.goblinBehavior != null) {
+            this.setGoblinQueen(tag.getBoolean("isQueen"));
+            this.setGoblinTamed(tag.getBoolean("isTamed"));
+            if (tag.contains("robTicks", Tag.TAG_ANY_NUMERIC)) {
+                this.goblinBehavior.robTicks = tag.getInt("robTicks");
             }
         }
 
@@ -2711,6 +2833,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 default -> raw.thenPlayAndHold("animation.cat.throw_away");
             });
         }
+        if (this.goblinBehavior != null) {
+            return state.setAndContinue(this.goblinAnimation());
+        }
         if (this.kind == CompanionKind.GALATH && this.getFirstPassenger() instanceof Player) {
             return state.setAndContinue(this.entityData.get(DATA_GALATH_BOOST) > 0
                     ? software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.galath.boost")
@@ -2740,6 +2865,26 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         return state.setAndContinue(this.kind.idleAnimation());
+    }
+
+    private software.bernie.geckolib.animation.RawAnimation goblinAnimation() {
+        var raw = software.bernie.geckolib.animation.RawAnimation.begin();
+        String person = this.level().isClientSide && com.trolmastercard.sexmod.client.ClientHooks.isCarrierFirstPerson(this)
+                ? "_1person" : "_3person";
+        return switch (this.goblinState()) {
+            case GoblinBehavior.RUN -> raw.thenLoop("animation.goblin.running");
+            case GoblinBehavior.CATCH -> raw.thenPlayAndHold("animation.goblin.catch" + person);
+            case GoblinBehavior.CATCH_BJ -> raw.thenPlayAndHold("animation.goblin.catch" + person + "Bj");
+            case GoblinBehavior.CATCH_BJ_IDLE -> raw.thenLoop("animation.goblin.catch" + person + "Bj_idle");
+            case GoblinBehavior.PICK_UP -> raw.thenPlayAndHold("animation.goblin.pick_up" + person);
+            case GoblinBehavior.SHOULDER -> raw.thenLoop("animation.goblin.shoulder_idle");
+            case GoblinBehavior.THROWING -> raw.thenPlayAndHold("animation.goblin.throw" + person);
+            case GoblinBehavior.THROWN -> raw.thenLoop("animation.goblin.thrown");
+            case GoblinBehavior.STAND_UP -> raw.thenPlayAndHold("animation.goblin.stand_up");
+            case GoblinBehavior.SIT -> raw.thenLoop("animation.goblin.sit");
+            case GoblinBehavior.AWAIT_PICK_UP -> raw.thenLoop("animation.goblin.await_pick_up");
+            default -> this.isWalkingVisibly() ? raw.thenLoop("animation.goblin.walk") : raw.thenLoop("animation.goblin.idle");
+        };
     }
 
     /** Original ff animation predicate outside scenes: attack / sleep / work states, else idle, walk, run (armed when attacked). */
