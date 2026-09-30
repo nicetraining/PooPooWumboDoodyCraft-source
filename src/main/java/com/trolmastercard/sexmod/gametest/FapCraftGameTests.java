@@ -1025,4 +1025,85 @@ public final class FapCraftGameTests {
         }
         return player;
     }
+
+    @GameTest(template = "empty", timeoutTicks = 100, batch = "b_struct")
+    public static void originalStructuresLoadAndPlace(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        var manager = level.getStructureManager();
+        StringBuilder report = new StringBuilder();
+        int at = 0;
+        for (String name : List.of("goblin", "bia", "jenny", "ellie", "luna", "ssa")) {
+            var template = manager.get(id(name));
+            if (template.isEmpty()) {
+                System.out.println("STRUCT-FAIL " + name);
+                continue;
+            }
+            var size = template.get().getSize();
+            var origin = helper.absolutePos(new net.minecraft.core.BlockPos(0, 10, 0)).offset(at, 0, 0);
+            at += size.getX() + 4;
+            var settings = new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings();
+            template.get().placeInWorld(level, origin, origin, settings, level.getRandom(), 2);
+            int solid = 0;
+            int total = 0;
+            for (var pos : net.minecraft.core.BlockPos.betweenClosed(origin, origin.offset(size.getX() - 1, size.getY() - 1, size.getZ() - 1))) {
+                total++;
+                if (!level.getBlockState(pos).isAir()) {
+                    solid++;
+                }
+            }
+            report.append(name).append(' ').append(size.toShortString()).append(" solid=").append(solid).append('/').append(total).append("; ");
+            if (solid < total / 10) {
+                helper.fail("structure " + name + " placed almost nothing: " + report);
+                return;
+            }
+        }
+        System.out.println("STRUCT-REPORT " + report);
+        helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 500, batch = "b_hall")
+    public static void goblinHallIsCarvedIntoACave(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        var base = helper.absolutePos(new net.minecraft.core.BlockPos(1, 40, 1)); // high above the neighbouring tests
+        // a 12 x 6 x 12 cave: solid floor and ceiling, one entrance in the north wall
+        for (int x = -1; x <= 12; x++) {
+            for (int y = -1; y <= 6; y++) {
+                for (int z = -1; z <= 12; z++) {
+                    boolean inside = x >= 1 && x <= 10 && z >= 1 && z <= 10 && y >= 0 && y <= 5;
+                    boolean door = x == 5 && z == 0 && (y == 0 || y == 1);
+                    level.setBlock(base.offset(x, y, z), inside || door
+                            ? net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()
+                            : net.minecraft.world.level.block.Blocks.STONE.defaultBlockState(), 2);
+                }
+            }
+        }
+        // nothing is wrong with a solid block: but a missing floor must stop the hall
+        if (!com.trolmastercard.sexmod.worldgen.OriginalStructures.placeHall(level, base)) {
+            helper.fail("a cave with a solid floor, solid ceiling and one entrance takes the goblin hall");
+            return;
+        }
+        var queens = level.getEntitiesOfClass(CompanionEntity.class, new net.minecraft.world.phys.AABB(base).inflate(14.0D),
+                e -> e.kind() == CompanionKind.GOBLIN);
+        if (queens.size() != 1 || !queens.get(0).goblinQueen() || queens.get(0).goblin().thronePos == null) {
+            helper.fail("the hall has exactly one queen with a throne, found " + queens.size());
+            return;
+        }
+        var queen = queens.get(0);
+        helper.runAfterDelay(300, () -> {
+            if (queen.goblinState() != com.trolmastercard.sexmod.entity.GoblinBehavior.SIT
+                    || queen.position().distanceTo(queen.goblin().thronePos) > 0.01D) {
+                helper.fail("the queen sits on her throne, state " + queen.goblinState() + " alive=" + queen.isAlive() + " tc=" + queen.tickCount + " pos=" + queen.position() + " throne=" + queen.goblin().thronePos + " hp=" + queen.getHealth() + " ticking=" + level.isPositionEntityTicking(queen.blockPosition()) + " forced=" + level.getForcedChunks().size() + " players=" + level.players().size() + " rm=" + queen.isRemoved());
+                return;
+            }
+            var floorless = base.offset(40, 0, 0);
+            if (com.trolmastercard.sexmod.worldgen.OriginalStructures.placeHall(level, floorless)) {
+                helper.fail("open air is not a goblin hall");
+                return;
+            }
+            queen.discard();
+            helper.succeed();
+        });
+    }
 }

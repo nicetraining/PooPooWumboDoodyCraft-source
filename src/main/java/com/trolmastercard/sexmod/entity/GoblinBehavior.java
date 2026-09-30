@@ -50,6 +50,9 @@ public final class GoblinBehavior {
     public boolean queen;
     public UUID queenId;
     public int robTicks = ROB_PERIOD - 480;
+    /** Original al / ac: where the queen sits and which way she faces. */
+    public Vec3 thronePos;
+    public float throneRot;
     private int stateTicks;
     private int pickTicks = -1;
     private float fade = 1.0F;
@@ -349,6 +352,16 @@ public final class GoblinBehavior {
     private void tickQueen(ServerLevel level) {
         if (this.k.goblinState() != SIT) {
             this.setState(SIT);
+        }
+        if (this.thronePos != null) {
+            // original m(): while nobody is with her she stays on the throne
+            this.k.getNavigation().stop();
+            if (this.k.position().distanceToSqr(this.thronePos) > 1.0E-4D) {
+                this.k.moveTo(this.thronePos.x, this.thronePos.y, this.thronePos.z, this.throneRot, 0.0F);
+            }
+            this.k.setYRot(this.throneRot);
+            this.k.yBodyRot = this.throneRot;
+            this.k.yHeadRot = this.throneRot;
         }
         if (this.k.goblinTamed() || this.k.isPreggo()) {
             return;

@@ -2661,6 +2661,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             tag.putBoolean("isQueen", this.goblinQueen());
             tag.putBoolean("isTamed", this.goblinTamed());
             tag.putInt("robTicks", this.goblinBehavior.robTicks);
+            if (this.goblinBehavior.thronePos != null) {
+                tag.putFloat("throneRot", this.goblinBehavior.throneRot);
+                tag.putDouble("thronePosX", this.goblinBehavior.thronePos.x);
+                tag.putDouble("thronePosY", this.goblinBehavior.thronePos.y);
+                tag.putDouble("thronePosZ", this.goblinBehavior.thronePos.z);
+            }
         }
         tag.putBoolean("FapCraftTechnicalProxy", this.technicalProxy);
     }
@@ -2715,6 +2721,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.setGoblinTamed(tag.getBoolean("isTamed"));
             if (tag.contains("robTicks", Tag.TAG_ANY_NUMERIC)) {
                 this.goblinBehavior.robTicks = tag.getInt("robTicks");
+            }
+            if (tag.contains("thronePosX", Tag.TAG_ANY_NUMERIC)) {
+                this.goblinBehavior.thronePos = new Vec3(tag.getDouble("thronePosX"), tag.getDouble("thronePosY"), tag.getDouble("thronePosZ"));
+                this.goblinBehavior.throneRot = tag.getFloat("throneRot");
             }
         }
 
