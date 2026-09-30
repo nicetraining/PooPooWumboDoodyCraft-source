@@ -510,7 +510,8 @@ public final class FapCraftGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = "empty")
+    // Own batch that runs first: Jenny searches 22 blocks for beds and would find beds left by other tests.
+    @GameTest(template = "empty", batch = "a_first")
     public static void jennyWalksToABedForDoggy(GameTestHelper helper) {
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         CompanionEntity jenny = spawnKind(helper, CompanionKind.JENNY);
