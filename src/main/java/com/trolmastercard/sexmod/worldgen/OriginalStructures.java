@@ -184,7 +184,7 @@ public final class OriginalStructures {
         int y = top - 1;
         int x = x0;
         int z = z0;
-        for (int layer = 0; changed && layer < 32 && y > level.getMinBuildHeight(); layer++) {
+        for (int layer = 0; changed && layer < 200 && y > level.getMinBuildHeight(); layer++) {
             changed = false;
             z--;
             x--;
@@ -217,7 +217,7 @@ public final class OriginalStructures {
 
     /** Original g3.a(World, Random, int, int): a 12x6x12 hollow with a solid floor and ceiling and 1 to 4 entrances. */
     public static boolean tryHall(ServerLevel level, int cx, int cz, RandomSource random) {
-        int y = level.getMinBuildHeight() + random.nextInt(255);
+        int y = random.nextInt(255);
         return placeHall(level, new BlockPos(16 * cx + 3, y, 16 * cz + 3));
     }
 

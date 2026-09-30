@@ -288,7 +288,7 @@ public final class LunaHookEntity extends Projectile {
         if (this.catchable <= 0 || luna == null) {
             return List.of();
         }
-        int luck = EnchantmentHelper.getFishingLuckBonus(level, this.rod, luna);
+        int luck = 0; // original gi.c builds the loot context without luck
         LootParams params = new LootParams.Builder(level)
                 .withParameter(LootContextParams.ORIGIN, this.position())
                 .withParameter(LootContextParams.TOOL, this.rod)

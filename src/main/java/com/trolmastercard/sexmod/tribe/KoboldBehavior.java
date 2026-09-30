@@ -279,6 +279,9 @@ public final class KoboldBehavior {
         double distance = this.k.distanceTo(owner);
         if (distance > 2.0D) {
             double speed = (owner.isSprinting() ? RUN : WALK) + Math.floor(distance / 5.0D) * 0.3D;
+            if (this.k.isInWater()) {
+                speed *= 60.0D; // original ff.a: sixty times faster in water
+            }
             this.k.getNavigation().moveTo(owner, speed);
         } else {
             this.k.getNavigation().stop();

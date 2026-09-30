@@ -13,7 +13,9 @@ public enum CompanionAction {
     THROW_PEARL,
     DOWNED,
     RIDE,
-    SIT;
+    SIT,
+    GALATH_SUMMON,
+    GALATH_DESUMMON;
 
     public String animationSuffix(int attackVariant) {
         return switch (this) {
@@ -23,6 +25,8 @@ public enum CompanionAction {
             case DOWNED -> "downed";
             case RIDE -> "ride";
             case SIT -> "sit";
+            case GALATH_SUMMON -> "summon";
+            case GALATH_DESUMMON -> "desummon";
             case NONE -> "idle";
         };
     }

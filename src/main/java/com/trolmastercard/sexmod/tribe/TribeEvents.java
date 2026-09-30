@@ -51,7 +51,7 @@ public final class TribeEvents {
     /** Original g3: 0.004 of newly generated chunks get a wild tribe at the chunk centre (not in flat worlds). */
     @SubscribeEvent
     public static void onChunkLoad(net.neoforged.neoforge.event.level.ChunkEvent.Load event) {
-        if (!event.isNewChunk() || !(event.getLevel() instanceof ServerLevel level) || level.isFlat()
+        if (!com.trolmastercard.sexmod.Config.SHOULD_GEN_BUILDINGS.get() || !event.isNewChunk() || !(event.getLevel() instanceof ServerLevel level) || level.isFlat()
                 || level.dimensionType().hasCeiling() || level.dimension() == net.minecraft.world.level.Level.END) {
             return;
         }

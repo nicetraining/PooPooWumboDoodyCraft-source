@@ -206,6 +206,9 @@ public final class GoblinBehavior {
             return;
         }
         this.stateTicks++;
+        if (this.k.goblinState() == THROWING) {
+            this.k.setGoblinPhase(Math.min(this.stateTicks, 255));
+        }
         if (this.k.goblinModel().isEmpty()) {
             this.k.setGoblinModel(this.queen ? GoblinModel.queen(this.k.getRandom()) : GoblinModel.random(this.k.getRandom()));
         }
@@ -218,6 +221,8 @@ public final class GoblinBehavior {
             case NULL -> {
                 if (this.queenId != null && !this.k.goblinTamed()) {
                     this.k.discard(); // a calm robber vanishes (and drops what it holds)
+                } else if (this.k.goblinTamed()) {
+                    this.tamedIdle(level);
                 }
             }
             case RUN -> this.flee(level);
@@ -266,17 +271,18 @@ public final class GoblinBehavior {
             case THROWN -> {
                 this.k.noPhysics = false;
                 this.k.setNoGravity(false);
-                if (this.k.onGround()) {
-                    if (++this.groundTicks >= 30) {
-                        this.groundTicks = 0;
-                        this.setState(STAND_UP);
+                if (!this.k.goblinTamed()) {
+                    // original e3.H: an untamed thrown goblin fades away once it touches the ground or water
+                    if (this.k.onGround() || this.k.isInWater()) {
+                        this.fade -= 0.05F;
+                        this.k.setGoblinFade(Math.max(0.0F, this.fade));
+                        if (this.fade <= 0.0F) {
+                            this.k.discard();
+                        }
                     }
-                } else if (!this.k.goblinTamed() && this.queenId != null) {
-                    this.fade -= 0.05F;
-                    this.k.setGoblinFade(Math.max(0.0F, this.fade));
-                    if (this.fade <= 0.0F) {
-                        this.k.discard();
-                    }
+                } else if (this.k.onGround() && ++this.groundTicks >= 30) {
+                    this.groundTicks = 0;
+                    this.setState(STAND_UP);
                 }
             }
             case STAND_UP -> {
@@ -328,6 +334,39 @@ public final class GoblinBehavior {
         this.k.yBodyRot = carrier.yBodyRot;
         this.k.yHeadRot = carrier.yBodyRot;
         this.k.setNoGravity(true);
+    }
+
+    private net.minecraft.core.BlockPos wanderSpot;
+    private int wanderTicks;
+
+    /** Original e3.n(): a tamed goblin faces a player who comes within 2 blocks, otherwise wanders around a spot at speed 0.3. */
+    private void tamedIdle(ServerLevel level) {
+        if (this.k.isInScene()) {
+            return;
+        }
+        Player player = level.getNearestPlayer(this.k, 15.0D);
+        if (player != null && player.distanceTo(this.k) < 2.0F) {
+            double dx = player.getX() - this.k.getX();
+            double dz = player.getZ() - this.k.getZ();
+            this.k.setYRot((float) (Math.toDegrees(Math.atan2(dz, dx)) - 90.0D));
+            this.k.yHeadRot = this.k.getYRot();
+            this.k.getNavigation().stop();
+            return;
+        }
+        if (this.wanderSpot == null
+                || this.k.distanceToSqr(this.wanderSpot.getX(), this.wanderSpot.getY(), this.wanderSpot.getZ()) > 800.0D
+                || this.wanderTicks > 100) {
+            int dx = (this.k.getRandom().nextBoolean() ? 1 : -1) * this.k.getRandom().nextInt(5);
+            int dz = (this.k.getRandom().nextBoolean() ? 1 : -1) * this.k.getRandom().nextInt(5);
+            int x = this.k.blockPosition().getX() + dx;
+            int z = this.k.blockPosition().getZ() + dz;
+            this.wanderSpot = new net.minecraft.core.BlockPos(x, level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z), z);
+            this.wanderTicks = 0;
+        }
+        if (Math.sqrt(this.wanderSpot.distSqr(this.k.blockPosition())) > 2.0D) {
+            this.k.getNavigation().moveTo(this.wanderSpot.getX() + 0.5D, this.wanderSpot.getY(), this.wanderSpot.getZ() + 0.5D, 0.3D);
+        }
+        this.wanderTicks++;
     }
 
     private void tickThrow(Player carrier) {
@@ -408,25 +447,27 @@ public final class GoblinBehavior {
         if (++this.robTicks < ROB_PERIOD) {
             return;
         }
-        Player best = null;
-        double bestDistance = Double.MAX_VALUE;
-        for (Player player : level.players()) {
-            if (!player.onGround() || player.getAbilities().flying || player.isSpectator()) {
-                continue;
-            }
-            double dx = player.getX() - this.k.getX();
-            double dz = player.getZ() - this.k.getZ();
-            double horizontal = Math.sqrt(dx * dx + dz * dz);
-            if (horizontal > 100.0D || horizontal >= bestDistance || slotOfValuable(player) < 0) {
-                continue;
-            }
-            best = player;
-            bestDistance = horizontal;
-        }
-        if (best == null) {
+        // original e3.B: only the single nearest player counts; it must be on the ground, not flying and close enough
+        Player best = level.getNearestPlayer(this.k, 3000.0D);
+        if (best == null || !best.onGround() || best.getAbilities().flying || best.isSpectator()) {
             return;
         }
-        int slot = slotOfValuable(best);
+        double dx = best.getX() - this.k.getX();
+        double dz = best.getZ() - this.k.getZ();
+        if (Math.sqrt(dx * dx + dz * dz) > 100.0D) {
+            return;
+        }
+        List<Integer> slots = new java.util.ArrayList<>();
+        for (int i = 0; i < best.getInventory().getContainerSize(); i++) {
+            ItemStack candidate = best.getInventory().getItem(i);
+            if (!candidate.isEmpty() && VALUABLES.contains(candidate.getItem())) {
+                slots.add(i);
+            }
+        }
+        if (slots.isEmpty()) {
+            return;
+        }
+        int slot = slots.get(this.k.getRandom().nextInt(slots.size()));
         ItemStack stolen = best.getInventory().getItem(slot).copy();
         CompanionEntity robber = com.trolmastercard.sexmod.registry.ModEntities.get(CompanionKind.GOBLIN).create(level);
         if (robber == null || robber.goblin() == null) {
@@ -496,7 +537,7 @@ public final class GoblinBehavior {
             if (this.k.isPreggo()) {
                 if (level.getGameTime() - this.lastNag >= NAG_COOLDOWN) {
                     this.lastNag = level.getGameTime();
-                    player.sendSystemMessage(Component.literal("The Queen is still pregnant - so no breeding for you uwu"));
+                    player.displayClientMessage(Component.literal("The Queen is still pregnant - so no breeding for you uwu"), true);
                 }
                 return;
             }
@@ -607,6 +648,7 @@ public final class GoblinBehavior {
             // original BREEDING_CUM_0: she is pregnant from now on
             this.k.setGoblinPreggo(true);
             this.impregnationTick = level.getGameTime();
+            this.lastNag = level.getGameTime();
         }
         this.lastPhase = phase;
     }

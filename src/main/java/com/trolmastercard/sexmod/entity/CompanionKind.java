@@ -17,7 +17,7 @@ public enum CompanionKind {
             "textures/entity/jenny/jenny.png",
             "animations/jenny/jenny.animation.json",
             "animation.jenny.idle", "animation.jenny.walk",
-            0.49F, 1.95F, 20.0D, 0.30D, 0x322600, 0xC11605
+            0.49F, 1.95F, 20.0D, 0.50D, 0x322640, 0xC11A85
     ),
     ELLIE(
             "ellie", "Ellie",
@@ -25,7 +25,7 @@ public enum CompanionKind {
             "textures/entity/ellie/ellie.png",
             "animations/ellie/ellie.animation.json",
             "animation.ellie.idle", "animation.ellie.walk",
-            0.60F, 1.95F, 20.0D, 0.30D, 0x161616, 0x980000
+            0.60F, 1.80F, 20.0D, 0.50D, 0x161616, 0x980000
     ),
     SLIME(
             "slime", "Slime",
@@ -33,7 +33,7 @@ public enum CompanionKind {
             "textures/entity/slime/slime.png",
             "animations/slime/slime.animation.json",
             "animation.slime.idle", "animation.slime.walk",
-            0.70F, 1.80F, 20.0D, 0.28D, 0xC8EE24, 0x7DC42A
+            0.70F, 1.80F, 20.0D, 0.28D, 0xC8ECA4, 0x7DCC6A
     ),
     BIA(
             "bia", "Bia",
@@ -41,7 +41,7 @@ public enum CompanionKind {
             "textures/entity/bia/bia.png",
             "animations/bia/bia.animation.json",
             "animation.bia.idle", "animation.bia.walk",
-            0.49F, 1.65F, 20.0D, 0.30D, 0x724D70, 0x6EB24B
+            0.49F, 1.65F, 20.0D, 0.50D, 0x724530, 0x6EB24B
     ),
     BEE(
             "bee", "Bee",
@@ -49,7 +49,7 @@ public enum CompanionKind {
             "textures/entity/bee/bee.png",
             "animations/bee/bee.animation.json",
             "animation.bee.idle", "animation.bee.idle",
-            0.30F, 1.50F, 12.0D, 0.20D, 0xFED268, 0x432ADB
+            0.30F, 1.50F, 12.0D, 0.20D, 0xFED668, 0x43241B
     ),
     LUNA(
             "luna", "Luna",
@@ -57,7 +57,7 @@ public enum CompanionKind {
             "textures/entity/cat/cat.png",
             "animations/cat/cat.animation.json",
             "animation.cat.idle", "animation.cat.walk",
-            0.60F, 1.80F, 20.0D, 0.32D, 0x784A7B, 0x792946
+            0.60F, 1.80F, 20.0D, 0.50D, 0x78443B, 0x792946
     ),
     ALLIE(
             "allie", "Allie",
@@ -73,7 +73,7 @@ public enum CompanionKind {
             "textures/entity/kobold/kobold.png",
             "animations/kobold/kobold.animation.json",
             "animation.kobold.idle", "animation.kobold.walk",
-            0.50F, 0.99F, 20.0D, 0.34D, 0x783F69, 0xE7B36E
+            0.50F, 0.99F, 20.0D, 0.50D, 0x783F69, 0xE7B36E
     ),
     GOBLIN(
             "goblin", "Goblin",
@@ -81,7 +81,7 @@ public enum CompanionKind {
             "textures/entity/goblin/goblin.png",
             "animations/goblin/goblin.animation.json",
             "animation.goblin.idle", "animation.goblin.walk",
-            0.50F, 0.99F, 20.0D, 0.34D, 0x009A00, 0x004C00
+            0.50F, 0.99F, 20.0D, 0.50D, 0x009A00, 0x004C00
     ),
     GALATH(
             "galath", "Galath",
@@ -89,7 +89,7 @@ public enum CompanionKind {
             "textures/entity/galath/galath.png",
             "animations/galath/galath.animation.json",
             "animation.galath.idle", "animation.galath.walk",
-            1.20F, 2.40F, 110.0D, 0.30D, 0xFF0000, 0xFF0000
+            1.20F, 2.40F, 110.0D, 0.60D, 0xFF0000, 0xFF0000
     ),
     MANGLELIE(
             "manglelie", "Manglelie",
@@ -97,7 +97,7 @@ public enum CompanionKind {
             "textures/entity/manglelie/manglelie.png",
             "animations/manglelie/manglelie.animation.json",
             "animation.manglelie.idle", "animation.manglelie.walk",
-            0.90F, 2.20F, 60.0D, 0.32D, 0xF9F9F9, 0x817316
+            0.90F, 2.20F, 60.0D, 0.32D, 0xF9F9F9, 0x817AC6
     );
 
     private final String registryPath;

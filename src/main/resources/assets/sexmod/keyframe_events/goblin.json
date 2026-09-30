@@ -24,6 +24,7 @@
   ]
  },
  "catchMe": {
+  "text": "...or use me?~",
   "sounds": [
    "misc.plob.plob0"
   ]
@@ -150,6 +151,7 @@
   ]
  },
  "breedingFound": {
+  "text": "guess we found a worthy breeding partner!",
   "sounds": [
    "misc.plob.plob0"
   ]

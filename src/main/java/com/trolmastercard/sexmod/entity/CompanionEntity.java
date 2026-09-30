@@ -270,6 +270,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if (kind == CompanionKind.GOBLIN && !technicalProxy) {
             this.goblinBehavior = new GoblinBehavior(this);
+            this.configureGoblin();
         }
         if (this.getNavigation() instanceof GroundPathNavigation ground) {
             ground.setCanOpenDoors(true);
@@ -277,7 +278,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (!technicalProxy && (kind == CompanionKind.JENNY || kind == CompanionKind.ELLIE
                 || kind == CompanionKind.BIA || kind == CompanionKind.LUNA)) {
             // Original e2 constructor: iron sword in slot 0, bow in slot 1 (Luna also a fishing rod in slot 6).
-            this.equipment.setItem(0, new ItemStack(Items.IRON_SWORD));
+            this.equipment.setItem(0, new ItemStack(kind == CompanionKind.LUNA ? Items.IRON_AXE : Items.IRON_SWORD));
             this.equipment.setItem(1, new ItemStack(Items.BOW));
             if (kind == CompanionKind.LUNA) {
                 this.equipment.setItem(6, new ItemStack(Items.FISHING_ROD));
@@ -309,7 +310,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, kind.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, kind.movementSpeed())
-                .add(Attributes.FOLLOW_RANGE, 32.0D)
+                .add(Attributes.FOLLOW_RANGE, switch (kind) {
+                    case BEE -> 16.0D;
+                    case GALATH -> 50.0D;
+                    default -> 30.0D;
+                })
                 .add(Attributes.ATTACK_DAMAGE, switch (kind) {
                     case GALATH, MANGLELIE -> 7.0D;
                     case KOBOLD, GOBLIN -> 4.0D;
@@ -331,14 +336,6 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     ) {
         if (!Mob.checkMobSpawnRules(type, level, spawnType, position, random)) {
             return false;
-        }
-        if (level instanceof ServerLevel serverLevel) {
-            AABB area = new AABB(position).inflate(128.0D);
-            return serverLevel.getEntitiesOfClass(
-                    CompanionEntity.class,
-                    area,
-                    companion -> !companion.hasMaster() && !companion.isTechnicalProxy()
-            ).size() < 2;
         }
         return true;
     }
@@ -657,6 +654,41 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     private int galathDespawnTicks = -1;
+    private long galathHurtSoundAt;
+
+    /** Original cc.a(f_): the coin calls her back; she plays the de-summon animation in place and is removed afterwards. */
+    public void beginGalathDeSummon(int ticks) {
+        if (this.galathDespawnTicks < 0) {
+            this.galathDespawnTicks = ticks;
+        }
+    }
+
+    private void tickGalathCoinStates(ServerLevel serverLevel) {
+        if (this.galathDespawnTicks >= 0) {
+            this.setAction(CompanionAction.GALATH_DESUMMON);
+            this.getNavigation().stop();
+            this.setDeltaMovement(Vec3.ZERO);
+            this.setNoGravity(true);
+            return;
+        }
+        if (this.summonedByGalathCoin && this.tickCount <= 15 && !this.isInScene()) {
+            // original GALATH_SUMMON: she materialises for 15 ticks before she acts
+            this.setAction(CompanionAction.GALATH_SUMMON);
+            this.getNavigation().stop();
+            this.setDeltaMovement(Vec3.ZERO);
+        } else if (this.action() == CompanionAction.GALATH_SUMMON) {
+            this.setAction(CompanionAction.NONE);
+        }
+        // original f_.ae(): she is removed when her owner is in another dimension or more than 60 blocks away
+        if (this.summonedByGalathCoin && this.tickCount % 20 == 0) {
+            this.masterId().map(id -> serverLevel.getServer().getPlayerList().getPlayer(id)).ifPresent(owner -> {
+                if (owner.level() != serverLevel || owner.distanceToSqr(this) > 3600.0D) {
+                    this.discard();
+                }
+            });
+        }
+    }
+
     private int galathBoostTicks;
     private double galathBoostSpeed;
 
@@ -735,6 +767,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 || source.is(net.minecraft.world.damagesource.DamageTypes.IN_WALL)
                 || source.is(net.minecraft.world.damagesource.DamageTypes.CRAMMING))) {
             return true; // original: fire, wall, drowning, fall and cramming do nothing to her
+        }
+        if (this.isInScene() && !source.is(net.minecraft.world.damagesource.DamageTypes.FELL_OUT_OF_WORLD)) {
+            return true; // original ah.b: a girl in a scene takes no damage except the void
         }
         return super.isInvulnerableTo(source);
     }
@@ -948,6 +983,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return null;
     }
 
+    /** Original e3 goals: swim, door, look-at-player only; wandering, running and idling are scripted in GoblinBehavior. */
+    private void configureGoblin() {
+        this.goalSelector.removeAllGoals(goal -> true);
+        this.targetSelector.removeAllGoals(goal -> true);
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(3, new OpenDoorGoal(this, true));
+        this.goalSelector.addGoal(5, new IdleLookGoal());
+    }
+
     private void configureKobold() {
         // Original ff goals: swim, tempt (0.4), door, look-at-player. Everything else is scripted in KoboldBehavior.
         this.goalSelector.removeAllGoals(goal -> true);
@@ -1009,6 +1053,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
      * happens where the panel opens).
      */
     public boolean canUsePanel(Player player) {
+        if (this.kind == CompanionKind.ELLIE || this.kind == CompanionKind.LUNA) {
+            return true; // original el / eb: no master check, never a busy line
+        }
         return !this.hasMaster() || this.isMaster(player);
     }
 
@@ -1073,6 +1120,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.fallDistance = 0.0F;
             this.setAction(CompanionAction.NONE);
             this.clearMaster();
+            this.sayStopLine(); // original x() also runs when the go-home routine ends
         }
     }
 
@@ -1145,6 +1193,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 if (!CompanionActions.canAfford(player, this, scene)) {
                     player.displayClientMessage(
                             Component.translatable("message.sexmod.cannot_afford", this.getDisplayName()), false);
+                    com.trolmastercard.sexmod.registry.ModSounds.find("girls.jenny.sadoh.sadoh1").ifPresent(sound ->
+                            player.level().playSound(null, player.blockPosition(), sound.get(),
+                                    net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.0F));
                     return;
                 }
                 if (this.startScene(player, scene)) {
@@ -1737,7 +1788,39 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public boolean causeFallDamage(float fallDistance, float multiplier, net.minecraft.world.damagesource.DamageSource source) {
+        if (this.goblinBehavior != null) {
+            int st = this.goblinState(); // original e3: no fall damage while being thrown
+            if (st == GoblinBehavior.THROWN || st == GoblinBehavior.THROWING) {
+                return false;
+            }
+        }
         return this.slimeBehavior == null && super.causeFallDamage(fallDistance, multiplier, source); // original Slime: no fall damage
+    }
+
+    /** Original e3.canBeCollidedWith: only a running, waiting or idle goblin that nobody carries can be hit or clicked. */
+    @Override
+    public boolean isPickable() {
+        if (this.goblinBehavior != null) {
+            int st = this.goblinState();
+            if (st == GoblinBehavior.THROWN) {
+                return false;
+            }
+            if (st == GoblinBehavior.RUN || st == GoblinBehavior.AWAIT_PICK_UP) {
+                return super.isPickable();
+            }
+            if (this.goblinCarrier().isPresent() || st != GoblinBehavior.NULL) {
+                return false;
+            }
+        }
+        return super.isPickable();
+    }
+
+    @Override
+    public void setRemainingFireTicks(int ticks) {
+        if (this.goblinBehavior != null && this.goblinCarrier().isPresent()) {
+            return; // original e3.setFire: a carried goblin does not burn
+        }
+        super.setRemainingFireTicks(ticks);
     }
 
     @Override
@@ -1758,22 +1841,77 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return false;
     }
 
+    /** Original eye heights (Jenny 1.64, Ellie 1.9, Luna 1.34, Kobold 0.94, Goblin 0.75). */
+    @Override
+    public net.minecraft.world.entity.EntityDimensions getDefaultDimensions(net.minecraft.world.entity.Pose pose) {
+        var dimensions = super.getDefaultDimensions(pose);
+        Float eye = this.kind == null ? null : switch (this.kind) {
+            case JENNY -> 1.64F;
+            case ELLIE -> 1.9F;
+            case LUNA -> 1.34F;
+            case KOBOLD -> 0.94F;
+            case GOBLIN -> 0.75F;
+            default -> null;
+        };
+        return eye == null ? dimensions : dimensions.withEyeHeight(eye);
+    }
+
+    /** Original jump motion: Luna 0.5, Kobold 0.45. */
+    @Override
+    protected float getJumpPower() {
+        return switch (this.kind) {
+            case LUNA -> 0.5F * this.getBlockJumpFactor() + this.getJumpBoostPower();
+            case KOBOLD -> 0.45F * this.getBlockJumpFactor() + this.getJumpBoostPower();
+            default -> super.getJumpPower();
+        };
+    }
+
     @Override
     public boolean isPushable() {
-        if (this.goblinBehavior != null) {
-            int st = this.goblinState();
-            return !this.isInScene() && (st == GoblinBehavior.RUN || st == GoblinBehavior.AWAIT_PICK_UP
-                    || st == GoblinBehavior.NULL) && super.isPushable();
-        }
-        return !this.isInScene() && super.isPushable();
+        // original em.canBePushed is false for every girl; only the Kobold (ff) can be pushed
+        return this.kind == CompanionKind.KOBOLD && !this.isInScene() && super.isPushable();
     }
 
     @Override
     public void tick() {
         super.tick();
 
+        if (this.kind == CompanionKind.KOBOLD && this.level().isClientSide) {
+            com.trolmastercard.sexmod.client.ClientHooks.koboldGreeting(this);
+        }
+        if (this.kind == CompanionKind.ALLIE && this.level().isClientSide) {
+            if (this.tickCount == 1) {
+                // original ev.d(): 300 portal particles when she arrives (spread 0.75, height 1.5)
+                for (int i = 0; i < 300; i++) {
+                    this.level().addParticle(ParticleTypes.PORTAL, this.getX() + (this.random.nextDouble() - 0.5D) * 0.75D,
+                            this.getY() + this.random.nextDouble() * 1.5D, this.getZ() + (this.random.nextDouble() - 0.5D) * 0.75D,
+                            this.random.nextGaussian() * 0.01D, this.random.nextGaussian() * 0.01D, this.random.nextGaussian() * 0.01D);
+                }
+            }
+            if (this.tickCount % 10 == 0) {
+                // original ev.b(): a portal particle drifts off one of her tail bones every 10 ticks
+                double angle = Math.toRadians(this.yBodyRot);
+                this.level().addParticle(ParticleTypes.PORTAL, this.getX() + Math.sin(angle) * 0.5D,
+                        this.getY() + 0.6D + this.random.nextDouble() * 0.4D, this.getZ() - Math.cos(angle) * 0.5D,
+                        this.random.nextGaussian() * 0.01D, this.random.nextGaussian() * 0.01D, this.random.nextGaussian() * 0.01D);
+            }
+        }
+
         if (!(this.level() instanceof ServerLevel serverLevel)) {
             return;
+        }
+
+        if (this.tickCount >= 1 && this.homePos().isEmpty()
+                && (this.kind.hasMasterAI() || this.kind == CompanionKind.BEE)) {
+            this.setHome(this.blockPosition()); // original em.updateAITasks: home defaults to where she first stood
+        }
+        if (this.kind == CompanionKind.LUNA && this.tickCount % 10 == 0) {
+            // original eb: speed 1.0 while she has no master, 0.5 with one
+            var speedAttribute = this.getAttribute(Attributes.MOVEMENT_SPEED);
+            double wanted = this.hasMaster() ? 0.5D : 1.0D;
+            if (speedAttribute != null && speedAttribute.getBaseValue() != wanted) {
+                speedAttribute.setBaseValue(wanted);
+            }
         }
 
         if (this.tickCount == 1 && this.getHealth() > this.getMaxHealth()) {
@@ -1799,6 +1937,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if (this.kind == CompanionKind.GALATH) {
             this.tickGalathRide();
+        }
+        if (this.kind == CompanionKind.GALATH) {
+            this.tickGalathCoinStates(serverLevel);
         }
         if (this.galathDespawnTicks >= 0 && --this.galathDespawnTicks < 0) {
             this.discard();
@@ -2202,6 +2343,40 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
     }
 
+    @Override
+    protected net.minecraft.sounds.SoundEvent getHurtSound(net.minecraft.world.damagesource.DamageSource source) {
+        if (this.kind == CompanionKind.JENNY) {
+            return null; // original ex: no hurt sound
+        }
+        if (this.kind == CompanionKind.GALATH) {
+            long now = this.level().getGameTime(); // original: one of seven UUH sounds, at most once per second
+            if (now - this.galathHurtSoundAt < 20) {
+                return null;
+            }
+            this.galathHurtSoundAt = now;
+            return com.trolmastercard.sexmod.registry.ModSounds.find("girls.galath.uuh.uuh" + this.random.nextInt(7))
+                    .map(holder -> holder.get()).orElse(null);
+        }
+        if (this.kind == CompanionKind.LUNA) {
+            return com.trolmastercard.sexmod.registry.ModSounds.find("girls.luna.ouu.ouu" + this.random.nextInt(13))
+                    .map(holder -> holder.get()).orElse(null);
+        }
+        return super.getHurtSound(source);
+    }
+
+    @Override
+    protected net.minecraft.sounds.SoundEvent getDeathSound() {
+        if (this.kind == CompanionKind.JENNY) {
+            return com.trolmastercard.sexmod.registry.ModSounds.find("girls.jenny.sigh.sigh" + this.random.nextInt(2))
+                    .map(holder -> holder.get()).orElse(null);
+        }
+        if (this.kind == CompanionKind.LUNA) {
+            String path = this.random.nextInt(20) == 0 ? "girls.allie.scawy.scawy2" : "girls.luna.ouu.ouu12";
+            return com.trolmastercard.sexmod.registry.ModSounds.find(path).map(holder -> holder.get()).orElse(null);
+        }
+        return super.getDeathSound();
+    }
+
     public void playCue(String path, float volume) {
         com.trolmastercard.sexmod.registry.ModSounds.find(path)
                 .ifPresent(sound -> this.playSound(sound.get(), volume, 1.0F));
@@ -2456,7 +2631,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.POWER), bow);
         int flame = net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(
                 enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.FLAME), bow);
-        arrow.setBaseDamage(4.5D + (power > 0 ? power * 0.5D + 0.5D : 0.0D));
+        arrow.setBaseDamage(4.5D); // original g.e(): setDamage(4.5) overwrites the Power bonus
         if (flame > 0) {
             arrow.setRemainingFireTicks(100);
         }
@@ -2652,6 +2827,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.level().isClientSide) {
             if (!this.isInScene() && this.mayUseSceneActions(player)) {
                 com.trolmastercard.sexmod.client.ClientHooks.openActionPanel(this);
+                if (this.kind == CompanionKind.KOBOLD && this.isMaster(player)) {
+                    com.trolmastercard.sexmod.client.ClientHooks.koboldMasterSound(this);
+                }
             } else if (this.kind.busyDialogue() != null) {
                 player.sendSystemMessage(Component.literal("<")
                         .append(this.getDisplayName())
@@ -2927,6 +3105,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if (this.goblinBehavior != null) {
             return state.setAndContinue(this.goblinAnimation());
+        }
+        if (this.kind == CompanionKind.GALATH && this.action() == CompanionAction.GALATH_SUMMON) {
+            return state.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin().thenPlayAndHold("animation.galath.summon"));
+        }
+        if (this.kind == CompanionKind.GALATH && this.action() == CompanionAction.GALATH_DESUMMON) {
+            return state.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin().thenPlayAndHold(
+                    this.onGround() ? "animation.galath.desummon_standing" : "animation.galath.desummon"));
         }
         if (this.kind == CompanionKind.GALATH && this.getFirstPassenger() instanceof Player) {
             return state.setAndContinue(this.entityData.get(DATA_GALATH_BOOST) > 0
@@ -3255,24 +3440,25 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 self.getNavigation().setSpeedModifier(speed);
             }
             ItemStack bow = self.equipment.getItem(1);
-            if (bow.getItem() instanceof net.minecraft.world.item.BowItem
-                    && distance > 6.0D && self.hasLineOfSight(target)) {
-                // Original: stand and draw for 32 ticks, shoot, then a 20 tick cooldown.
-                self.getNavigation().stop();
-                if (self.bowCharge >= 0) {
+            // Original g.a(ATTACK): the counter p is bumped every tick while the bow is usable (even close up), and again
+            // while drawing, so a full draw takes 16 ticks; after a shot it starts at -20 and she chases meanwhile.
+            boolean meleeNow = distance < 1.9D && self.swingCooldown <= 0;
+            if (!meleeNow && bow.getItem() instanceof net.minecraft.world.item.BowItem && self.hasLineOfSight(target)) {
+                self.bowCharge = Math.min(self.bowCharge + 1, 1000);
+                if (self.bowCharge > 0 && distance > 6.0D) {
+                    self.getNavigation().stop();
                     self.setAction(CompanionAction.BOW);
+                    if (++self.bowCharge >= 32) {
+                        self.fireBow(target, bow);
+                        self.bowCharge = -20;
+                        self.setAction(CompanionAction.NONE);
+                    }
+                    return;
                 }
-                if (++self.bowCharge >= 32) {
-                    self.fireBow(target, bow);
-                    self.bowCharge = -20;
-                    self.setAction(CompanionAction.NONE);
-                }
-                return;
             }
             if (self.action() == CompanionAction.BOW) {
                 self.setAction(CompanionAction.NONE);
             }
-            self.bowCharge = 0;
             if (distance < 1.9D && self.swingCooldown <= 0) {
                 self.entityData.set(DATA_ATTACK_VARIANT, self.random.nextInt(3));
                 self.setAction(CompanionAction.ATTACK);

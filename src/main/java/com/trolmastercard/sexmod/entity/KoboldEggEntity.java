@@ -146,7 +146,7 @@ public final class KoboldEggEntity extends PathfinderMob implements GeoEntity {
             return;
         }
         level.sendParticles(ParticleTypes.POOF, this.getX(), this.getY() + this.getBbHeight() * 0.5D, this.getZ(),
-                30, 0.35D, 0.35D, 0.35D, 0.08D);
+                30, 0.5D, 0.5D, 0.5D, 0.08D);
         level.playSound(null, this.blockPosition(), SoundEvents.TURTLE_EGG_HATCH, SoundSource.BLOCKS, 0.5F, 1.0F);
         if (tribe.master != null) {
             net.minecraft.server.level.ServerPlayer owner = level.getServer().getPlayerList().getPlayer(tribe.master);

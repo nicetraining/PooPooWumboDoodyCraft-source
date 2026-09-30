@@ -372,5 +372,8 @@
  },
  "blackscreen": {
   "wipe": true
+ },
+ "summonMSG7": {
+  "chat": "allie.dialogue.summon7"
  }
 }

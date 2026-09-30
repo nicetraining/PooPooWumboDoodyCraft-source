@@ -1,11 +1,9 @@
 {
   "type": "neoforge:add_spawns",
   "biomes": [
-    "minecraft:flower_forest",
-    "minecraft:meadow",
-    "minecraft:sunflower_plains"
+    "minecraft:forest"
   ],
   "spawners": [
-    { "type": "sexmod:bee", "weight": 1, "minCount": 1, "maxCount": 1 }
+    { "type": "sexmod:bee", "weight": 5, "minCount": 1, "maxCount": 1 }
   ]
 }

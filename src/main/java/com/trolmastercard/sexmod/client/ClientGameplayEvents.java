@@ -116,6 +116,28 @@ public final class ClientGameplayEvents {
         restorePlayerAfterSceneCamera();
     }
 
+    /** Original d3: while the controls are locked every mouse click is swallowed (no attacking or using items mid-scene). */
+    @SubscribeEvent
+    public static void swallowClicks(net.neoforged.neoforge.client.event.InputEvent.InteractionKeyMappingTriggered event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || minecraft.player == null) {
+            return;
+        }
+        boolean locked = TransitionOverlay.isActive();
+        UUID id = minecraft.player.getUUID();
+        for (Entity loaded : minecraft.level.entitiesForRendering()) {
+            if (loaded instanceof CompanionEntity companion && companion.isInScene()
+                    && companion.scenePartnerId().filter(id::equals).isPresent()
+                    && (companion.currentScene().locksControls() || companion.currentScene().hasInteractivePhases())) {
+                locked = true;
+            }
+        }
+        if (locked) {
+            event.setCanceled(true);
+            event.setSwingHand(false);
+        }
+    }
+
     /** The original's movement lock (d3.a(false)): during the transition wipe and while Bia's Talk plays. */
     @SubscribeEvent
     public static void lockControls(net.neoforged.neoforge.client.event.MovementInputUpdateEvent event) {

@@ -813,5 +813,8 @@
  },
  "doggyCumDone": {
   "hud": "reset"
+ },
+ "attackSound": {
+  "vanilla_sound": "minecraft:entity.player.attack.sweep"
  }
 }

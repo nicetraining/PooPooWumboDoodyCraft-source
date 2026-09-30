@@ -25,6 +25,7 @@ public final class ModCommands {
 
     @SubscribeEvent
     public static void register(RegisterCommandsEvent event) {
+        event.getDispatcher().register(Commands.literal("locatenearestgoblinlair").executes(ModCommands::locateLair));
         event.getDispatcher().register(Commands.literal("fapcraft")
                 .then(Commands.literal("home")
                         .then(Commands.argument("target", EntityArgument.entity())
@@ -42,6 +43,36 @@ public final class ModCommands {
                         .then(Commands.argument("target", EntityArgument.entity())
                                 .executes(ModCommands::stopScene))));
     }
+    /** Original gn: nearest loaded queen goblin; "goblin lairs don't exist" in the Nether and End. */
+    private static int locateLair(CommandContext<CommandSourceStack> context) {
+        CommandSourceStack source = context.getSource();
+        var level = source.getLevel();
+        if (level.dimension() != net.minecraft.world.level.Level.OVERWORLD) {
+            boolean nether = level.dimension() == net.minecraft.world.level.Level.NETHER;
+            source.sendSuccess(() -> Component.literal("goblin lairs don't exist in the ").withStyle(net.minecraft.ChatFormatting.YELLOW)
+                    .append(Component.literal(nether ? "Nether" : "End")
+                            .withStyle(nether ? net.minecraft.ChatFormatting.RED : net.minecraft.ChatFormatting.DARK_PURPLE)), false);
+            return 0;
+        }
+        CompanionEntity nearest = null;
+        for (Entity entity : level.getAllEntities()) {
+            if (entity instanceof CompanionEntity companion && companion.goblinQueen()
+                    && (nearest == null || companion.distanceToSqr(source.getPosition()) < nearest.distanceToSqr(source.getPosition()))) {
+                nearest = companion;
+            }
+        }
+        if (nearest == null) {
+            source.sendSuccess(() -> Component.literal("No nearby goblin lair found uwu").withStyle(net.minecraft.ChatFormatting.RED), false);
+            return 0;
+        }
+        var pos = nearest.blockPosition();
+        source.sendSuccess(() -> Component.literal("goblin lair found at ").withStyle(net.minecraft.ChatFormatting.YELLOW)
+                .append(Component.literal(pos.getX() + " ").withStyle(net.minecraft.ChatFormatting.RED))
+                .append(Component.literal(pos.getY() + " ").withStyle(net.minecraft.ChatFormatting.GREEN))
+                .append(Component.literal(String.valueOf(pos.getZ())).withStyle(net.minecraft.ChatFormatting.BLUE)), false);
+        return 1;
+    }
+
     private static int setHome(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         CompanionEntity companion = target(context);
         if (companion == null) {

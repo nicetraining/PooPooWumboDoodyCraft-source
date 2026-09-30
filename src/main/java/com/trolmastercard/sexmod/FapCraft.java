@@ -27,6 +27,7 @@ public final class FapCraft {
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public FapCraft(IEventBus modEventBus, ModContainer modContainer) {
+        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, Config.SPEC);
         ModBlocks.register(modEventBus);
         ModEntities.register(modEventBus);
         ModItems.register(modEventBus);

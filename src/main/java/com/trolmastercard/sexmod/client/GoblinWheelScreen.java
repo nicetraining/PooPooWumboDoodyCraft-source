@@ -76,12 +76,6 @@ public final class GoblinWheelScreen extends Screen {
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        this.onClose();
-        return true;
-    }
-
-    @Override
     public void removed() {
         super.removed();
         float largest = Math.max(this.left, Math.max(this.top, this.bottom));

@@ -773,5 +773,8 @@
  },
  "openSexUi": {
   "hud": "show"
+ },
+ "attackSound": {
+  "vanilla_sound": "minecraft:entity.player.attack.sweep"
  }
 }

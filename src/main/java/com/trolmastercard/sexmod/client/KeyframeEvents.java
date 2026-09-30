@@ -115,6 +115,13 @@ public final class KeyframeEvents {
                 return;
             }
         }
+        if (entry.has("vanilla_sound")) {
+            // original attackSound: a vanilla sound event (player sweep attack) at her position
+            net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT
+                    .getOptional(net.minecraft.resources.ResourceLocation.parse(entry.get("vanilla_sound").getAsString()))
+                    .ifPresent(sound -> girl.level().playLocalSound(girl.getX(), girl.getY(), girl.getZ(), sound,
+                            net.minecraft.sounds.SoundSource.NEUTRAL, 1.0F, 1.0F, false));
+        }
         if (entry.has("sounds")) {
             playLayer(girl, entry);
         }

@@ -48,6 +48,8 @@ final class SlimeBehavior {
         if (birth != -1) {
             birth--;
             this.slime.setSlimeBirth(birth);
+            level.sendParticles(net.minecraft.core.particles.ParticleTypes.WITCH, this.slime.getX(), this.slime.getY() + 0.5D,
+                    this.slime.getZ(), 1, 0.3D, 0.3D, 0.3D, 0.0D); // original fn.d(): spell particles while pregnant
             if (birth == 0) {
                 ModSounds.find("misc.plob.plob0").ifPresent(
                         sound -> this.slime.playSound(sound.get(), 1.0F, 1.0F));

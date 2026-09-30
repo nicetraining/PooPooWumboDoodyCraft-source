@@ -54,4 +54,31 @@ public final class ClientHooks {
                 && minecraft.options.getCameraType().isFirstPerson()
                 && goblin.goblinCarrier().filter(minecraft.player.getUUID()::equals).isPresent();
     }
+
+    private static final java.util.Map<Integer, Double> KOBOLD_LAST_DISTANCE = new java.util.HashMap<>();
+    private static long koboldGreetingAt = -300L;
+
+    /** Original ff.w: an idle Kobold greets her owner when he walks up from over 2 blocks to under 2 (300 tick cooldown for all Kobolds). */
+    public static void koboldGreeting(CompanionEntity kobold) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || kobold.koboldState() != com.trolmastercard.sexmod.tribe.KoboldBehavior.ST_NONE
+                || kobold.isInScene() || !kobold.masterId().filter(minecraft.player.getUUID()::equals).isPresent()) {
+            return;
+        }
+        double distance = kobold.distanceTo(minecraft.player);
+        double previous = KOBOLD_LAST_DISTANCE.getOrDefault(kobold.getId(), distance);
+        KOBOLD_LAST_DISTANCE.put(kobold.getId(), distance);
+        long now = kobold.level().getGameTime();
+        if (distance < 10.0D && previous > 2.0D && distance < 2.0D && now - koboldGreetingAt >= 300L) {
+            koboldGreetingAt = now;
+            minecraft.player.sendSystemMessage(net.minecraft.network.chat.Component.literal("<")
+                    .append(kobold.getDisplayName()).append("> Hey master!"));
+            kobold.playCue("girls.kobold.heymaster.heymaster" + kobold.getRandom().nextInt(6), 1.0F);
+        }
+    }
+
+    /** Original ff: opening a Kobold's menu as its owner plays one of the "master" voice lines. */
+    public static void koboldMasterSound(CompanionEntity kobold) {
+        kobold.playCue("girls.kobold.master.master" + kobold.getRandom().nextInt(6), 1.0F);
+    }
 }
