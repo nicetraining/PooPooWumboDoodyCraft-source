@@ -73,6 +73,16 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
             int packedOverlay,
             int renderColor
     ) {
+        if (bone.getName().equals("Head2")) {
+            // The original skips the partner's head while the local player is that partner in first
+            // person; the camera sits inside it otherwise. Children (the camera bone) still update.
+            Minecraft minecraft = Minecraft.getInstance();
+            boolean localPartner = minecraft.player != null
+                    && entity.currentScene() != null
+                    && entity.currentScene().hasPartner()
+                    && entity.scenePartnerId().filter(minecraft.player.getUUID()::equals).isPresent();
+            bone.setHidden(localPartner && minecraft.options.getCameraType().isFirstPerson());
+        }
         if (bone.getName().equals("boyCam")) {
             bone.setTrackingMatrices(true);
             BOY_CAMS.put(entity.getId(), bone);
