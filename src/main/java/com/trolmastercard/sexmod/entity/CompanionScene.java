@@ -200,13 +200,43 @@ public enum CompanionScene {
             phase("animation.cat.sitting_cum", 105)
     ),
 
+    /** First wish: the long summon speech (original SUMMON -> SUMMON_WAIT). The wish menu opens near the end and cannot be dismissed. */
+    ALLIE_SUMMON(
+            CompanionKind.ALLIE, "summon", false,
+            phase("animation.allie.summon", 244),
+            loop("animation.allie.summon_wait", 48)
+    ),
+    /** Later wishes: the short summon (original SUMMON_NORMAL -> SUMMON_NORMAL_WAIT). */
+    ALLIE_SUMMON_NORMAL(
+            CompanionKind.ALLIE, "summon_normal", false,
+            phase("animation.allie.summon_normal", 125),
+            loop("animation.allie.summon_normal_wait", 33)
+    ),
+    /** Summoned on sand: she panics and leaves (original SUMMON_SAND). */
+    ALLIE_SUMMON_SAND(
+            CompanionKind.ALLIE, "summon_sand", false,
+            phase("animation.allie.summon_sand", 244)
+    ),
     ALLIE_RICH(
             CompanionKind.ALLIE, "rich", false,
             phase("animation.allie.rich", 100)
     ),
+    ALLIE_RICH_NORMAL(
+            CompanionKind.ALLIE, "rich_normal", false,
+            phase("animation.allie.rich_normal", 106)
+    ),
+    /** Before the deepthroat / reverse cowgirl choice plays out (first wish). */
+    ALLIE_PREPARE(
+            CompanionKind.ALLIE, "prepare", false,
+            phase("animation.allie.deepthroat_prepare", 69)
+    ),
+    /** Same, for later wishes. */
+    ALLIE_PREPARE_NORMAL(
+            CompanionKind.ALLIE, "prepare_normal", false,
+            phase("animation.allie.deepthroat_normal_prepare", 33)
+    ),
     ALLIE_DEEPTHROAT(
             CompanionKind.ALLIE, "deepthroat", true,
-            phase("animation.allie.deepthroat_prepare", 69),
             phase("animation.allie.deepthroat_start", 64),
             loop("animation.allie.deepthroat_slow", 119),
             loop("animation.allie.deepthroat_fast", 72),
@@ -392,7 +422,19 @@ public enum CompanionScene {
 
     /** Scenes that only lead into something else: no reward, no afterglow, no completion message. */
     public boolean isPrelude() {
-        return this.isClothingToggle() || this == BIA_TALK || this == JENNY_PAYMENT || this == LUNA_PAYMENT || this == ELLIE_DASH || this == ELLIE_HUG || this.isWaitScene();
+        return this.isClothingToggle() || this.isAlliePrelude() || this == BIA_TALK || this == JENNY_PAYMENT || this == LUNA_PAYMENT || this == ELLIE_DASH || this == ELLIE_HUG || this.isWaitScene();
+    }
+
+    /** Allie's wish scenes that lead into the next one. */
+    public boolean isAlliePrelude() {
+        return this == ALLIE_SUMMON || this == ALLIE_SUMMON_NORMAL || this == ALLIE_SUMMON_SAND
+                || this == ALLIE_PREPARE || this == ALLIE_PREPARE_NORMAL
+                || this == ALLIE_RICH || this == ALLIE_RICH_NORMAL;
+    }
+
+    /** True for the phase where Allie waits for the player to pick a wish (the menu cannot be dismissed). */
+    public boolean isMenuWaitPhase(int phaseIndex) {
+        return (this == ALLIE_SUMMON || this == ALLIE_SUMMON_NORMAL) && phaseIndex == 1;
     }
 
     /** Scenes that only wait beside the bed until the player steps up, then hand over to the chosen scene. */
@@ -414,7 +456,7 @@ public enum CompanionScene {
 
     /** Scenes during which the local player's movement keys are locked without attaching them (original d3.a(false)). */
     public boolean locksControls() {
-        return this == BIA_TALK || this == ELLIE_DASH || this == ELLIE_HUG;
+        return this == BIA_TALK || this == ELLIE_DASH || this == ELLIE_HUG || this.isAlliePrelude();
     }
 
     /** Label on the action panel; Bia's second menu uses the original's plain "Anal" / "Doggy". */
@@ -428,6 +470,9 @@ public enum CompanionScene {
             case GALATH_ANAL -> "action.names.anal";
             case GALATH_RIDE -> "action.names.ride";
             case ELLIE_MISSIONARY -> "action.names.missionary";
+            case ALLIE_RICH -> "action.names.makemerichallie";
+            case ALLIE_DEEPTHROAT -> "action.names.deepthroat";
+            case ALLIE_REVERSE_COWGIRL -> "action.names.reverse_cowgirl";
             default -> this.translationKey();
         };
     }

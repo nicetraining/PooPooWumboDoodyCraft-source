@@ -176,6 +176,49 @@ public final class ClientGameplayEvents {
         }
     }
 
+    private static int allieMenuDelay;
+
+    /** Original ev.ac(): Allie's wish menu cannot be dismissed, it comes back until a wish is chosen. */
+    @SubscribeEvent
+    public static void reopenAllieMenu(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level == null || minecraft.player == null) {
+            return;
+        }
+        if (minecraft.screen != null) {
+            allieMenuDelay = 10;
+            return;
+        }
+        if (allieMenuDelay > 0) {
+            allieMenuDelay--;
+            return;
+        }
+        UUID id = minecraft.player.getUUID();
+        for (Entity loaded : minecraft.level.entitiesForRendering()) {
+            if (loaded instanceof CompanionEntity companion
+                    && companion.isInScene()
+                    && companion.currentScene().isMenuWaitPhase(companion.currentScenePhase())
+                    && companion.scenePartnerId().filter(id::equals).isPresent()) {
+                ClientHooks.openSceneMenu(companion.getId(), java.util.List.of(
+                        com.trolmastercard.sexmod.entity.CompanionScene.ALLIE_RICH.serializedName(),
+                        com.trolmastercard.sexmod.entity.CompanionScene.ALLIE_DEEPTHROAT.serializedName(),
+                        com.trolmastercard.sexmod.entity.CompanionScene.ALLIE_REVERSE_COWGIRL.serializedName()));
+                allieMenuDelay = 10;
+                return;
+            }
+        }
+    }
+
+    /** Original: the whole HUD is hidden while the lamp is being rubbed. */
+    @SubscribeEvent
+    public static void hideHudWhileRubbing(net.neoforged.neoforge.client.event.RenderGuiLayerEvent.Pre event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player != null
+                && minecraft.player.getPersistentData().getBoolean(com.trolmastercard.sexmod.item.AlliesLampItem.IN_USE_KEY)) {
+            event.setCanceled(true);
+        }
+    }
+
     private static boolean lastRideJump;
     private static boolean lastShift;
     private static boolean lastJump;

@@ -321,6 +321,10 @@
   "chat": "allie.dialogue.youhave"
  },
  "summon_normalMSG3": {
+  "chat_by_uses": {
+   "2": "allie.dialogue.2wishes",
+   "default": "allie.dialogue.1wish"
+  },
   "sounds": [
    "girls.allie.hmph.hmph4"
   ]
@@ -362,5 +366,11 @@
  },
  "openSexUi": {
   "hud": "show"
+ },
+ "summon_sandMSG2": {
+  "actionbar": "allie.dialogue.phobia"
+ },
+ "blackscreen": {
+  "wipe": true
  }
 }

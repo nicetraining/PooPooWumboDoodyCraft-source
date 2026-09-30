@@ -31,7 +31,7 @@ public final class ModItems {
 
     public static final DeferredItem<AlliesLampItem> ALLIES_LAMP = ITEMS.register(
             "allies_lamp",
-            () -> new AlliesLampItem(new Item.Properties().durability(4))
+            () -> new AlliesLampItem(new Item.Properties().stacksTo(1))
     );
     public static final DeferredItem<DragonStaffItem> DRAGON_STAFF = ITEMS.register(
             "dragon_staff",

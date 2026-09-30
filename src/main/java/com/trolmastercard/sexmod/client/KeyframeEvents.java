@@ -77,6 +77,25 @@ public final class KeyframeEvents {
             }
         }
 
+        boolean partner = local != null && girl.scenePartnerId().filter(local.getUUID()::equals).isPresent();
+        if (entry.has("wipe") && partner) {
+            TransitionOverlay.start(); // original blackscreen: fh.b() for the owner
+        }
+        if (entry.has("actionbar") && partner) {
+            Minecraft.getInstance().gui.setOverlayMessage(Component.translatable(entry.get("actionbar").getAsString()), false);
+        }
+        if (entry.has("chat_by_uses")) {
+            // Original summon_normalMSG3: "2 wishes left!" when the lamp's counter is 2, else "one last wish".
+            JsonObject byUses = entry.getAsJsonObject("chat_by_uses");
+            String uses = Integer.toString(girl.allieUses());
+            String key = (byUses.has(uses) ? byUses.get(uses) : byUses.get("default")).getAsString();
+            if (local != null && local.distanceToSqr(girl) < 30.0D * 30.0D) {
+                local.sendSystemMessage(Component.literal("<")
+                        .append(girl.getDisplayName())
+                        .append("> ")
+                        .append(Component.translatable(key)));
+            }
+        }
         if (entry.has("chat") || entry.has("text")) {
             Minecraft minecraft = Minecraft.getInstance();
             if (minecraft.player != null && minecraft.player.distanceToSqr(girl) < 30.0D * 30.0D) {

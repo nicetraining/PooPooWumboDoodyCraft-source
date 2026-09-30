@@ -89,11 +89,8 @@ import net.minecraft.world.item.component.ItemAttributeModifiers;
  * this foundation so they can be ported without compromising world data.</p>
  */
 public final class CompanionEntity extends PathfinderMob implements GeoEntity {
-    private static final String ALLIE_RICH_REWARD_KEY = "sexmod:allie_rich_reward";
-    private static final String SCENE_REWARD_DAY_KEY = "sexmod:scene_reward_day_";
     private static final int SCENE_CONTROL_COOLDOWN = 5;
     private static final int SCENE_ENVIRONMENT_CHECK_INTERVAL = 20;
-    private static final double SCENE_PRIVACY_RADIUS = 12.0D;
     /** The player she is following right now (original "master"); transient, never saved. */
     private static final EntityDataAccessor<Optional<UUID>> DATA_MASTER =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
@@ -120,6 +117,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Optional<UUID>> DATA_SCENE_PARTNER =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Integer> DATA_ALLIE_USES =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_GALATH_BOOST =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_FLYING =
@@ -157,7 +156,6 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private boolean scenePreviousNoGravity;
     private String lastAnimationKey = "";
     private int rangedAttackCooldown;
-    private boolean richRewardGranted;
     /** Stable identity of this girl (original "girlID"); packets and saves address her by it. */
     private UUID girlId = UUID.randomUUID();
     private FollowState followState = FollowState.IDLE;
@@ -172,6 +170,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private int goHomeTicks = -1;
     /** Scene the player asked for while she was still dressed; it starts once the strip has finished. */
     private CompanionScene queuedScene;
+    /** A scene to queue after {@link #queuedScene} has started (Allie: prepare, then the chosen scene). */
+    private CompanionScene chainedScene;
 
     public CompanionEntity(EntityType<? extends CompanionEntity> entityType, Level level, CompanionKind kind) {
         this(entityType, level, kind, false);
@@ -307,6 +307,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_SCENE_PARTNER, Optional.empty());
         builder.define(DATA_FLYING, false);
         builder.define(DATA_GALATH_BOOST, 0);
+        builder.define(DATA_ALLIE_USES, 0);
     }
 
     public Optional<UUID> masterId() {
@@ -731,8 +732,92 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
     }
 
+    /** How many wishes this lamp has granted including this one (1 = the first-time speech). */
+    public int allieUses() {
+        return this.entityData.get(DATA_ALLIE_USES);
+    }
+
+    /**
+     * The lamp's summon (original ap, end of the 95 tick rub): she appears two blocks in front of the player,
+     * facing them, and plays the speech for the first wish, a later wish, or the sand phobia scene.
+     */
+    public static boolean summonAllie(ServerPlayer player, int usesAfter) {
+        ServerLevel level = player.serverLevel();
+        for (CompanionEntity other : level.getEntitiesOfClass(CompanionEntity.class,
+                player.getBoundingBox().inflate(64.0D), entity -> entity.kind() == CompanionKind.ALLIE)) {
+            if (other.isMaster(player)) {
+                return false; // she is still out for this player
+            }
+        }
+        Vec3 pos = player.position().add(Vec3.directionFromRotation(0.0F, player.getYHeadRot()).scale(2.0D));
+        CompanionEntity allie = ModEntities.get(CompanionKind.ALLIE).create(level);
+        if (allie == null) {
+            return false;
+        }
+        allie.moveTo(pos.x, pos.y, pos.z, Mth.wrapDegrees(player.getYRot() + 180.0F), player.getXRot());
+        allie.entityData.set(DATA_ALLIE_USES, usesAfter);
+        allie.setMaster(player.getUUID());
+        allie.setNoGravity(true);
+        allie.noPhysics = true;
+        level.addFreshEntity(allie);
+        CompanionScene scene = level.getBlockState(allie.blockPosition().below()).is(net.minecraft.world.level.block.Blocks.SAND)
+                ? CompanionScene.ALLIE_SUMMON_SAND
+                : usesAfter <= 1 ? CompanionScene.ALLIE_SUMMON : CompanionScene.ALLIE_SUMMON_NORMAL;
+        if (!allie.startScene(player, scene)) {
+            allie.discard();
+            return false;
+        }
+        return true;
+    }
+
+    private void openAllieMenu(ServerPlayer player) {
+        net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+                player,
+                new com.trolmastercard.sexmod.network.OpenSceneMenuPayload(
+                        this.getId(),
+                        List.of(CompanionScene.ALLIE_RICH.serializedName(),
+                                CompanionScene.ALLIE_DEEPTHROAT.serializedName(),
+                                CompanionScene.ALLIE_REVERSE_COWGIRL.serializedName())));
+    }
+
+    /** Original ev.a(String, UUID): pick a wish; "rich" grants the drops, the others go through the prepare animation. */
+    private boolean pickAllieWish(ServerPlayer player, String action) {
+        CompanionScene current = this.currentScene();
+        if (current == null
+                || !this.scenePartnerId().filter(player.getUUID()::equals).isPresent()
+                || !(current.isMenuWaitPhase(this.currentScenePhase())
+                || (current == CompanionScene.ALLIE_SUMMON && this.currentScenePhase() == 0 && this.scenePhaseTicks >= 190))) {
+            return true;
+        }
+        boolean first = this.allieUses() <= 1;
+        CompanionScene chosen = CompanionScene.byName(action);
+        if (chosen == CompanionScene.ALLIE_RICH) {
+            this.queuedScene = first ? CompanionScene.ALLIE_RICH : CompanionScene.ALLIE_RICH_NORMAL;
+        } else if (chosen == CompanionScene.ALLIE_DEEPTHROAT || chosen == CompanionScene.ALLIE_REVERSE_COWGIRL) {
+            this.queuedScene = first ? CompanionScene.ALLIE_PREPARE : CompanionScene.ALLIE_PREPARE_NORMAL;
+            this.chainedScene = chosen;
+        } else {
+            return true;
+        }
+        this.finishScene(true);
+        return true;
+    }
+
+    /** Original rich_MSG1 reward: diamond, emerald and gold ingot, 1 to 2 of each, dropped where she stands. */
+    private void dropAllieRewards(ServerLevel serverLevel) {
+        net.minecraft.world.item.Item[] rewards = {Items.DIAMOND, Items.EMERALD, Items.GOLD_INGOT};
+        for (net.minecraft.world.item.Item item : rewards) {
+            serverLevel.addFreshEntity(new net.minecraft.world.entity.item.ItemEntity(
+                    serverLevel, this.getX(), this.getY(), this.getZ(),
+                    new ItemStack(item, 1 + this.random.nextInt(2))));
+        }
+    }
+
     /** Bia's second menu (Anal / Doggy) after Talk: she answers, then walks the chosen scene. */
     private boolean pickTalkFollowUp(ServerPlayer player, String action) {
+        if (this.kind == CompanionKind.ALLIE) {
+            return this.pickAllieWish(player, action);
+        }
         CompanionScene chosen = CompanionScene.byName(action);
         if (this.currentScene() == CompanionScene.ELLIE_HUG
                 && this.currentScenePhase() == 1
@@ -870,7 +955,6 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
         this.lockSceneTransforms(player, scene.hasPartner(), true);
         this.enterScenePhase(0);
-        this.playSound(SoundEvents.ENCHANTMENT_TABLE_USE, 0.45F, 1.35F);
         return true;
     }
 
@@ -1175,6 +1259,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return;
         }
         this.tickScene(serverLevel);
+        if (this.kind == CompanionKind.ALLIE && !this.isInScene() && this.tickCount > 5) {
+            this.discard(); // original ev: she vanishes once her state is NULL (also after a reload)
+            return;
+        }
         this.tickEllieHorny(serverLevel);
         this.tickTargetSanity();
         this.tickGoHome(serverLevel);
@@ -1247,6 +1335,19 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (scene == CompanionScene.JENNY_PAYMENT && this.scenePhaseTicks == 43) {
             this.sayPaymentLine(controller);
         }
+        if ((scene == CompanionScene.ALLIE_RICH && this.scenePhaseTicks == 1)
+                || (scene == CompanionScene.ALLIE_RICH_NORMAL && this.scenePhaseTicks == 10)) {
+            this.dropAllieRewards(serverLevel);
+        }
+        if (scene == CompanionScene.ALLIE_SUMMON && this.currentScenePhase() == 0 && this.scenePhaseTicks == 194) {
+            this.openAllieMenu(controller);
+        }
+        if (scene.isMenuWaitPhase(this.currentScenePhase())) {
+            if (this.scenePhaseTicks > 12000) {
+                this.finishScene(false);
+            }
+            return; // waits for the wish; the client reopens the menu if it is closed
+        }
         if (scene.isWaitScene()) {
             this.tickWaitForPartner(controller, scene);
             return;
@@ -1311,6 +1412,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                                 List.of(CompanionScene.ELLIE_COWGIRL.serializedName(), CompanionScene.ELLIE_MISSIONARY.serializedName())));
             }
         }
+        if (scene == CompanionScene.ALLIE_SUMMON_NORMAL && phaseIndex == 1) {
+            ServerPlayer owner = this.scenePartnerId()
+                    .map(serverLevel.getServer().getPlayerList()::getPlayer)
+                    .orElse(null);
+            if (owner != null) {
+                this.openAllieMenu(owner);
+            }
+        }
         if (scene == CompanionScene.BIA_TALK && phaseIndex == 1) {
             ServerPlayer controller = this.scenePartnerId()
                     .map(serverLevel.getServer().getPlayerList()::getPlayer)
@@ -1323,26 +1432,6 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                                 List.of(CompanionScene.BIA_ANAL.serializedName(), CompanionScene.BIA_PRONE.serializedName())));
             }
         }
-
-        String cuePath = this.sceneCuePath();
-        if (cuePath != null && ModSounds.find(cuePath).isPresent()) {
-            this.playSound(ModSounds.find(cuePath).orElseThrow().get(), 0.55F, 0.98F + phaseIndex * 0.03F);
-        } else {
-            this.playSound(SoundEvents.AMETHYST_BLOCK_CHIME, 0.35F, 1.1F + phaseIndex * 0.04F);
-        }
-    }
-
-    private String sceneCuePath() {
-        return switch (this.kind) {
-            case JENNY -> "girls.jenny.aftersessionmoan.aftersessionmoan0";
-            case ELLIE -> "girls.ellie.aftersessionmoan.aftersessionmoan0";
-            case BIA -> "girls.bia.breath.breath0";
-            case LUNA -> "girls.luna.giggle.giggle0";
-            case ALLIE -> "girls.allie.aftersessionmoan.aftersessionmoan0";
-            case KOBOLD -> "girls.kobold.bjmoan.bjmoan0";
-            case GALATH -> "girls.galath.breathing.breathing0";
-            default -> null;
-        };
     }
 
     private boolean isSceneEnvironmentValid(
@@ -1351,18 +1440,6 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             CompanionScene scene,
             boolean notify
     ) {
-        boolean privateArea = serverLevel.getEntitiesOfClass(
-                Player.class,
-                this.getBoundingBox().inflate(SCENE_PRIVACY_RADIUS),
-                other -> !other.isSpectator() && !other.getUUID().equals(controller.getUUID())
-        ).isEmpty();
-        if (!privateArea) {
-            if (notify) {
-                controller.displayClientMessage(Component.translatable("message.sexmod.scene_private"), true);
-            }
-            return false;
-        }
-
         if (scene.requiresBed() && !this.walksToBed() && !this.hasNearbyBed(serverLevel)) {
             if (notify) {
                 controller.displayClientMessage(Component.translatable("message.sexmod.scene_bed_required"), true);
@@ -1715,22 +1792,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 controller.setXRot(this.scenePartnerReturnPitch);
             }
 
-            if (completed && scene != null && controller != null && !scene.isPrelude()) {
-                if (scene == CompanionScene.ALLIE_RICH) {
-                    this.grantAllieRichReward(controller, serverLevel);
-                } else {
-                    this.grantDailySceneReward(controller);
-                }
-                if (scene.hasPartner()) {
-                    applyAfterglowEffects(controller);
-                }
-                controller.displayClientMessage(Component.translatable("message.sexmod.scene_completed"), true);
-            } else if (!completed && controller != null) {
+            if (!completed && controller != null && this.kind != CompanionKind.ALLIE) {
                 controller.displayClientMessage(Component.translatable("message.sexmod.scene_stopped"), true);
             }
         }
         CompanionScene next = completed ? this.queuedScene : null;
+        CompanionScene after = completed ? this.chainedScene : null;
         this.queuedScene = null;
+        this.chainedScene = null;
 
         this.entityData.set(DATA_SCENE, "");
         this.entityData.set(DATA_SCENE_PHASE, 0);
@@ -1751,86 +1820,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.skipPayment = true;
             this.startScene(controller, next);
             this.skipPayment = false;
+            if (after != null && this.currentScene() == next) {
+                this.queuedScene = after;
+            }
+        }
+        if (this.kind == CompanionKind.ALLIE && !this.isInScene()) {
+            this.discard(); // original: she vanishes when her state returns to NULL
         }
         if (!this.isInScene()) {
             this.bedSpotPosition = null;
-        }
-    }
-
-    /**
-     * Light-hearted exhaustion applied after a completed partner scene.
-     *
-     * <p>Levitation is deliberately short and is always paired with slow falling
-     * that outlasts it, so the joke cannot turn into fall damage and inventory
-     * loss in survival.</p>
-     */
-    private static void applyAfterglowEffects(ServerPlayer player) {
-        player.addEffect(new MobEffectInstance(MobEffects.HUNGER, 600, 0, false, true, true));
-        player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 400, 1, false, true, true));
-        player.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, 400, 0, false, true, true));
-        player.addEffect(new MobEffectInstance(MobEffects.LEVITATION, 60, 0, false, true, true));
-        player.addEffect(new MobEffectInstance(MobEffects.SLOW_FALLING, 260, 0, false, true, true));
-        player.fallDistance = 0.0F;
-    }
-
-    private void grantAllieRichReward(ServerPlayer player, ServerLevel serverLevel) {
-        if (this.richRewardGranted
-                || !this.isMaster(player)
-                || player.getPersistentData().getBoolean(ALLIE_RICH_REWARD_KEY)) {
-            return;
-        }
-
-        this.richRewardGranted = true;
-        player.getPersistentData().putBoolean(ALLIE_RICH_REWARD_KEY, true);
-        this.giveSceneReward(player, new ItemStack(Items.DIAMOND));
-        this.giveSceneReward(player, new ItemStack(Items.GOLD_INGOT, 4));
-        serverLevel.sendParticles(
-                ParticleTypes.HAPPY_VILLAGER,
-                this.getX(),
-                this.getY() + 0.8D,
-                this.getZ(),
-                24,
-                0.5D,
-                0.7D,
-                0.5D,
-                0.05D
-        );
-    }
-
-    private void grantDailySceneReward(ServerPlayer player) {
-        long rewardDay = this.level().getDayTime() / 24000L + 1L;
-        String rewardKey = SCENE_REWARD_DAY_KEY + this.kind.registryPath();
-        if (player.getPersistentData().getLong(rewardKey) == rewardDay) {
-            player.displayClientMessage(Component.translatable("message.sexmod.scene_reward_cooldown"), true);
-            return;
-        }
-
-        ItemStack reward = switch (this.kind) {
-            case JENNY -> new ItemStack(Items.BREAD, 2);
-            case ELLIE -> new ItemStack(Items.IRON_NUGGET, 3);
-            case SLIME -> new ItemStack(Items.SLIME_BALL, 2);
-            case BIA -> new ItemStack(Items.SWEET_BERRIES, 3);
-            case BEE -> new ItemStack(Items.HONEY_BOTTLE);
-            case LUNA -> new ItemStack(Items.STRING, 2);
-            case ALLIE -> new ItemStack(Items.AMETHYST_SHARD);
-            case KOBOLD -> new ItemStack(Items.COPPER_INGOT);
-            case GOBLIN -> new ItemStack(Items.ARROW, 4);
-            case GALATH -> new ItemStack(Items.BLAZE_POWDER);
-            case MANGLELIE -> new ItemStack(Items.QUARTZ, 2);
-        };
-        player.getPersistentData().putLong(rewardKey, rewardDay);
-        Component itemName = reward.getHoverName();
-        int count = reward.getCount();
-        this.giveSceneReward(player, reward);
-        player.displayClientMessage(
-                Component.translatable("message.sexmod.scene_reward", count, itemName),
-                true
-        );
-    }
-
-    private void giveSceneReward(Player player, ItemStack reward) {
-        if (!player.getInventory().add(reward)) {
-            player.drop(reward, false);
         }
     }
 
@@ -2085,7 +2083,6 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         tag.put("FapCraftStorage", SlotNbt.save(this.storage, this.registryAccess()));
         tag.putBoolean("FapCraftGalathCoinSummon", this.summonedByGalathCoin);
         tag.putBoolean("FapCraftTechnicalProxy", this.technicalProxy);
-        tag.putBoolean("FapCraftRichReward", this.richRewardGranted);
     }
 
     @Override
@@ -2155,7 +2152,6 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
         this.summonedByGalathCoin = tag.getBoolean("FapCraftGalathCoinSummon");
         this.technicalProxy = tag.getBoolean("FapCraftTechnicalProxy") || this.technicalProxy;
-        this.richRewardGranted = tag.getBoolean("FapCraftRichReward");
 
         // Running scenes are intentionally not persisted. This prevents a
         // disconnected player from being locked after a server restart.

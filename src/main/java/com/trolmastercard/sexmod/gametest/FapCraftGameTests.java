@@ -534,4 +534,26 @@ public final class FapCraftGameTests {
         jenny.discard();
         helper.succeed();
     }
+
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void allieWishFlowAndIdleRemoval(GameTestHelper helper) {
+        if (CompanionScene.ALLIE_SUMMON.phase(0).durationTicks() != 244
+                || !CompanionScene.ALLIE_SUMMON.isMenuWaitPhase(1)
+                || CompanionScene.ALLIE_SUMMON.isMenuWaitPhase(0)
+                || !CompanionScene.ALLIE_SUMMON_NORMAL.isMenuWaitPhase(1)
+                || !CompanionScene.ALLIE_PREPARE.isPrelude()
+                || !CompanionScene.ALLIE_RICH_NORMAL.isPrelude()
+                || CompanionScene.ALLIE_DEEPTHROAT.isPrelude()
+                || !CompanionScene.ALLIE_DEEPTHROAT.hasPartner()
+                || !CompanionScene.ALLIE_PREPARE.locksControls()) {
+            helper.fail("Allie's scene chain is not set up as in the original");
+        }
+        CompanionEntity allie = spawnKind(helper, CompanionKind.ALLIE);
+        helper.runAfterDelay(12, () -> {
+            if (allie.isAlive()) {
+                helper.fail("an Allie without a wish scene should vanish (original: state NULL removes her)");
+            }
+            helper.succeed();
+        });
+    }
 }
