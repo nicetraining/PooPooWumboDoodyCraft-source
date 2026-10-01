@@ -8,7 +8,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * Original f_.ai() / ay(): a tamed Galath without a daughter follows her owner (teleports to him beyond 16 blocks, stands
+ * Original f_.ae(): a tamed Galath WITH a daughter follows her owner (am()/ai()); without one she seeks a wild Manglelie (aJ()) (teleports to him beyond 16 blocks, stands
  * still within 4); otherwise, and always while she carries Manglelie, she wanders around: every 175 ticks a new spot within
  * 9 blocks, walked to at speed 0.35. The follow speed is 0.5 (0.55 when the owner sprints or is more than 7 blocks away)
  * plus 0.2 per started 5 blocks of distance.
@@ -41,8 +41,8 @@ final class GalathFollowAi {
     }
 
     private boolean follow(ServerLevel level) {
-        if (this.self.familyId() != null) {
-            return false; // original a(): with a daughter nothing follows
+        if (this.self.familyId() == null) {
+            return false; // original ae(): no daughter -> aJ() (seek a wild Manglelie, wander); with a daughter -> am() (follow)
         }
         Player owner = this.self.masterId().map(level::getPlayerByUUID).orElse(null);
         if (owner == null || owner.level() != level) {
@@ -50,6 +50,7 @@ final class GalathFollowAi {
         }
         float distance = this.self.distanceTo(owner);
         if (distance < 4.0F) {
+            this.self.setGalathRunning(false);
             this.self.getNavigation().stop();
             return false;
         }
@@ -59,6 +60,7 @@ final class GalathFollowAi {
             return true;
         }
         boolean quick = owner.isSprinting() || distance > 7.0F;
+        this.self.setGalathRunning(quick);
         double speed = (quick ? 0.55D : 0.5D) + Math.floor(distance / 5.0F) * 0.2D;
         if (this.self.isInWater()) {
             speed *= 60.0D;

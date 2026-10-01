@@ -793,6 +793,9 @@ public final class FapCraftGameTests {
         CompanionEntity far = spawnKind(helper, CompanionKind.GALATH);
         far.moveTo(helper.absoluteVec(new Vec3(4.5, 181.0, 19.5)));
         far.setMaster(player.getUUID());
+        // original ae(): only a Galath with a daughter follows her owner
+        com.trolmastercard.sexmod.entity.ManglelieBehavior.spawnDaughter(level, near);
+        com.trolmastercard.sexmod.entity.ManglelieBehavior.spawnDaughter(level, far);
         helper.runAfterDelay(150, () -> {
             if (near.distanceTo(player) > 6.0F) {
                 helper.fail("a tamed Galath within 16 blocks walks to her owner (distance " + near.distanceTo(player) + ")");

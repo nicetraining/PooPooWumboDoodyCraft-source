@@ -234,6 +234,7 @@
     ]
   },
   "renderEgg": {
+    "show_egg": true,
     "sounds": [
       "misc.plob.plob0"
     ],

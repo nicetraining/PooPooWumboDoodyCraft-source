@@ -108,8 +108,8 @@ public final class OriginalStructures {
 
     /** Original g3.generate after the tribe roll: the goblin hall, then the surface structures. */
     public static void generate(ServerLevel level, int cx, int cz, RandomSource random) {
-        if (level.isFlat()) {
-            return;
+        if (level.isFlat() || !com.trolmastercard.sexmod.Config.SHOULD_GEN_BUILDINGS.get()) {
+            return; // original g3.i (config shouldGenBuildings) gates every generator
         }
         tryHall(level, cx, cz, random);
         if (busy) {

@@ -206,6 +206,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<String> DATA_KOBOLD_NAME =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.STRING);
+    /** Original e4.M: the model string of a Kobold ("07-01-50-50-..."), eight fields, see {@link #koboldGene(int)}. */
+    private static final EntityDataAccessor<String> DATA_KOBOLD_GENES =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Boolean> DATA_K_LEADER =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_K_FOLLOW =
@@ -507,6 +510,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_EYE_COLOR, com.trolmastercard.sexmod.tribe.KoboldColor.values()[
                 this.random.nextInt(com.trolmastercard.sexmod.tribe.KoboldColor.values().length)].name());
         builder.define(DATA_KOBOLD_NAME, com.trolmastercard.sexmod.tribe.KoboldBehavior.randomName(this.random));
+        builder.define(DATA_KOBOLD_GENES, randomKoboldGenes(this.random));
         builder.define(DATA_K_LEADER, false);
         builder.define(DATA_K_FOLLOW, false);
         builder.define(DATA_K_ATTACKED, false);
@@ -815,6 +819,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     /** Client only: game time at which Allie's fade-out started, or -1 (original ev.U). */
     public long allieFadeStart = -1L;
+    /** Client only: original ff.Q, the Kobold's egg bone is shown from the renderEgg keyframe until the scene ends. */
+    public boolean koboldEggShown;
 
     public ItemStack paymentItem() {
         return switch (this.entityData.get(DATA_PAYMENT_ITEM)) {
@@ -1213,6 +1219,36 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     public void setKoboldName(String name) {
         this.entityData.set(DATA_KOBOLD_NAME, name);
+    }
+
+    /** Original ff.a(StringBuilder): up horn 0-7, down horn 0-2, two bell-shaped 00-99 values, freckles 0-2 twice, 0-1 twice. */
+    private static String randomKoboldGenes(net.minecraft.util.RandomSource random) {
+        StringBuilder out = new StringBuilder();
+        out.append(random.nextInt(8)).append('-').append(random.nextInt(3)).append('-');
+        for (int i = 0; i < 2; i++) {
+            double x = -2.5D + 5.0D * random.nextDouble();
+            String formatted = String.format(java.util.Locale.ROOT, "%.2f", Math.exp(-(x * x)));
+            out.append(formatted.substring(formatted.indexOf('.') + 1)).append('-');
+        }
+        out.append(random.nextInt(3)).append('-').append(random.nextInt(3)).append('-')
+                .append(random.nextInt(2)).append('-').append(random.nextInt(2));
+        return out.toString();
+    }
+
+    /**
+     * Field i of the Kobold model string: 0 up horn, 1 down horn, 2 breast size, 3 eye size, 4 and 5 freckles (arms side
+     * and head side), 6 backpack / tailpack (0 backpack, 1 both, 2 tailpack, 3 neither), 7 mouth offset.
+     */
+    public int koboldGene(int index) {
+        String[] fields = this.entityData.get(DATA_KOBOLD_GENES).split("-");
+        if (index < 0 || index >= fields.length) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(fields[index].trim());
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 
     public boolean isTribeLeader() {
@@ -3503,6 +3539,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             tag.putString("FapCraftOutfit", this.outfit().serializedName());
         }
         tag.putInt("FapCraftVariant", this.appearanceVariant());
+        tag.putString("FapCraftGenes", this.entityData.get(DATA_KOBOLD_GENES));
         tag.putFloat("FapCraftScale", this.appearanceScale());
         this.homePos().ifPresent(home -> {
             tag.putDouble("homeX", home.getX());
@@ -3664,6 +3701,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             }
         }
         this.setAppearanceVariant(tag.getInt("FapCraftVariant"));
+        if (tag.contains("FapCraftGenes", Tag.TAG_STRING) && tag.getString("FapCraftGenes").split("-").length == 8) {
+            this.entityData.set(DATA_KOBOLD_GENES, tag.getString("FapCraftGenes"));
+        }
         if (tag.contains("FapCraftScale", Tag.TAG_FLOAT)) {
             this.setAppearanceScale(tag.getFloat("FapCraftScale"));
         }
@@ -3754,6 +3794,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             AnimationState<T> state
     ) {
         CompanionScene.Phase sceneAnimation = this.currentSceneAnimation();
+        // original cv.a(): the controller blends with the transitionTick of the current state (5 without one)
+        state.getController().transitionLength(sceneAnimation != null
+                ? TransitionTicks.forAnimation(sceneAnimation.animation())
+                : switch (this.action()) {
+                    case DOWNED -> 7;
+                    case ATTACK, RIDE, SIT -> 0;
+                    case BOW -> 2;
+                    default -> 5;
+                });
         if (sceneAnimation != null) {
             return state.setAndContinue(sceneAnimation.rawAnimation());
         }
@@ -3850,6 +3899,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             }
         }
 
+        if (this.isWalkingVisibly() && this.kind == CompanionKind.GALATH && this.entityData.get(DATA_SPEED_CLASS) == 2) {
+            // original f_ predicate: "animation.galath." + (run flag bT ? "run" : "walk")
+            return state.setAndContinue(this.kind.stateAnimation("run"));
+        }
         if (this.isWalkingVisibly()) {
             return state.setAndContinue(this.kind.walkAnimation());
         }
@@ -3915,6 +3968,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
      * GeckoLib's own isMoving() needs a fairly high limb speed, so a slow idle wander never counted as
      * walking. Any real horizontal movement should play the walk animation, as in the original.
      */
+    /** Original f_.bT: the follow AI sets it while the owner sprints or is more than 7 blocks away. */
+    void setGalathRunning(boolean running) {
+        this.entityData.set(DATA_SPEED_CLASS, running ? 2 : 0);
+    }
+
     private boolean isWalkingVisibly() {
         return this.walkAnimation.speed() > 0.02F;
     }

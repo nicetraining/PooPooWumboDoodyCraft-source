@@ -155,7 +155,7 @@ public final class GalathBoss {
                             .withStyle(net.minecraft.ChatFormatting.GRAY));
                 }
             }
-            burst(level, this.self.position());
+            smokeRing(level, this.self.position());
         }
         this.knockOut(null);
         return Math.max(0.0F, this.self.getHealth() - 1.0F);
@@ -188,7 +188,7 @@ public final class GalathBoss {
             return false;
         }
         this.self.setBossFlag(part.left ? F_ORB_LEFT : F_ORB_RIGHT, false);
-        smokeRing(level, part.position());
+        burst(level, part.position());
         return true;
     }
 
@@ -815,7 +815,7 @@ public final class GalathBoss {
             }
             top = top.above();
             this.self.teleportTo(top.getX() + 0.5D, top.getY(), top.getZ() + 0.5D);
-            burst(level, Vec3.atBottomCenterOf(top));
+            smokeRing(level, Vec3.atBottomCenterOf(top));
             level.playSound(null, this.self.getX(), this.self.getY(), this.self.getZ(), SoundEvents.LAVA_EXTINGUISH,
                     SoundSource.AMBIENT, 1.0F, 1.0F);
             this.self.setBossState(S_KO_GROUND);
@@ -908,7 +908,7 @@ public final class GalathBoss {
             if (entity == null || !entity.isAlive() || target.distanceTo(entity) < 15.0F) {
                 continue;
             }
-            burst(level, entity.position());
+            smokeRing(level, entity.position());
             entity.discard();
         }
     }
@@ -917,7 +917,7 @@ public final class GalathBoss {
         for (UUID id : this.skeletons) {
             Entity entity = level.getEntity(id);
             if (entity != null) {
-                burst(level, entity.position());
+                smokeRing(level, entity.position());
                 entity.discard();
             }
         }
@@ -976,19 +976,20 @@ public final class GalathBoss {
         return new DamageSource(context.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(key), attacker);
     }
 
-    /** Original bv(pos, true): a burst of 100 dragon breath particles. */
-    public static void burst(ServerLevel level, Vec3 at) {
-        level.sendParticles(ParticleTypes.DRAGON_BREATH, at.x, at.y, at.z, 100, 0.0D, 0.0D, 0.0D, 0.1D);
-    }
-
-    /** Original bv(pos, false): a ring of smoke and the shatter sound. */
+    /** Original bv(pos, true) -> c4.a: a ring of 200 smoke particles (1.8 degree steps), radius 0.5, no sound. */
     public static void smokeRing(ServerLevel level, Vec3 at) {
-        for (float angle = 0.0F; angle < Math.PI * 2; angle += 1.8F) {
+        double step = Math.toRadians(1.8D);
+        for (double angle = 0.0D; angle < Math.PI * 2; angle += step) {
             double s = Math.sin(angle);
             double c = Math.cos(angle);
             level.sendParticles(ParticleTypes.SMOKE, at.x + s * 0.5D, at.y, at.z + c * 0.5D, 0, s * 0.15D,
                     level.random.nextDouble() * 0.15D, c * 0.15D, 1.0D);
         }
+    }
+
+    /** Original bv(pos, false) -> c4.c: 100 dragon breath particles plus the shatter sound (0.7, ambient). */
+    public static void burst(ServerLevel level, Vec3 at) {
+        level.sendParticles(ParticleTypes.DRAGON_BREATH, at.x, at.y, at.z, 100, 0.0D, 0.0D, 0.0D, 0.1D);
         ModSounds.find("misc.shatter.shatter0").ifPresent(sound -> level.playSound(null, at.x, at.y, at.z, sound.get(),
                 SoundSource.AMBIENT, 0.7F, 1.0F));
     }

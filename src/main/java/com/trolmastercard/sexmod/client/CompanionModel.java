@@ -31,8 +31,7 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
             "weaponstart",
             "weaponend",
             "energyballr",
-            "energyballl",
-            "egg"
+            "energyballl"
     );
 
     @Override
@@ -81,8 +80,16 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
             }
         }
 
+        if (entity.kind() == CompanionKind.KOBOLD) {
+            this.koboldScales(entity);
+        }
         if (entity.goblin() != null) {
             goblinPose(entity);
+        } else if (entity.kind() == CompanionKind.ELLIE && entity.currentSceneAnimation() != null
+                && entity.currentSceneAnimation().animation().equals("animation.ellie.sitdownidle")) {
+            this.ellieSitLook(entity);
+        } else if (entity.kind() != CompanionKind.MANGLELIE) {
+            this.trackLook(entity, animationState);
         }
         if (entity.kind() == com.trolmastercard.sexmod.entity.CompanionKind.MANGLELIE && entity.mangRiding()) {
             // original f8.af / W: she looks at the nearest player or her target while sitting on her mother's head
@@ -92,6 +99,122 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
                 head.setRotX(head.getRotX() + entity.mangLookPitch);
             }
         }
+    }
+
+    /**
+     * Original cv.a(T, AnimationProcessor, AnimationEvent): outside scenes (states NULL, ATTACK and BOW) the neck turns half
+     * of the head yaw, the head follows yaw and pitch of the look direction.
+     */
+    private void trackLook(CompanionEntity entity, AnimationState<CompanionEntity> state) {
+        com.trolmastercard.sexmod.entity.CompanionAction action = entity.action();
+        if (entity.isInScene() || entity.currentSceneAnimation() != null
+                || action != com.trolmastercard.sexmod.entity.CompanionAction.NONE
+                && action != com.trolmastercard.sexmod.entity.CompanionAction.ATTACK
+                && action != com.trolmastercard.sexmod.entity.CompanionAction.BOW) {
+            return;
+        }
+        if (entity.kind() == CompanionKind.GALATH && entity.getFirstPassenger() != null) {
+            return;
+        }
+        software.bernie.geckolib.cache.object.GeoBone head = this.bone("head");
+        if (head == null) {
+            return;
+        }
+        software.bernie.geckolib.model.data.EntityModelData data =
+                state.getData(software.bernie.geckolib.constant.DataTickets.ENTITY_MODEL_DATA);
+        if (data == null) {
+            return;
+        }
+        GeoBone neck = this.bone("neck");
+        if (neck != null) {
+            neck.setRotY(data.netHeadYaw() * 0.5F * 0.017453292F);
+        }
+        head.setRotY(data.netHeadYaw() * 0.017453292F);
+        // original c0 (Bee model): her head is tilted 1.0 rad further down
+        head.setRotX((entity.kind() == CompanionKind.BEE ? 1.0F : 0.0F) + data.headPitch() * 0.017453292F);
+        GeoBone body = this.bone("body") != null ? this.bone("body") : this.bone("dd");
+        if (body != null) {
+            body.setRotY(0.0F);
+        }
+    }
+
+    /** Original c9: breast size 0.75-1.35 (boobL, boobR, armorBoobs) and eye size 1.0-1.2 (eyeL, eyeR, pushed sideways). */
+    private void koboldScales(CompanionEntity kobold) {
+        float breast = 0.75F + (1.35F - 0.75F) * (kobold.koboldGene(2) / 100.0F);
+        for (String name : new String[] {"boobL", "boobR", "armorBoobs"}) {
+            GeoBone bone = this.bone(name);
+            if (bone != null) {
+                bone.setScaleX(breast);
+                bone.setScaleY(breast);
+                bone.setScaleZ(breast);
+            }
+        }
+        float eye = 1.0F + (1.2F - 1.0F) * (kobold.koboldGene(3) / 100.0F);
+        for (String name : new String[] {"eyeL", "eyeR"}) {
+            GeoBone bone = this.bone(name);
+            if (bone != null) {
+                bone.setScaleX(eye);
+                bone.setScaleY(eye);
+                bone.setScaleZ(eye);
+            }
+        }
+        GeoBone left = this.bone("eyeL");
+        GeoBone right = this.bone("eyeR");
+        if (left != null && right != null) {
+            left.setPosX(left.getPosX() + (eye - 1.0F));
+            right.setPosX(right.getPosX() - (eye - 1.0F));
+        }
+    }
+
+    /** Original cx.a(): while Ellie sits on the bed waiting, her head follows the nearest player within 15 blocks. */
+    private void ellieSitLook(CompanionEntity ellie) {
+        GeoBone head = this.bone("head");
+        net.minecraft.world.entity.player.Player player = ellie.level().getNearestPlayer(ellie, 15.0D);
+        if (head == null || player == null) {
+            return;
+        }
+        net.minecraft.world.phys.Vec3 delta = ellie.position().subtract(player.position());
+        float wrapped = net.minecraft.util.Mth.wrapDegrees(ellie.getYRot());
+        int facing = Math.round(wrapped / 90.0F) * 90;
+        if (facing == -180) {
+            facing = 180;
+        }
+        float yaw;
+        if (facing == 180) {
+            yaw = (float) Math.atan2(delta.x, delta.z) * 1.2F;
+            yaw = yaw > 0.0F ? Math.max(1.5F, Math.min(3.14F, yaw)) : Math.max(-3.14F, Math.min(-1.5F, yaw));
+            yaw = yaw == 1.5F || yaw == 3.14F || yaw == -3.14F || yaw == -1.5F ? 0.0F : yaw + 3.0F;
+        } else {
+            float offset;
+            float min;
+            float max;
+            switch (facing) {
+                case -90 -> {
+                    offset = 2.0F;
+                    min = -71.56F;
+                    max = -68.0F;
+                }
+                case 90 -> {
+                    offset = -2.0F;
+                    min = 68.0F;
+                    max = 70.5F;
+                }
+                default -> {
+                    offset = 0.0F;
+                    min = -1.2F;
+                    max = 1.2F;
+                }
+            }
+            yaw = ((float) (Math.atan2(delta.x, delta.z) + offset) + facing) * 0.8F;
+            yaw = Math.max(min, Math.min(max, yaw));
+            if (yaw == min || yaw == max) {
+                yaw = 0.0F;
+            }
+        }
+        float pitch = yaw == 0.0F ? 0.0F
+                : net.minecraft.util.Mth.clamp((float) ((player.getY() - ellie.getY()) * 0.5D), -0.75F, 0.75F);
+        head.setRotY(yaw);
+        head.setRotX(pitch);
     }
 
     private GeoBone bone(String name) {
@@ -237,18 +360,7 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
         int variant = entity.appearanceVariant();
 
         if (kind == CompanionKind.KOBOLD) {
-            if (normalized.startsWith("freckles")) {
-                return true;
-            }
-
-            if (normalized.matches("horn(?:ur|ul)[0-7]")) {
-                int hornVariant = normalized.charAt(normalized.length() - 1) - '0';
-                return hornVariant != Math.floorMod(variant, 8);
-            }
-
-            if (normalized.matches("horn(?:dr|dl)[1-2]")) {
-                return true;
-            }
+            return koboldBoneHidden(entity, normalized);
         }
 
         if (kind == CompanionKind.SLIME && (normalized.equals("bedslime") || normalized.equals("bedslimelayer"))) {
@@ -314,6 +426,42 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
                     || normalized.equals("nippler");
         }
 
+        return false;
+    }
+
+    /** Original c9.a(): crown, egg, tongue, packs, horns and freckles follow the Kobold's state and model string. */
+    private static boolean koboldBoneHidden(CompanionEntity entity, String bone) {
+        if (bone.equals("crown")) {
+            return !entity.isTribeLeader();
+        }
+        if (bone.equals("egg")) {
+            if (entity.currentScene() == null) {
+                entity.koboldEggShown = false;
+            }
+            return !entity.koboldEggShown;
+        }
+        if (bone.equals("tounge")) {
+            return entity.currentScene() != com.trolmastercard.sexmod.entity.CompanionScene.KOBOLD_BLOWJOB;
+        }
+        if (bone.equals("backpack") || bone.equals("tailpack")) {
+            int pack = entity.koboldGene(6);
+            boolean payment = entity.currentScene() == com.trolmastercard.sexmod.entity.CompanionScene.KOBOLD_PAYMENT;
+            boolean backpack = pack == 0 || pack == 1 || payment;
+            boolean tailpack = pack == 1 || pack == 2;
+            return !(bone.equals("backpack") ? backpack : tailpack);
+        }
+        if (bone.matches("horn(?:ur|ul)[0-7]")) {
+            return bone.charAt(bone.length() - 1) - '0' != entity.koboldGene(0);
+        }
+        if (bone.matches("horn(?:dr|dl)[0-9]")) {
+            return bone.charAt(bone.length() - 1) - '0' != entity.koboldGene(1);
+        }
+        if (bone.matches("frecklesa[lr][12]")) {
+            return bone.charAt(bone.length() - 1) - '0' != entity.koboldGene(4);
+        }
+        if (bone.matches("frecklesh[lr][12]")) {
+            return bone.charAt(bone.length() - 1) - '0' != entity.koboldGene(5);
+        }
         return false;
     }
 

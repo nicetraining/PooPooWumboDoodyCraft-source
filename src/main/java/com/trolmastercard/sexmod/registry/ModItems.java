@@ -56,7 +56,7 @@ public final class ModItems {
     public static final DeferredItem<LegacyPurposeItem> WINCHESTER = ITEMS.register(
             "winchester",
             () -> new LegacyPurposeItem(
-                    new Item.Properties().stacksTo(1),
+                    new Item.Properties(),
                     "winchester",
                     0
             )
@@ -70,6 +70,9 @@ public final class ModItems {
 
     static {
         for (CompanionKind kind : CompanionKind.values()) {
+            if (kind == CompanionKind.ALLIE || kind == CompanionKind.KOBOLD) {
+                continue; // original bi: Allie and Kobold are registered without a spawn egg
+            }
             SPAWN_EGGS.put(kind, ITEMS.register(
                     kind.spawnEggPath(),
                     () -> new DeferredSpawnEggItem(
@@ -95,7 +98,6 @@ public final class ModItems {
                         output.accept(GALATH_COIN.get());
                         output.accept(NPC_EDITOR_WAND.get());
                         output.accept(KOBOLD_EGG_ITEM.get());
-                        output.accept(WINCHESTER.get());
                         output.accept(LUNA_ROD.get());
                         SPAWN_EGGS.values().forEach(egg -> output.accept(egg.get()));
                     })

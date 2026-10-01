@@ -125,7 +125,8 @@ public final class GalathMorning {
             return;
         }
         // original: 500 ms later the player is placed on the bed and looks at them (pitch -10, yaw facing + 185)
-        player.getServer().execute(() -> player.teleportTo(level, player.getX(), player.getY(), player.getZ(),
-                yaw + 185.0F, -10.0F));
+        net.minecraft.server.MinecraftServer server = player.getServer();
+        server.tell(new net.minecraft.server.TickTask(server.getTickCount() + 10, () -> player.teleportTo(level, player.getX(),
+                player.getY(), player.getZ(), yaw + 185.0F, -10.0F)));
     }
 }

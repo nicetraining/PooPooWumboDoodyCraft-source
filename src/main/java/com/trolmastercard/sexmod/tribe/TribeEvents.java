@@ -88,7 +88,7 @@ public final class TribeEvents {
         if (!zombie && !skeleton && !spider) {
             return;
         }
-        monster.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(monster, CompanionEntity.class, 10, skeleton, false,
+        monster.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(monster, CompanionEntity.class, 10, true, false,
                 target -> target instanceof CompanionEntity kobold && kobold.kind() == CompanionKind.KOBOLD && kobold.isOwnedKobold()
                         && (!spider || monster.getLightLevelDependentMagicValue() < 0.5F)));
     }

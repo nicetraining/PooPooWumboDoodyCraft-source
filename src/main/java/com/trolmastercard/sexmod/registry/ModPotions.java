@@ -56,7 +56,7 @@ public final class ModPotions {
 
     public static void registerBrewingRecipes(RegisterBrewingRecipesEvent event) {
         LEGACY_RED_FLOWERS.forEach(flower ->
-                event.getBuilder().addMix(Potions.AWKWARD, flower, HORNY_POTION));
+                event.getBuilder().addMix(Potions.MUNDANE, flower, HORNY_POTION));
     }
 
     private static final class MarkerEffect extends MobEffect {

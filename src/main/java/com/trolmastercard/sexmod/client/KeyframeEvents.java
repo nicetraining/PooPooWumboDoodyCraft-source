@@ -96,6 +96,9 @@ public final class KeyframeEvents {
                 PaymentArm.lower(girl.scenePartnerId().get());
             }
         }
+        if (entry.has("show_egg")) {
+            girl.koboldEggShown = true;
+        }
         if (entry.has("fade") && girl.level() != null) {
             girl.allieFadeStart = girl.level().getGameTime(); // original ev: alpha 0.99, then -0.01 per rendered frame
         }

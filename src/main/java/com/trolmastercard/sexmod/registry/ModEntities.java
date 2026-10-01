@@ -118,7 +118,7 @@ public final class ModEntities {
                 kind.registryPath(),
                 () -> EntityType.Builder.<CompanionEntity>of(
                                 (entityType, level) -> new CompanionEntity(entityType, level, kind),
-                                MobCategory.CREATURE
+                                kind == CompanionKind.MANGLELIE ? MobCategory.AMBIENT : MobCategory.CREATURE
                         )
                         .sized(kind.width(), kind.height())
                         .clientTrackingRange(10)

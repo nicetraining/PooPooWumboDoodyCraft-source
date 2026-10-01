@@ -15,14 +15,16 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class ModBlocks {
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(FapCraft.MOD_ID);
 
-    public static final DeferredBlock<Block> FIRE = BLOCKS.registerSimpleBlock(
+    public static final DeferredBlock<Block> FIRE = BLOCKS.register(
             "fire",
+            () -> new CampFireBlock(
             BlockBehaviour.Properties.of()
                     .noCollission()
                     .instabreak()
                     .lightLevel(state -> 15)
                     .sound(SoundType.WOOL)
                     .replaceable()
+                    .pushReaction(net.minecraft.world.level.material.PushReaction.DESTROY))
     );
 
     private ModBlocks() {

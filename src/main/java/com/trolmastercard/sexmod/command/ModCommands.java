@@ -25,7 +25,7 @@ public final class ModCommands {
 
     @SubscribeEvent
     public static void register(RegisterCommandsEvent event) {
-        event.getDispatcher().register(Commands.literal("locatenearestgoblinlair").executes(ModCommands::locateLair));
+        event.getDispatcher().register(Commands.literal("locatenearestgoblinlair").requires(source -> source.hasPermission(4)).executes(ModCommands::locateLair));
         event.getDispatcher().register(Commands.literal("fapcraft")
                 .then(Commands.literal("home")
                         .then(Commands.argument("target", EntityArgument.entity())

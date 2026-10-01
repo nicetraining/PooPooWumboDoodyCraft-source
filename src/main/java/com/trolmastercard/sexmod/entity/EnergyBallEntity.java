@@ -150,7 +150,7 @@ public final class EnergyBallEntity extends Entity {
         skeleton.setItemSlot(net.minecraft.world.entity.EquipmentSlot.MAINHAND, new ItemStack(Items.STONE_SWORD));
         skeleton.moveTo(spot.x, spot.y, spot.z, this.random.nextFloat() * 360.0F, 0.0F);
         level.addFreshEntity(skeleton);
-        GalathBoss.burst(level, spot);
+        GalathBoss.smokeRing(level, spot);
         if (galath != null && galath.boss() != null) {
             galath.boss().addSkeleton(skeleton);
         }
@@ -169,7 +169,7 @@ public final class EnergyBallEntity extends Entity {
         if (source.is(DamageTypes.ARROW)) {
             this.armed = false;
             if (this.level() instanceof ServerLevel level) {
-                GalathBoss.smokeRing(level, this.position());
+                GalathBoss.burst(level, this.position());
             }
             Entity arrow = source.getDirectEntity();
             if (arrow instanceof AbstractArrow) {
