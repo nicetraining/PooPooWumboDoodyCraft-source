@@ -680,6 +680,85 @@ public final class FapCraftGameTests {
         });
     }
 
+    @GameTest(template = "empty", timeoutTicks = 300, batch = "b_galath")
+    public static void wildGalathHuntsAPlayer(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        floor(helper, 30);
+        CompanionEntity galath = spawnKind(helper, CompanionKind.GALATH);
+        galath.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 15.5)));
+        var player = serverPlayer(helper);
+        player.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 5.5)));
+        player.getAbilities().instabuild = false;
+        helper.runAfterDelay(60, () -> {
+            if (galath.hasMaster() || !galath.wildBoss() || galath.bossTargetId() != player.getId()) {
+                helper.fail("a wild Galath targets the player within 20 blocks (target " + galath.bossTargetId() + ")");
+                return;
+            }
+            if (galath.boss().attack() == null) {
+                helper.fail("she starts an attack once she has a target");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 300, batch = "b_galath")
+    public static void reflectedEnergyBallKnocksGalathOut(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        floor(helper, 30);
+        CompanionEntity galath = spawnKind(helper, CompanionKind.GALATH);
+        galath.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 12.5)));
+        var player = serverPlayer(helper);
+        player.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 18.5)), 180.0F, 0.0F);
+        player.getAbilities().instabuild = true; // she ignores creative players, so she just hangs there
+        var ball = com.trolmastercard.sexmod.registry.ModEntities.ENERGY_BALL.get().create(level);
+        ball.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 15.5)).add(0.0D, player.getEyeHeight(), 0.0D));
+        level.addFreshEntity(ball);
+        helper.runAfterDelay(2, () -> {
+            player.setYRot(180.0F);
+            player.setXRot(0.0F);
+            ball.hurt(level.damageSources().playerAttack(player), 1.0F);
+        });
+        helper.runAfterDelay(80, () -> {
+            if (!galath.boss().knocked()) {
+                helper.fail("the reflected ball knocked Galath out (state " + galath.bossState() + ", ball alive " + ball.isAlive() + ")");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400, batch = "b_galath")
+    public static void galathIsParalysedInsteadOfDyingAndCanBeCorrupted(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        floor(helper, 30);
+        CompanionEntity galath = spawnKind(helper, CompanionKind.GALATH);
+        galath.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 15.5)));
+        var player = serverPlayer(helper);
+        player.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 18.5)));
+        player.getAbilities().instabuild = true;
+        helper.runAfterDelay(5, () -> galath.hurt(level.damageSources().generic(), 1000.0F));
+        helper.runAfterDelay(200, () -> {
+            if (!galath.isAlive() || galath.getHealth() <= 0.0F || !galath.boss().paralysed()) {
+                helper.fail("at zero health she is paralysed instead of dying (alive " + galath.isAlive() + ", hp " + galath.getHealth() + ")");
+                return;
+            }
+            if (galath.bossState() != com.trolmastercard.sexmod.entity.GalathBoss.S_KO_GROUND) {
+                helper.fail("a paralysed Galath lies on the ground (state " + galath.bossState() + ")");
+                return;
+            }
+            galath.interact(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            if (galath.currentScene() != com.trolmastercard.sexmod.entity.CompanionScene.GALATH_WILD_CORRUPT) {
+                helper.fail("right-clicking her starts the corrupt scene (scene " + galath.currentScene() + ")");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
     @GameTest(template = "empty", timeoutTicks = 700, batch = "b_mang")
     public static void galathAdoptsManglelieAndManglelieShoots(GameTestHelper helper) {
         var level = helper.getLevel();

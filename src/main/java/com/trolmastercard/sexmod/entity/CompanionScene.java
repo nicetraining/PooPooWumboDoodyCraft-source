@@ -324,6 +324,25 @@ public enum CompanionScene {
             loop("animation.galath.corrupt_hard", 75),
             phase("animation.galath.corrupt_cum", 57)
     ),
+    /** Original wild Galath catch (h8 rape): she drains the player with the succubus damage until he escapes or dies. */
+    GALATH_WILD_RAPE(
+            CompanionKind.GALATH, "wild_rape", true,
+            phase("animation.galath.rape_intro", 43),
+            loop("animation.galath.rape0", 16),
+            loop("animation.galath.rape1", 16),
+            loop("animation.galath.rape2", 16),
+            phase("animation.galath.rape_cum", 35),
+            phase("animation.galath.rape_cum_idle", 79)
+    ),
+    /** Original corrupt scene on a paralysed Galath: ends with the coin she gives to her new master. */
+    GALATH_WILD_CORRUPT(
+            CompanionKind.GALATH, "wild_corrupt", true,
+            phase("animation.galath.corrupt_intro", 30),
+            loop("animation.galath.corrupt_slow", 88),
+            loop("animation.galath.corrupt_hard", 75),
+            phase("animation.galath.corrupt_cum", 30),
+            phase("animation.galath.give_coin", 140)
+    ),
 
     /**
      * The bed animations are authored for the combined Galath and Manglelie
@@ -458,8 +477,17 @@ public enum CompanionScene {
     }
 
     /** Scenes during which the local player's movement keys are locked without attaching them (original d3.a(false)). */
+    /** The scripted catch: no controls at all, not even the meter. */
+    public boolean isWild() {
+        return this == GALATH_WILD_RAPE;
+    }
+
+    public boolean isWildCorrupt() {
+        return this == GALATH_WILD_CORRUPT;
+    }
+
     public boolean locksControls() {
-        return this == BIA_TALK || this == ELLIE_DASH || this == ELLIE_HUG || this.isAlliePrelude();
+        return this.isWild() || this == BIA_TALK || this == ELLIE_DASH || this == ELLIE_HUG || this.isAlliePrelude();
     }
 
     /** Label on the action panel; Bia's second menu uses the original's plain "Anal" / "Doggy". */
@@ -494,7 +522,7 @@ public enum CompanionScene {
     }
 
     public boolean hasInteractivePhases() {
-        return this.hasPartner && this.firstLoopPhase() >= 0;
+        return this.hasPartner && !this.isWild() && this.firstLoopPhase() >= 0;
     }
 
     public int firstLoopPhase() {

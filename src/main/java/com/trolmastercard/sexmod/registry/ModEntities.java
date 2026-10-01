@@ -102,9 +102,10 @@ public final class ModEntities {
             ENTITY_TYPES.register(
                     "energy_ball",
                     () -> EntityType.Builder.<EnergyBallEntity>of(EnergyBallEntity::new, MobCategory.MISC)
-                            .sized(0.3125F, 0.3125F)
+                            .sized(0.5F, 0.5F)
                             .clientTrackingRange(8)
-                            .updateInterval(2)
+                            .updateInterval(1)
+                            .noSave()
                             .build(FapCraft.MOD_ID + ":energy_ball")
             );
 

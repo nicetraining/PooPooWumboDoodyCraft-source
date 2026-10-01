@@ -298,10 +298,6 @@ public enum CompanionKind {
         return this == BEE || this == GALATH || this == MANGLELIE;
     }
 
-    public boolean usesRangedMagic() {
-        return this == BEE || this == GALATH;
-    }
-
     public static CompanionKind byName(String value) {
         if (value == null || value.isBlank()) {
             return JENNY;

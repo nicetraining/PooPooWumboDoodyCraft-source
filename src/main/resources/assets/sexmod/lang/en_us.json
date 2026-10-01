@@ -362,5 +362,10 @@
   "action.names.goblin_use_her": "use her",
   "action.names.goblin_take_back": "take ur stuff back",
   "key.sexmod.goblin_wheel": "Goblin menu",
-  "key.categories.sexmod": "FapCraft"
+  "key.categories.sexmod": "FapCraft",
+  "death.attack.succubus": "%1$s got his cum drained by a Succubus",
+  "death.attack.galath": "%1$s was slain by Galath",
+  "message.sexmod.galath_paralyzed": "Galath is paralyzed! Now it's time to corrupt her",
+  "message.sexmod.galath_paralyzed_hint": "(Walk to her and right click her)",
+  "message.sexmod.galath_coin_lore": "Defeating a succubus makes her accept the victor as her master, granting him a coin to which her soul is bound. Using the coin summons her, offering services on demand. If her master uses the coin on her or goes too far, she returns to the coin."
 }

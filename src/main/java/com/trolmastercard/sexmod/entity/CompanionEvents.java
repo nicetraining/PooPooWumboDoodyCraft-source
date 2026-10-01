@@ -2,6 +2,7 @@ package com.trolmastercard.sexmod.entity;
 
 import com.trolmastercard.sexmod.FapCraft;
 import net.neoforged.bus.api.SubscribeEvent;
+import com.trolmastercard.sexmod.data.GalathBindingData;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -88,5 +89,38 @@ public final class CompanionEvents {
                 && hit.getEntity() instanceof CompanionEntity) {
             event.setCanceled(true);
         }
+    }
+
+    /** Original CheckSpawn hijack: a natural Wither Skeleton or Blaze may become the wild Galath boss instead. */
+    @SubscribeEvent
+    public static void onFinalizeSpawn(net.neoforged.neoforge.event.entity.living.FinalizeSpawnEvent event) {
+        var mob = event.getEntity();
+        if (!(mob instanceof net.minecraft.world.entity.monster.WitherSkeleton)
+                && !(mob instanceof net.minecraft.world.entity.monster.Blaze)) {
+            return;
+        }
+        var type = event.getSpawnType();
+        if (type == net.minecraft.world.entity.MobSpawnType.SPAWNER || type == net.minecraft.world.entity.MobSpawnType.SPAWN_EGG
+                || type == net.minecraft.world.entity.MobSpawnType.COMMAND || type == net.minecraft.world.entity.MobSpawnType.MOB_SUMMONED
+                || type == net.minecraft.world.entity.MobSpawnType.TRIGGERED || type == net.minecraft.world.entity.MobSpawnType.DISPENSER) {
+            return;
+        }
+        if (!(event.getLevel().getLevel() instanceof net.minecraft.server.level.ServerLevel level)
+                || level.dimension() != net.minecraft.world.level.Level.NETHER) {
+            return;
+        }
+        var pos = mob.blockPosition();
+        if (!GalathBoss.canSpawnAt(level, pos)) {
+            return;
+        }
+        CompanionEntity galath = com.trolmastercard.sexmod.registry.ModEntities.get(CompanionKind.GALATH).create(level);
+        if (galath == null) {
+            return;
+        }
+        event.setSpawnCancelled(true);
+        galath.moveTo(event.getX(), event.getY(), event.getZ(), level.random.nextFloat() * 360.0F, 0.0F);
+        galath.setPersistenceRequired();
+        level.addFreshEntity(galath);
+        GalathBindingData.get(level.getServer()).addSpawn(pos, false);
     }
 }

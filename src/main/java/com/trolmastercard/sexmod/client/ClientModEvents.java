@@ -28,7 +28,7 @@ public final class ClientModEvents {
         event.registerEntityRenderer(ModEntities.KOBOLD_EGG.get(), KoboldEggRenderer::new);
         event.registerEntityRenderer(ModEntities.FRIENDLY_SLIME.get(), net.minecraft.client.renderer.entity.SlimeRenderer::new);
         event.registerEntityRenderer(ModEntities.LUNA_HOOK.get(), LunaHookRenderer::new);
-        event.registerEntityRenderer(ModEntities.ENERGY_BALL.get(), ThrownItemRenderer::new);
+        event.registerEntityRenderer(ModEntities.ENERGY_BALL.get(), EnergyBallRenderer::new);
     }
 
     @SubscribeEvent
@@ -57,5 +57,8 @@ public final class ClientModEvents {
         event.registerAboveAll(
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, "flight_hud"),
                 FlightHud::render);
+        event.registerAboveAll(
+                net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, "escape_hud"),
+                EscapeHud::render);
     }
 }

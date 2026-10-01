@@ -139,6 +139,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Long> DATA_MANG_SHOT =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Integer> DATA_BOSS_STATE =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_BOSS_TARGET =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_BOSS_SUMMON =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_BOSS_FLAGS =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_FLYING =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
 
@@ -241,6 +249,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private LunaFishing lunaFishing;
     private GoblinBehavior goblinBehavior;
     private ManglelieBehavior manglelieBehavior;
+    private GalathBoss boss;
     /** Client: Manglelie's head turn towards the nearest player or her arrow target (original f8.af / W). */
     public float mangLookYaw;
     public float mangLookPitch;
@@ -286,6 +295,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if ((kind == CompanionKind.GALATH || kind == CompanionKind.MANGLELIE) && !technicalProxy) {
             this.manglelieBehavior = new ManglelieBehavior(this);
+        }
+        if (kind == CompanionKind.GALATH && !technicalProxy) {
+            this.boss = new GalathBoss(this);
         }
         if (this.getNavigation() instanceof GroundPathNavigation ground) {
             ground.setCanOpenDoors(true);
@@ -364,6 +376,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return true;
     }
 
+    /** Manglelie and the wild Galath boss run entirely on their own scripts. */
+    boolean noGenericAi() {
+        return this.kind == CompanionKind.MANGLELIE || this.wildBoss();
+    }
+
+    public boolean wildBoss() {
+        return this.boss != null && !this.technicalProxy && !this.hasMaster();
+    }
+
     @Override
     protected void registerGoals() {
         if (this.slimeBehavior != null) {
@@ -380,7 +401,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 0.35D) {
             @Override
             public boolean canUse() {
-                return !CompanionEntity.this.fishingHoldsHer() && CompanionEntity.this.kind != CompanionKind.MANGLELIE && super.canUse();
+                return !CompanionEntity.this.fishingHoldsHer() && !CompanionEntity.this.noGenericAi() && super.canUse();
             }
         });
 
@@ -388,18 +409,18 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.15D, true) {
             @Override
             public boolean canUse() {
-                return !CompanionEntity.this.kind.hasMasterAI() && CompanionEntity.this.kind != CompanionKind.MANGLELIE && super.canUse();
+                return !CompanionEntity.this.kind.hasMasterAI() && !CompanionEntity.this.noGenericAi() && super.canUse();
             }
 
             @Override
             public boolean canContinueToUse() {
-                return !CompanionEntity.this.kind.hasMasterAI() && CompanionEntity.this.kind != CompanionKind.MANGLELIE && super.canContinueToUse();
+                return !CompanionEntity.this.kind.hasMasterAI() && !CompanionEntity.this.noGenericAi() && super.canContinueToUse();
             }
         });
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this) {
             @Override
             public boolean canUse() {
-                return !CompanionEntity.this.kind.hasMasterAI() && CompanionEntity.this.kind != CompanionKind.MANGLELIE && super.canUse();
+                return !CompanionEntity.this.kind.hasMasterAI() && !CompanionEntity.this.noGenericAi() && super.canUse();
             }
         });
     }
@@ -421,6 +442,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_SCENE_PARTNER, Optional.empty());
         builder.define(DATA_FLYING, false);
         builder.define(DATA_GALATH_BOOST, 0);
+        builder.define(DATA_BOSS_STATE, 0);
+        builder.define(DATA_BOSS_TARGET, -1);
+        builder.define(DATA_BOSS_SUMMON, 0);
+        builder.define(DATA_BOSS_FLAGS, 0);
         builder.define(DATA_FAMILY, Optional.empty());
         builder.define(DATA_MANG_RIDING, false);
         builder.define(DATA_MANG_TARGET, -1);
@@ -491,6 +516,79 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     public void setGoblinFade(float fade) {
         this.entityData.set(DATA_G_FADE, fade);
+    }
+
+    public GalathBoss boss() {
+        return this.boss;
+    }
+
+    public int bossState() {
+        return this.entityData.get(DATA_BOSS_STATE);
+    }
+
+    public void setBossState(int state) {
+        this.entityData.set(DATA_BOSS_STATE, state);
+    }
+
+    public int bossTargetId() {
+        return this.entityData.get(DATA_BOSS_TARGET);
+    }
+
+    public void setBossTarget(int id) {
+        this.entityData.set(DATA_BOSS_TARGET, id);
+    }
+
+    public int summonTick() {
+        return this.entityData.get(DATA_BOSS_SUMMON);
+    }
+
+    public void setSummonTick(int tick) {
+        this.entityData.set(DATA_BOSS_SUMMON, tick);
+    }
+
+    public boolean bossFlag(int bit) {
+        return (this.entityData.get(DATA_BOSS_FLAGS) & bit) != 0;
+    }
+
+    public void setBossFlag(int bit, boolean on) {
+        int flags = this.entityData.get(DATA_BOSS_FLAGS);
+        this.entityData.set(DATA_BOSS_FLAGS, on ? flags | bit : flags & ~bit);
+    }
+
+    public void setBossFlags(int flags) {
+        this.entityData.set(DATA_BOSS_FLAGS, flags);
+    }
+
+    /** Original em.c(uuid) != null: the player is a scene partner of some companion nearby. */
+    public static boolean playerInScene(Player player) {
+        return !player.level().getEntitiesOfClass(CompanionEntity.class, player.getBoundingBox().inflate(64.0D),
+                c -> c.isInScene() && c.scenePartnerId().filter(player.getUUID()::equals).isPresent()).isEmpty();
+    }
+
+    @Override
+    public boolean isMultipartEntity() {
+        return this.boss != null;
+    }
+
+    @Override
+    public net.neoforged.neoforge.entity.PartEntity<?>[] getParts() {
+        return this.boss == null ? super.getParts() : this.boss.parts();
+    }
+
+    @Override
+    public void startSeenByPlayer(ServerPlayer player) {
+        super.startSeenByPlayer(player);
+        if (this.boss != null) {
+            this.boss.bar().addPlayer(player);
+        }
+    }
+
+    @Override
+    public void stopSeenByPlayer(ServerPlayer player) {
+        super.stopSeenByPlayer(player);
+        if (this.boss != null) {
+            this.boss.bar().removePlayer(player);
+        }
     }
 
     public ManglelieBehavior manglelie() {
@@ -697,6 +795,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     /** Called by the damage event: lethal damage while following leaves her downed at 1 HP; downed she takes no damage. */
     public float adjustIncomingDamage(float amount) {
+        if (this.boss != null && !this.hasMaster() && !this.technicalProxy) {
+            return this.boss.adjustLethal(amount); // wild Galath: her health never reaches zero
+        }
         if (this.kind == CompanionKind.GALATH && this.hasMaster() && !this.technicalProxy) {
             if (this.galathDespawnTicks >= 0) {
                 return 0.0F;
@@ -1181,7 +1282,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     /** Kobolds sell their scene menu to anyone. */
     public boolean mayUseSceneActions(Player player) {
-        return this.kind.opensMenuToStrangers() || this.canUsePanel(player);
+        return this.kind.opensMenuToStrangers() || this.canUsePanel(player)
+                || (this.wildBoss() && this.currentScene() == CompanionScene.GALATH_WILD_CORRUPT);
     }
 
     /** The original's go-home routine: throw an ender pearl home, then teleport there. */
@@ -1557,6 +1659,108 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return true;
     }
 
+    // ---------------------------------------------------------------- wild Galath scenes
+
+    private void drainPlayer(ServerPlayer player) {
+        player.hurt(GalathBoss.succubusSource(this), 1.0F);
+        this.setHealth(Math.min(this.getMaxHealth(), this.getHealth() + 1.5F));
+    }
+
+    /** Original h8 rape: three drains in the intro, then one per 16 tick loop until one more would kill, then the finish. */
+    private void tickWildScene(ServerLevel level, CompanionScene scene, ServerPlayer player, CompanionScene.Phase phase) {
+        int index = this.currentScenePhase();
+        int ticks = this.scenePhaseTicks;
+        switch (index) {
+            case 0 -> {
+                if (ticks == 3 || ticks == 19 || ticks == 38) {
+                    this.drainPlayer(player);
+                }
+                if (ticks >= phase.durationTicks()) {
+                    this.enterScenePhase(1 + this.random.nextInt(3));
+                }
+            }
+            case 1, 2, 3 -> {
+                if (ticks == 7) {
+                    this.drainPlayer(player);
+                }
+                if (ticks >= phase.durationTicks()) {
+                    this.enterScenePhase(player.getHealth() - 1.0F <= 0.0F ? 4 : 1 + this.random.nextInt(3));
+                }
+            }
+            case 4 -> {
+                if (ticks == 15) {
+                    player.hurt(GalathBoss.succubusSource(this), 2.14748365E9F);
+                }
+                if (ticks >= phase.durationTicks()) {
+                    this.enterScenePhase(5);
+                }
+            }
+            default -> {
+                if (ticks >= phase.durationTicks()) {
+                    this.finishScene(true);
+                }
+            }
+        }
+    }
+
+    /** Original cd packet: the player mashed free, she lets go and flies off. */
+    public void galathEscape(ServerPlayer player) {
+        if (this.currentScene() != CompanionScene.GALATH_WILD_RAPE
+                || !this.scenePartnerId().filter(player.getUUID()::equals).isPresent()
+                || this.currentScenePhase() > 3) {
+            return;
+        }
+        this.finishScene(false);
+        if (this.boss != null && this.level() instanceof ServerLevel level) {
+            this.setNoGravity(true);
+            this.boss.flyAway(level);
+        }
+    }
+
+    /** Original: the finished corruption leaves the winner holding her coin, and she is bound to it. */
+    private void awardGalathCoin(ServerPlayer player) {
+        ItemStack coin = new ItemStack(com.trolmastercard.sexmod.registry.ModItems.GALATH_COIN.get());
+        ItemStack old = player.getMainHandItem().copy();
+        player.setItemInHand(InteractionHand.MAIN_HAND, coin);
+        if (!old.isEmpty() && !player.getInventory().add(old)) {
+            player.drop(old, false);
+        }
+        player.sendSystemMessage(Component.translatable("message.sexmod.galath_coin_lore")
+                .withStyle(net.minecraft.ChatFormatting.GRAY));
+    }
+
+    private boolean tryWildCorrupt(Player player) {
+        return this.wildBoss()
+                && player instanceof ServerPlayer serverPlayer
+                && this.boss.paralysed()
+                && this.bossState() == GalathBoss.S_KO_GROUND
+                && !this.isInScene()
+                && player.distanceToSqr(this) <= 36.0D
+                && this.startWildScene(serverPlayer, CompanionScene.GALATH_WILD_CORRUPT);
+    }
+
+    private boolean wildStart;
+
+    /** Scenes the wild Galath starts herself (catch or corruption): no ownership, distance or room checks. */
+    public boolean startWildScene(ServerPlayer player, CompanionScene scene) {
+        this.wildStart = true;
+        try {
+            boolean started = this.startScene(player, scene);
+            if (started) {
+                this.wildTickCounter = 0;
+                if (scene == CompanionScene.GALATH_WILD_RAPE) {
+                    net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
+                            player, new com.trolmastercard.sexmod.network.GalathEscapePayload(this.getId()));
+                }
+            }
+            return started;
+        } finally {
+            this.wildStart = false;
+        }
+    }
+
+    private int wildTickCounter;
+
     public boolean startScene(Player player, CompanionScene scene) {
         if (scene == CompanionScene.GOBLIN_USE_HER || scene == CompanionScene.GOBLIN_TAKE_BACK) {
             if (this.goblinBehavior == null) {
@@ -1576,9 +1780,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 || scene == null
                 || scene.kind() != this.kind
                 || this.isInScene()
-                || !this.mayUseSceneActions(player)
+                || (!this.wildStart
+                && (!this.mayUseSceneActions(player)
                 || (scene != CompanionScene.GOBLIN_BREEDING && player.distanceToSqr(this) > (scene.isWaitScene() ? 1024.0D : 64.0D))
-                || !this.isSceneEnvironmentValid(serverLevel, player, scene, true)) {
+                || !this.isSceneEnvironmentValid(serverLevel, player, scene, true)))) {
             return false;
         }
 
@@ -2094,11 +2299,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.manglelieBehavior != null) {
             this.manglelieBehavior.tick(serverLevel);
         }
+        if (this.boss != null) {
+            this.boss.tick(serverLevel);
+        }
         this.tickEllieHorny(serverLevel);
         this.tickTargetSanity();
         this.tickGoHome(serverLevel);
         this.tickHealing(serverLevel);
-        this.tickRangedCombat(serverLevel);
         this.tickFlight();
 
         if (this.tickCount % 20 == 0) {
@@ -2139,7 +2346,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         this.sceneEnvironmentTicks++;
-        if (this.sceneEnvironmentTicks >= SCENE_ENVIRONMENT_CHECK_INTERVAL) {
+        if (!scene.isWild() && this.sceneEnvironmentTicks >= SCENE_ENVIRONMENT_CHECK_INTERVAL) {
             this.sceneEnvironmentTicks = 0;
             if (!this.isSceneEnvironmentValid(serverLevel, controller, scene, false)) {
                 controller.displayClientMessage(
@@ -2163,6 +2370,21 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         this.scenePhaseTicks++;
+        if (scene.isWild()) {
+            this.tickWildScene(serverLevel, scene, controller, phase);
+            return;
+        }
+        if (scene.isWildCorrupt() && this.currentScenePhase() == 4) {
+            if (this.scenePhaseTicks == 95) {
+                for (int i = 0; i < 40; i++) {
+                    serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.DRAGON_BREATH,
+                            this.getX(), this.getY() + 1.5D, this.getZ(), 0,
+                            (this.random.nextFloat() * 2.0F - 1.0F) * 0.2D, (this.random.nextFloat() * 2.0F - 1.0F) * 0.2D,
+                            (this.random.nextFloat() * 2.0F - 1.0F) * 0.2D, 1.0D);
+                }
+                this.awardGalathCoin(controller);
+            }
+        }
         if (scene == CompanionScene.JENNY_PAYMENT && this.scenePhaseTicks == 43) {
             this.sayPaymentLine(controller);
         }
@@ -2699,6 +2921,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.kind == CompanionKind.ALLIE && !this.isInScene()) {
             this.discard(); // original: she vanishes when her state returns to NULL
         }
+        if (scene == CompanionScene.GALATH_WILD_CORRUPT && completed) {
+            if (this.boss != null) {
+                this.boss.bar().removeAllPlayers();
+            }
+            this.discard(); // original: she is gone, only the coin remains
+        }
         if (!this.isInScene()) {
             this.bedSpotPosition = null;
         }
@@ -2772,38 +3000,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.playSound(SoundEvents.SKELETON_SHOOT, 1.0F, 1.0F / (this.random.nextFloat() * 0.4F + 0.8F));
     }
 
-    private void tickRangedCombat(ServerLevel serverLevel) {
-        LivingEntity target = this.getTarget();
-        if (!this.kind.usesRangedMagic()
-                || this.isInScene()
-                || this.rangedAttackCooldown > 0
-                || target == null
-                || !target.isAlive()
-                || this.distanceToSqr(target) > 256.0D
-                || !this.hasLineOfSight(target)) {
-            return;
-        }
-
-        EnergyBallEntity projectile = ModEntities.ENERGY_BALL.get().create(serverLevel);
-        if (projectile == null) {
-            return;
-        }
-
-        projectile.setOwner(this);
-        projectile.setPos(this.getX(), this.getEyeY() - 0.15D, this.getZ());
-        Vec3 aim = target.getEyePosition().subtract(projectile.position());
-        projectile.shoot(aim.x, aim.y, aim.z, 1.1F, 2.0F);
-        serverLevel.addFreshEntity(projectile);
-        this.rangedAttackCooldown = 60;
-        this.playSound(SoundEvents.BLAZE_SHOOT, 0.55F, this.kind == CompanionKind.GALATH ? 0.8F : 1.3F);
-    }
-
     private void tickFlight() {
         if (this.noPhysics) {
             return; // breeding guards are held in place by their queen
         }
         if (this.beeBehavior != null) {
             return; // the bee flies by navigation, see BeeBehavior
+        }
+        if (this.wildBoss()) {
+            return; // the wild Galath moves in GalathBoss
         }
         if (this.galathRider() != null) {
             this.entityData.set(DATA_FLYING, false);
@@ -2917,6 +3122,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack heldItem = player.getItemInHand(hand);
 
+        if (this.wildBoss()) {
+            if (!this.level().isClientSide && hand == InteractionHand.MAIN_HAND) {
+                this.tryWildCorrupt(player);
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
+        }
         if (heldItem.isEmpty() && player.isShiftKeyDown()) {
             if (!this.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                 this.openControlMenu(serverPlayer);
@@ -3232,6 +3443,20 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return state.setAndContinue(sceneAnimation.rawAnimation());
         }
 
+        if (this.kind == CompanionKind.GALATH && this.bossState() != GalathBoss.S_NONE) {
+            var raw = software.bernie.geckolib.animation.RawAnimation.begin();
+            return state.setAndContinue(switch (this.bossState()) {
+                case GalathBoss.S_SUMMON -> raw.thenLoop(this.bossFlag(GalathBoss.F_MIRROR)
+                        ? "animation.galath.summon_skeletonMirrored" : "animation.galath.summon_skeleton");
+                case GalathBoss.S_SWORD -> raw.thenLoop("animation.galath.attack");
+                case GalathBoss.S_KO_FLY -> raw.thenLoop("animation.galath.knockout_air");
+                case GalathBoss.S_KO_GROUND -> raw.thenLoop("animation.galath.knocked_out");
+                case GalathBoss.S_KO_STAND -> raw.thenPlayAndHold("animation.galath.knocked_out_stand_up");
+                case GalathBoss.S_PREPARE -> raw.thenLoop("animation.galath.rape_prepare");
+                case GalathBoss.S_CHARGE -> raw.thenLoop("animation.galath.rape_charge");
+                default -> raw.thenLoop("animation.galath.idle_flying");
+            });
+        }
         if (this.beeBehavior != null) {
             return state.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin().thenLoop(
                     this.action() == CompanionAction.THROW_PEARL ? "animation.bee.throw_pearl"
