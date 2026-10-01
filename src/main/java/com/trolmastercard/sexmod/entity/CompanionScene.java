@@ -266,7 +266,10 @@ public enum CompanionScene {
             phase("animation.kobold.blowjobStart", 226),
             loop("animation.kobold.blowjobSlowR", 100),
             loop("animation.kobold.blowjobFast", 60),
-            phase("animation.kobold.blowjobCum", 84)
+            phase("animation.kobold.blowjobCum", 84),
+            loop("animation.kobold.blowjobSlowL", 100), // variant of the slow loop (side flag a4)
+            phase("animation.kobold.blowjobSlowLSwitch", 50), // slow R -> slow L
+            phase("animation.kobold.blowjobSlowRSwitch", 50) // slow L -> slow R
     ),
     KOBOLD_MATING_PRESS(
             CompanionKind.KOBOLD, "mating_press", true,
@@ -562,6 +565,15 @@ public enum CompanionScene {
         return this.hasPartner && !this.isWild() && this.firstLoopPhase() >= 0;
     }
 
+    /** Loop phases that only vary a slow loop (the Kobold's left side); navigation treats them as their base loop. */
+    public boolean isVariantPhase(int index) {
+        return this == KOBOLD_BLOWJOB && index == 4;
+    }
+
+    public int canonicalPhase(int index) {
+        return this.isVariantPhase(index) ? 1 : index;
+    }
+
     public int firstLoopPhase() {
         for (int index = 0; index < this.phases.size(); index++) {
             if (this.phases.get(index).loop()) {
@@ -573,7 +585,7 @@ public enum CompanionScene {
 
     public int lastLoopPhase() {
         for (int index = this.phases.size() - 1; index >= 0; index--) {
-            if (this.phases.get(index).loop()) {
+            if (this.phases.get(index).loop() && !this.isVariantPhase(index)) {
                 return index;
             }
         }
@@ -581,8 +593,8 @@ public enum CompanionScene {
     }
 
     public int previousLoopPhase(int current) {
-        for (int index = Math.min(current - 1, this.phases.size() - 1); index >= 0; index--) {
-            if (this.phases.get(index).loop()) {
+        for (int index = Math.min(this.canonicalPhase(current) - 1, this.phases.size() - 1); index >= 0; index--) {
+            if (this.phases.get(index).loop() && !this.isVariantPhase(index)) {
                 return index;
             }
         }
@@ -590,8 +602,8 @@ public enum CompanionScene {
     }
 
     public int nextLoopPhase(int current) {
-        for (int index = Math.max(0, current + 1); index < this.phases.size(); index++) {
-            if (this.phases.get(index).loop()) {
+        for (int index = Math.max(0, this.canonicalPhase(current) + 1); index < this.phases.size(); index++) {
+            if (this.phases.get(index).loop() && !this.isVariantPhase(index)) {
                 return index;
             }
         }
@@ -615,6 +627,9 @@ public enum CompanionScene {
 
     /** The loop a one-shot transition phase leads into, or -1 if the phase is not a transition. */
     public int transitionTarget(int phaseIndex) {
+        if (this == KOBOLD_BLOWJOB) {
+            return phaseIndex == 5 ? 4 : phaseIndex == 6 ? 1 : -1;
+        }
         if (this != GALATH_MORNING && this != MANGLELIE_THREESOME) {
             return -1;
         }

@@ -884,6 +884,14 @@ public final class FapCraftGameTests {
                 return;
             }
         }
+        CompanionScene bj = CompanionScene.KOBOLD_BLOWJOB;
+        if (bj.nextLoopPhase(1) != 2 || bj.nextLoopPhase(4) != 2 || bj.previousLoopPhase(2) != 1
+                || bj.previousLoopPhase(4) != -1 || bj.finalePhase() != 3 || bj.transitionTarget(5) != 4
+                || bj.transitionTarget(6) != 1 || bj.phaseRole(5) != CompanionScene.PhaseRole.AUTO
+                || bj.phaseRole(4) != CompanionScene.PhaseRole.INTENSITY || bj.lastLoopPhase() != 2) {
+            helper.fail("the Kobold blowjob side variants do not disturb slow/fast/finale navigation");
+            return;
+        }
         helper.succeed();
     }
 

@@ -2208,6 +2208,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 this.enterScenePhase(via >= 0 ? via : slower);
                 return;
             }
+            if (scene == CompanionScene.KOBOLD_BLOWJOB && !this.sceneFastHeld && this.random.nextBoolean()) {
+                // original `switch` keyframe: half the time the slow loop changes sides through a switch animation
+                this.enterScenePhase(current == 1 ? 5 : 6);
+                return;
+            }
             this.scenePhaseTicks = 0;
         }
         if (++this.interactiveLoopTicks > 12000) {

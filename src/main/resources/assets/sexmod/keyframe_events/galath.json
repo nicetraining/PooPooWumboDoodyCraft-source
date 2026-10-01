@@ -356,5 +356,8 @@
   },
   "blackScreenMaster": {
     "wipe": true
+  },
+  "setCoinLook": {
+    "face_girl": true
   }
 }

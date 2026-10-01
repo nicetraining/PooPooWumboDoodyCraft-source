@@ -81,6 +81,14 @@ public final class KeyframeEvents {
         if (entry.has("wipe") && partner) {
             TransitionOverlay.start(); // original blackscreen: fh.b() for the owner
         }
+        if (entry.has("face_girl") && partner && local != null) {
+            // original setCoinLook: the owner's view turns to the girl's yaw + 180, level
+            float yaw = girl.getYRot() + 180.0F;
+            local.setYRot(yaw);
+            local.yRotO = yaw;
+            local.setXRot(0.0F);
+            local.xRotO = 0.0F;
+        }
         if (entry.has("fade") && girl.level() != null) {
             girl.allieFadeStart = girl.level().getGameTime(); // original ev: alpha 0.99, then -0.01 per rendered frame
         }
