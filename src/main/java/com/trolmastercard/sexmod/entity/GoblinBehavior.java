@@ -383,7 +383,10 @@ public final class GoblinBehavior {
             Vec3 look = carrier.getLookAngle();
             this.k.noPhysics = false;
             this.k.setNoGravity(false);
-            this.k.setPos(carrier.getX(), carrier.getEyeY() - 0.2D, carrier.getZ());
+            // original e3.e(): at the carrier's feet + eye height, 0.4 to the right of the head direction
+            double headYaw = Math.toRadians(carrier.getYHeadRot());
+            this.k.setPos(carrier.getX() - 0.4D * Math.cos(headYaw), carrier.getY() + carrier.getEyeHeight(),
+                    carrier.getZ() - 0.4D * Math.sin(headYaw));
             this.k.setDeltaMovement(look.scale(1.5D));
             this.k.setYRot(carrier.getYRot());
             this.k.hasImpulse = true;

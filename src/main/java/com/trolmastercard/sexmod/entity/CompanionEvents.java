@@ -63,7 +63,9 @@ public final class CompanionEvents {
     @SubscribeEvent
     public static void onIncoming(LivingIncomingDamageEvent event) {
         if (event.getEntity() instanceof Player player && !player.level().isClientSide
-                && !event.getSource().is(DamageTypes.FELL_OUT_OF_WORLD)) {
+                && !event.getSource().is(DamageTypes.FELL_OUT_OF_WORLD)
+                && !event.getSource().typeHolder().is(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("sexmod", "succubus"))) {
+            // original ah.a: the succubus drain (a3) is the one thing that still hurts a player in a scene
             boolean partnered = !player.level().getEntitiesOfClass(CompanionEntity.class, player.getBoundingBox().inflate(1.0D),
                     c -> c.isInScene() && c.scenePartnerId().filter(player.getUUID()::equals).isPresent()).isEmpty();
             if (partnered) {

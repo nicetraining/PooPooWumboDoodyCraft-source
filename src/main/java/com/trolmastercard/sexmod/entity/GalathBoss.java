@@ -489,7 +489,7 @@ public final class GalathBoss {
                         continue;
                     }
                     var hit = level.clip(new ClipContext(Vec3.atLowerCornerOf(me), Vec3.atLowerCornerOf(cell),
-                            ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this.self));
+                            ClipContext.Block.COLLIDER, ClipContext.Fluid.SOURCE_ONLY, this.self));
                     if (hit.getType() != HitResult.Type.MISS) {
                         continue;
                     }
@@ -603,7 +603,7 @@ public final class GalathBoss {
     }
 
     private static Vec3 mirror(Vec3 v) {
-        return new Vec3(-v.x, v.y, v.z);
+        return new Vec3(-v.x, v.y, -v.z); // original ck.c
     }
 
     /** Original ck.a(vec, yaw). */
@@ -753,7 +753,7 @@ public final class GalathBoss {
             length = 1.0E-4D;
         }
         t += 1.0D / length; // one block per tick (original 0.05 per step x 20)
-        if (!secondHalf && t >= 0.9D) {
+        if (!secondHalf && t < 0.9D) {
             this.moveTarget = target.position().add(0.0D, target.getEyeHeight() / 2.0D, 0.0D);
             goal = this.moveTarget;
         }
@@ -1005,12 +1005,12 @@ public final class GalathBoss {
                 e -> e.isAlive() && e.distanceToSqr(pos.getX(), pos.getY(), pos.getZ()) < 1000.0D * 1000.0D)) {
             return false;
         }
-        for (int i = 1; i <= 15; i++) {
+        for (int i = 0; i < 15; i++) {
             if (!level.getBlockState(pos.above(i)).isAir()) {
                 return false;
             }
         }
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 0; i < 5; i++) {
             if (level.getBlockState(pos.below(i)).getBlock() instanceof LiquidBlock) {
                 return false;
             }

@@ -119,6 +119,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> DATA_BEE_TAMED =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SCARED =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_BEE_CHEST =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_SLIME_STATE =
@@ -405,6 +407,43 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             }
         });
 
+        if (this.kind == CompanionKind.MANGLELIE) {
+            // original bt (AvoidEntity for players, 20 blocks, 1.0 / 1.2): off with a mother or near a tamed Galath
+            this.goalSelector.addGoal(1, new net.minecraft.world.entity.ai.goal.AvoidEntityGoal<>(
+                    this, Player.class, 20.0F, 1.0D, 1.2D) {
+                private boolean suppressed() {
+                    if (CompanionEntity.this.familyId() != null) {
+                        return true;
+                    }
+                    return !CompanionEntity.this.level().getEntitiesOfClass(CompanionEntity.class,
+                            CompanionEntity.this.getBoundingBox().inflate(20.0D),
+                            c -> c.kind == CompanionKind.GALATH && c.isAlive() && c.hasMaster()).isEmpty();
+                }
+
+                @Override
+                public boolean canUse() {
+                    return !this.suppressed() && super.canUse();
+                }
+
+                @Override
+                public boolean canContinueToUse() {
+                    return !this.suppressed() && super.canContinueToUse();
+                }
+
+                @Override
+                public void start() {
+                    CompanionEntity.this.entityData.set(DATA_SCARED, true);
+                    super.start();
+                }
+
+                @Override
+                public void stop() {
+                    CompanionEntity.this.entityData.set(DATA_SCARED, false);
+                    super.stop();
+                }
+            });
+        }
+
         // Kinds without the master/combat logic keep the old generic fighting until each one is ported.
         this.goalSelector.addGoal(4, new MeleeAttackGoal(this, 1.15D, true) {
             @Override
@@ -453,6 +492,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_ALLIE_USES, 0);
         builder.define(DATA_BEE_TAMED, false);
         builder.define(DATA_BEE_CHEST, false);
+        builder.define(DATA_SCARED, false);
         builder.define(DATA_SLIME_STATE, 0);
         builder.define(DATA_SLIME_HORNY, 0);
         builder.define(DATA_SLIME_BIRTH, -1);
@@ -1701,9 +1741,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     // ---------------------------------------------------------------- wild Galath scenes
 
-    private void drainPlayer(ServerPlayer player) {
+    /** Original f_.c(boolean): no drain when it would leave 1 HP or less, never on creative players; the heal is optional. */
+    private void drainPlayer(ServerPlayer player, boolean heal) {
+        if (0.0F >= player.getHealth() - 1.0F || player.isCreative()) {
+            return;
+        }
         player.hurt(GalathBoss.succubusSource(this), 1.0F);
-        this.setHealth(Math.min(this.getMaxHealth(), this.getHealth() + 1.5F));
+        if (heal) {
+            this.setHealth(Math.min(this.getMaxHealth(), this.getHealth() + 1.5F));
+        }
     }
 
     /** Original h8 rape: three drains in the intro, then one per 16 tick loop until one more would kill, then the finish. */
@@ -1713,7 +1759,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         switch (index) {
             case 0 -> {
                 if (ticks == 3 || ticks == 19 || ticks == 38) {
-                    this.drainPlayer(player);
+                    this.drainPlayer(player, ticks != 3); // rapeHurt (no heal), then poundRape twice
                 }
                 if (ticks >= phase.durationTicks()) {
                     this.enterScenePhase(1 + this.random.nextInt(3));
@@ -1721,7 +1767,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             }
             case 1, 2, 3 -> {
                 if (ticks == 7) {
-                    this.drainPlayer(player);
+                    this.drainPlayer(player, true);
                 }
                 if (ticks >= phase.durationTicks()) {
                     this.enterScenePhase(player.getHealth() - 1.0F <= 0.0F ? 4 : 1 + this.random.nextInt(3));
@@ -1732,14 +1778,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     player.hurt(GalathBoss.succubusSource(this), 2.14748365E9F);
                 }
                 if (ticks >= phase.durationTicks()) {
-                    this.enterScenePhase(5);
-                }
-            }
-            default -> {
-                if (ticks >= phase.durationTicks()) {
+                    // original o(): after 28 cum ticks she lets go and the player (if still alive) is lifted clear
                     this.finishScene(true);
+                    if (player.isAlive()) {
+                        player.teleportTo(player.getX(), Math.ceil(player.getY()) + 1.0D, player.getZ());
+                    }
                 }
             }
+            default -> this.finishScene(true);
         }
     }
 
@@ -1772,7 +1818,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private boolean tryWildCorrupt(Player player) {
         return this.wildBoss()
                 && player instanceof ServerPlayer serverPlayer
-                && this.boss.paralysed()
+                && this.boss.knocked()
                 && this.bossState() == GalathBoss.S_KO_GROUND
                 && !this.isInScene()
                 && player.distanceToSqr(this) <= 36.0D
@@ -1840,11 +1886,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
 
-        if ((this.kind == CompanionKind.JENNY || this.kind == CompanionKind.LUNA)
-                && !this.skipPayment && this.needsPaymentStep(scene)) {
+        if ((this.kind == CompanionKind.JENNY || this.kind == CompanionKind.LUNA || this.kind == CompanionKind.KOBOLD)
+                && !this.skipPayment && this.needsPaymentStep(scene, player)) {
             // Original: every paid Jenny/Luna action starts with her payment animation, then U() runs the chosen scene.
-            if (!this.startScene(player, this.kind == CompanionKind.JENNY
-                    ? CompanionScene.JENNY_PAYMENT : CompanionScene.LUNA_PAYMENT)) {
+            if (!this.startScene(player, switch (this.kind) {
+                case JENNY -> CompanionScene.JENNY_PAYMENT;
+                case KOBOLD -> CompanionScene.KOBOLD_PAYMENT;
+                default -> CompanionScene.LUNA_PAYMENT;
+            })) {
                 return false;
             }
             this.queuedScene = scene;
@@ -1960,7 +2009,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
     }
 
-    private boolean needsPaymentStep(CompanionScene scene) {
+    private boolean needsPaymentStep(CompanionScene scene, Player player) {
+        if (this.kind == CompanionKind.KOBOLD) {
+            // original ff.U: a stranger without the horny effect pays before blowjob / anal; the owner does not
+            return (scene == CompanionScene.KOBOLD_BLOWJOB || scene == CompanionScene.KOBOLD_ANAL)
+                    && !this.isMaster(player)
+                    && !this.hasEffect(com.trolmastercard.sexmod.registry.ModPotions.HORNY_EFFECT);
+        }
         if (this.kind == CompanionKind.LUNA) {
             return scene == CompanionScene.LUNA_SITTING || scene == CompanionScene.LUNA_TOUCH;
         }
@@ -2380,6 +2435,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     this.galathFollow = new GalathFollowAi(this);
                 }
                 this.galathFollow.tick(serverLevel);
+                if (!this.isInWater() && !this.isNoGravity() && this.getDeltaMovement().y < 0.0D
+                        && this.action() != CompanionAction.GALATH_MASTURBATE) {
+                    // original f_.au(): a tamed Galath glides down slowly
+                    Vec3 motion = this.getDeltaMovement();
+                    this.setDeltaMovement(motion.x, motion.y * 0.4D, motion.z);
+                }
                 if (this.familyId() != null && !this.isInScene()) {
                     this.boss.tickTamedCombat(serverLevel); // original ao(): a mother with a daughter fights near her
                 }
@@ -2473,17 +2534,31 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if (scene.isWildCorrupt() && this.currentScenePhase() == 4) {
             if (this.scenePhaseTicks == 95) {
-                for (int i = 0; i < 40; i++) {
+                // original: 100 dragon-breath particles around her, converging on her (velocity -0.03 x offset)
+                for (int i = 0; i < 100; i++) {
+                    double ox = (this.random.nextDouble() * 2.0D - 1.0D) * 1.5D;
+                    double oy = (this.random.nextDouble() * 2.0D - 1.0D) * 1.5D;
+                    double oz = (this.random.nextDouble() * 2.0D - 1.0D) * 1.5D;
                     serverLevel.sendParticles(net.minecraft.core.particles.ParticleTypes.DRAGON_BREATH,
-                            this.getX(), this.getY() + 1.5D, this.getZ(), 0,
-                            (this.random.nextFloat() * 2.0F - 1.0F) * 0.2D, (this.random.nextFloat() * 2.0F - 1.0F) * 0.2D,
-                            (this.random.nextFloat() * 2.0F - 1.0F) * 0.2D, 1.0D);
+                            this.getX() + ox, this.getY() + 1.5D + oy, this.getZ() + oz, 0,
+                            -0.03D * ox, -0.03D * oy, -0.03D * oz, 1.0D);
                 }
-                this.awardGalathCoin(controller);
             }
         }
         if (scene == CompanionScene.JENNY_PAYMENT && this.scenePhaseTicks == 43) {
             this.sayPaymentLine(controller);
+        }
+        if (scene == CompanionScene.GOBLIN_NELSON && this.currentScenePhase() == scene.phases().size() - 1
+                && this.scenePhaseTicks == 1) {
+            this.setGoblinPreggo(true); // original e3.b(fp): the belly shows while NELSON_CUM plays
+        }
+        if (scene == CompanionScene.KOBOLD_PAYMENT && this.scenePhaseTicks == 10) {
+            Component line = Component.literal("<").append(controller.getDisplayName()).append("> I'd like to use ur services owo");
+            for (ServerPlayer other : serverLevel.players()) {
+                if (other.distanceToSqr(this) <= 40.0D * 40.0D) {
+                    other.sendSystemMessage(line);
+                }
+            }
         }
         if ((scene == CompanionScene.ALLIE_RICH && this.scenePhaseTicks == 1)
                 || (scene == CompanionScene.ALLIE_RICH_NORMAL && this.scenePhaseTicks == 10)) {
@@ -2829,8 +2904,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     public void playCue(String path, float volume) {
+        float pitch = this.kind == CompanionKind.KOBOLD && path.startsWith("girls.kobold.") && !path.contains("cum")
+                ? 0.9F + 0.2F * (0.25F - this.koboldSize()) / 0.25F : 1.0F;
         com.trolmastercard.sexmod.registry.ModSounds.find(path)
-                .ifPresent(sound -> this.playSound(sound.get(), volume, 1.0F));
+                .ifPresent(sound -> this.playSound(sound.get(), volume, pitch));
     }
 
     /** A line she "says": local chat for players within 40 blocks, like the original's chat broadcast. */
@@ -2986,6 +3063,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 controller.displayClientMessage(Component.translatable("message.sexmod.scene_stopped"), true);
             }
         }
+        if (scene == CompanionScene.GOBLIN_NELSON && this.goblinBehavior != null) {
+            this.setGoblinPreggo(false);
+        }
         if (scene == CompanionScene.MANGLELIE_THREESOME && this.level() instanceof ServerLevel level) {
             if (completed && controller != null) {
                 GalathBindingData.get(level.getServer()).recordCum(controller.getUUID(), level.getGameTime());
@@ -3035,6 +3115,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.discard(); // original: she vanishes when her state returns to NULL
         }
         if (scene == CompanionScene.GALATH_WILD_CORRUPT && completed) {
+            if (controller instanceof ServerPlayer winner) {
+                this.awardGalathCoin(winner); // original b(fp) at the end of GIVE_COIN
+                winner.teleportTo(winner.getX(), Math.ceil(winner.getY()) + 1.0D, winner.getZ());
+            }
             if (this.boss != null) {
                 this.boss.bar().removeAllPlayers();
             }
@@ -3272,6 +3356,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             }
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
+        if (this.kind == CompanionKind.GALATH
+                && (player.getOffhandItem().is(com.trolmastercard.sexmod.registry.ModItems.GALATH_COIN.get())
+                || player.getMainHandItem().is(com.trolmastercard.sexmod.registry.ModItems.GALATH_COIN.get()))) {
+            return InteractionResult.PASS; // original f_.a(player, hand): no menu while the coin is in a hand
+        }
         if (heldItem.isEmpty() && player.isShiftKeyDown()) {
             if (!this.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                 this.openControlMenu(serverPlayer);
@@ -3394,6 +3483,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 }
             }
             tag.putBoolean("isTamed", this.goblinTamed());
+            if (this.goblinBehavior.queenId != null) {
+                tag.putUUID("queen", this.goblinBehavior.queenId); // original e3 saves its queen: a reloaded robber vanishes
+            }
             tag.putInt("robTicks", this.goblinBehavior.robTicks);
             if (this.goblinBehavior.thronePos != null) {
                 tag.putFloat("throneRot", this.goblinBehavior.throneRot);
@@ -3470,6 +3562,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 this.setGoblinModel(saved);
             }
             this.setGoblinTamed(tag.getBoolean("isTamed"));
+            if (tag.hasUUID("queen")) {
+                this.goblinBehavior.queenId = tag.getUUID("queen");
+            }
             this.setGoblinPreggo(tag.getBoolean("preggo"));
             if (tag.contains("impregnationTick", Tag.TAG_ANY_NUMERIC)) {
                 this.goblinBehavior.impregnationTick = tag.getLong("impregnationTick");
@@ -3574,6 +3669,22 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     ? software.bernie.geckolib.animation.PlayState.STOP
                     : state.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.manglelie.angry_face"))));
         }
+        String blinkPrefix = switch (this.kind) {
+            case ALLIE -> "allie";
+            case LUNA -> "cat";
+            case GALATH -> "galath";
+            case GOBLIN -> "goblin";
+            case KOBOLD -> "kobold";
+            default -> null;
+        };
+        if (blinkPrefix != null) {
+            // original em.p(): the "eyes" controller plays the blink loop while the state allows auto-blink, else the empty track
+            controllers.add(new AnimationController<CompanionEntity>(this, "eyes", 10, state -> {
+                boolean blink = !this.isInScene() && (this.goblinBehavior == null || this.goblinState() == GoblinBehavior.NULL);
+                return state.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin()
+                        .thenLoop("animation." + blinkPrefix + (blink ? ".blink" : ".null")));
+            }));
+        }
         controllers.add(new AnimationController<CompanionEntity>(this, "main", 0, this::animationPredicate)
                 .setSoundKeyframeHandler(event -> com.trolmastercard.sexmod.client.KeyframeEvents
                         .handle(this, event.getKeyframeData().getSound())));
@@ -3666,6 +3777,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 return state.setAndContinue(this.kind.stateAnimation(
                         action.animationSuffix(this.entityData.get(DATA_ATTACK_VARIANT))));
             }
+            if (this.isWalkingVisibly() && this.kind == CompanionKind.MANGLELIE && this.entityData.get(DATA_SCARED)) {
+                return state.setAndContinue(RawAnimation.begin().thenLoop("animation.manglelie.scared_run"));
+            }
             if (this.isWalkingVisibly()) {
                 String suffix = switch (this.entityData.get(DATA_SPEED_CLASS)) {
                     case 2 -> "run";
@@ -3688,7 +3802,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         String person = this.level().isClientSide && com.trolmastercard.sexmod.client.ClientHooks.isCarrierFirstPerson(this)
                 ? "_1person" : "_3person";
         return switch (this.goblinState()) {
-            case GoblinBehavior.RUN -> raw.thenLoop("animation.goblin.running");
+            case GoblinBehavior.RUN -> raw.thenLoop(this.onGround() ? "animation.goblin.running" : "animation.goblin.fly");
             case GoblinBehavior.CATCH -> raw.thenPlayAndHold("animation.goblin.catch" + person);
             case GoblinBehavior.CATCH_BJ -> raw.thenPlayAndHold("animation.goblin.catch" + person + "Bj");
             case GoblinBehavior.CATCH_BJ_IDLE -> raw.thenLoop("animation.goblin.catch" + person + "Bj_idle");
@@ -3713,7 +3827,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 case 2 -> raw.thenLoop("animation.goblin.breeding_fast_3");
                 default -> raw.thenPlayAndHold("animation.goblin.breeding_cum_3");
             };
-            default -> this.isWalkingVisibly() ? raw.thenLoop("animation.goblin.walk") : raw.thenLoop("animation.goblin.idle");
+            default -> this.isWalkingVisibly()
+                    ? raw.thenLoop(this.onGround() && Math.abs(this.getY() - this.yo) < 0.1D ? "animation.goblin.walk" : "animation.goblin.fly")
+                    : raw.thenLoop("animation.goblin.idle");
         };
     }
 

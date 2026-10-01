@@ -423,6 +423,7 @@ public final class KoboldWork {
         }
         if (!this.isLog(level, base)) {
             // the trunk is used up (the falling logs have landed and the base is still air)
+            this.replant(level, base);
             this.finishTask(level, tribe, task, false);
             this.release(tribe);
             return false;
@@ -444,16 +445,21 @@ public final class KoboldWork {
             BlockState state = level.getBlockState(pos);
             if (state.is(BlockTags.LOGS)) {
                 this.addToInventory(new ItemStack(state.getBlock().asItem()));
+                this.lastLog = state;
                 level.destroyBlock(pos, false);
             }
             removed.add(pos);
+            break; // original a(UUID, BlockPos, bs): one branch log per cycle
         }
-        BlockState baseState = level.getBlockState(base);
-        this.addToInventory(new ItemStack(baseState.getBlock().asItem()));
-        level.destroyBlock(base, false);
-        for (BlockPos pos : column) {
-            BlockState state = level.getBlockState(pos);
-            FallingBlockEntity.fall(level, pos, state);
+        if (removed.isEmpty()) {
+            BlockState baseState = level.getBlockState(base);
+            this.addToInventory(new ItemStack(baseState.getBlock().asItem()));
+            this.lastLog = baseState;
+            level.destroyBlock(base, false);
+            for (BlockPos pos : column) {
+                BlockState state = level.getBlockState(pos);
+                FallingBlockEntity.fall(level, pos, state);
+            }
         }
         if (!removed.isEmpty()) {
             task.blocks.removeAll(removed);
@@ -462,6 +468,38 @@ public final class KoboldWork {
         this.chopSwing = CHOP_SWING;
         this.chopWait = CHOP_WAIT;
         return true;
+    }
+
+    private BlockState lastLog;
+
+    /** Original a(UUID, bs, BlockPos): saplings of the last log type at the origin (jungle and dark oak: a 2x2). */
+    private void replant(ServerLevel level, BlockPos origin) {
+        if (this.lastLog == null) {
+            return;
+        }
+        net.minecraft.world.level.block.Block block = this.lastLog.getBlock();
+        net.minecraft.world.level.block.Block sapling = net.minecraft.world.level.block.Blocks.OAK_SAPLING;
+        boolean big = false;
+        if (block == net.minecraft.world.level.block.Blocks.SPRUCE_LOG) {
+            sapling = net.minecraft.world.level.block.Blocks.SPRUCE_SAPLING;
+        } else if (block == net.minecraft.world.level.block.Blocks.BIRCH_LOG) {
+            sapling = net.minecraft.world.level.block.Blocks.BIRCH_SAPLING;
+        } else if (block == net.minecraft.world.level.block.Blocks.ACACIA_LOG) {
+            sapling = net.minecraft.world.level.block.Blocks.ACACIA_SAPLING;
+        } else if (block == net.minecraft.world.level.block.Blocks.JUNGLE_LOG) {
+            sapling = net.minecraft.world.level.block.Blocks.JUNGLE_SAPLING;
+            big = true;
+        } else if (block == net.minecraft.world.level.block.Blocks.DARK_OAK_LOG) {
+            sapling = net.minecraft.world.level.block.Blocks.DARK_OAK_SAPLING;
+            big = true;
+        }
+        level.setBlockAndUpdate(origin, sapling.defaultBlockState());
+        if (big) {
+            level.setBlockAndUpdate(origin.north(), sapling.defaultBlockState());
+            level.setBlockAndUpdate(origin.west(), sapling.defaultBlockState());
+            level.setBlockAndUpdate(origin.north().west(), sapling.defaultBlockState());
+        }
+        this.lastLog = null;
     }
 
     /** Builds a FALL_TREE task for the tree whose lowest log is {@code base} (original bs.a(world,pos,tribe)). */

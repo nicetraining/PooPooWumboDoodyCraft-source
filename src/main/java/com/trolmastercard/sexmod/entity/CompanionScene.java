@@ -249,6 +249,11 @@ public enum CompanionScene {
             phase("animation.allie.reverse_cowgirl_cum", 49)
     ),
 
+    /** Original PAYMENT for a Kobold: the backpack rummage before a stranger's scene (no owner, no horny effect). */
+    KOBOLD_PAYMENT(
+            CompanionKind.KOBOLD, "payment", false,
+            phase("animation.kobold.paymentBackpack", 149)
+    ),
     KOBOLD_ANAL(
             CompanionKind.KOBOLD, "anal", true,
             phase("animation.kobold.analStart", 43),
@@ -283,7 +288,7 @@ public enum CompanionScene {
             phase("animation.goblin.breeding_intro_1", 245),
             loop("animation.goblin.breeding_slow_1l", 90),
             loop("animation.goblin.breeding_fast_1s", 65),
-            phase("animation.goblin.breeding_cum_1", 170)
+            phase("animation.goblin.breeding_cum_1", 100)
     ),
     GOBLIN_NELSON(
             CompanionKind.GOBLIN, "nelson", true,
@@ -307,8 +312,7 @@ public enum CompanionScene {
             CompanionKind.GALATH, "cowgirl", true,
             phase("animation.galath.rape_intro", 46),
             loop("animation.galath.rape0", 19),
-            phase("animation.galath.rape_cum", 35),
-            phase("animation.galath.rape_cum_idle", 79)
+            phase("animation.galath.rape_cum", 28)
     ),
     /** Tamed "anal": starts straight in CORRUPT_SLOW (the intro is skipped). */
     GALATH_ANAL(
@@ -331,8 +335,7 @@ public enum CompanionScene {
             loop("animation.galath.rape0", 16),
             loop("animation.galath.rape1", 16),
             loop("animation.galath.rape2", 16),
-            phase("animation.galath.rape_cum", 35),
-            phase("animation.galath.rape_cum_idle", 79)
+            phase("animation.galath.rape_cum", 28)
     ),
     /** Original corrupt scene on a paralysed Galath: ends with the coin she gives to her new master. */
     GALATH_WILD_CORRUPT(
@@ -421,8 +424,14 @@ public enum CompanionScene {
      * Allie's deepthroat and reverse cowgirl) use it; others keep the player's own position.
      */
     public boolean usesBoyCam() {
+        return this.usesBoyCam(0);
+    }
+
+    /** Original fp.useBoyCam per state: first person sits on the girl's boyCam bone in exactly these states. */
+    public boolean usesBoyCam(int phase) {
         return switch (this) {
-            case ELLIE_CARRY, BIA_PRONE, ALLIE_DEEPTHROAT, ALLIE_REVERSE_COWGIRL -> true;
+            case ELLIE_CARRY, BIA_PRONE, ALLIE_DEEPTHROAT, ALLIE_REVERSE_COWGIRL, GALATH_WILD_RAPE, GALATH_MORNING -> true;
+            case GALATH_WILD_CORRUPT -> phase == 0 || phase == 4; // CORRUPT_INTRO and GIVE_COIN
             default -> false;
         };
     }
@@ -460,7 +469,7 @@ public enum CompanionScene {
 
     /** Scenes that only lead into something else: no reward, no afterglow, no completion message. */
     public boolean isPrelude() {
-        return this.isClothingToggle() || this.isAlliePrelude() || this == BIA_TALK || this == JENNY_PAYMENT || this == LUNA_PAYMENT || this == ELLIE_DASH || this == ELLIE_HUG || this.isWaitScene();
+        return this.isClothingToggle() || this.isAlliePrelude() || this == BIA_TALK || this == JENNY_PAYMENT || this == LUNA_PAYMENT || this == KOBOLD_PAYMENT || this == ELLIE_DASH || this == ELLIE_HUG || this.isWaitScene();
     }
 
     /** Allie's wish scenes that lead into the next one. */

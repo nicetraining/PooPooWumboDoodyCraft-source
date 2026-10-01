@@ -246,7 +246,11 @@ public final class KoboldBehavior {
         }
         boolean leader = this.k.getUUID().equals(tribe.leader);
         if (leader) {
+            Tribe.Mode before = tribe.mode;
             tribe.mode = level.getDayTime() % 24000L < 12000L ? Tribe.Mode.ACTIVE : Tribe.Mode.REST;
+            if (before == Tribe.Mode.ACTIVE && tribe.mode == Tribe.Mode.REST) {
+                this.k.sayNearby(level, Component.literal("okay resting time owo")); // original: the leader announces dusk
+            }
         }
         if (this.combat(level, tribe)) {
             return;
@@ -400,7 +404,8 @@ public final class KoboldBehavior {
         }
         if (this.campSpot == null) {
             RandomSource random = this.k.getRandom();
-            this.campSpot = tribe.home.offset(random.nextInt(5) - 2, 0, random.nextInt(5) - 2);
+            this.campSpot = tribe.home.offset((random.nextBoolean() ? 1 : -1) * (random.nextInt(2) + 1), 0,
+                    (random.nextBoolean() ? 1 : -1) * (random.nextInt(2) + 1)); // original: never on the fire
         }
         if (this.k.position().distanceToSqr(Vec3.atBottomCenterOf(this.campSpot)) > 2.0D) {
             this.k.getNavigation().moveTo(this.campSpot.getX() + 0.5D, this.campSpot.getY(), this.campSpot.getZ() + 0.5D, WALK);
@@ -514,11 +519,16 @@ public final class KoboldBehavior {
         }
         Player nearest = null;
         double best = 10.0D * 10.0D;
+        // original t(): the distance is the minimum over all tribe members, so the whole tribe answers together
+        java.util.List<CompanionEntity> members = TribeManager.loadedMembers(level.getServer(), tribe);
         for (Player player : level.players()) {
             if (!holdsStaff(player)) {
                 continue;
             }
             double distance = player.distanceToSqr(this.k);
+            for (CompanionEntity member : members) {
+                distance = Math.min(distance, player.distanceToSqr(member));
+            }
             if (distance < best) {
                 best = distance;
                 nearest = player;
@@ -547,10 +557,14 @@ public final class KoboldBehavior {
             this.scanTicks = 0;
             this.scanTribeEnemies(level, tribe);
         }
+        net.minecraft.world.entity.Entity leaderEntity = level.getEntity(tribe.leader);
         tribe.enemies.removeIf(id -> {
             net.minecraft.world.entity.Entity entity = level.getEntity(id);
-            return !(entity instanceof LivingEntity living) || !living.isAlive();
+            // original c(UUID, Z): only enemies within 30 blocks of the leader count
+            return !(entity instanceof LivingEntity living) || !living.isAlive()
+                    || (leaderEntity != null && living.distanceTo(leaderEntity) > 30.0F);
         });
+        this.k.setKoboldUnderAttack(!tribe.enemies.isEmpty());
         if (tribe.enemies.isEmpty()) {
             return false;
         }

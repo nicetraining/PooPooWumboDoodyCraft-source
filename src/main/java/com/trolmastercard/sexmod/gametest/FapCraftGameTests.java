@@ -1066,7 +1066,7 @@ public final class FapCraftGameTests {
         }
         tribe.tasks.add(task);
         helper.runAfterDelay(900, () -> {
-            boolean gone = helper.getBlockState(base).isAir();
+            boolean gone = !helper.getBlockState(base).is(net.minecraft.tags.BlockTags.LOGS); // replanted with a sapling
             int logs = 0;
             for (int i = 0; i < kobold.storage().getContainerSize(); i++) {
                 if (kobold.storage().getItem(i).is(Items.OAK_LOG)) {

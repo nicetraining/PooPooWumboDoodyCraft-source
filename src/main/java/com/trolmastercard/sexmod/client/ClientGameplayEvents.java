@@ -50,7 +50,10 @@ public final class ClientGameplayEvents {
             return;
         }
 
-        if (companion.currentScene().usesBoyCam()) {
+        if (!companion.currentScene().usesBoyCam(companion.currentScenePhase())) {
+            return; // original l.a: no other scene moves the first-person camera
+        }
+        {
             software.bernie.geckolib.cache.object.GeoBone bone = CompanionRenderer.boyCam(companion.getId());
             if (bone != null) {
                 org.joml.Vector3d position = bone.getWorldPosition();
@@ -70,6 +73,9 @@ public final class ClientGameplayEvents {
             }
         }
 
+        if (true) {
+            return; // no boyCam bone: the original leaves the camera alone
+        }
         float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         Vec3 target = interpolatedSceneTarget(companion, partialTick);
         float yaw = Mth.rotLerp(partialTick, companion.yRotO, companion.getYRot());

@@ -176,6 +176,10 @@ public final class KeyframeEvents {
         String path = sounds.get(girl.getRandom().nextInt(sounds.size())).getAsString();
         float volume = layer.has("volume") ? layer.get("volume").getAsFloat() : 1.0F;
         float pitch = layer.has("pitch") ? layer.get("pitch").getAsFloat() : 1.0F;
+        if (girl.kind() == com.trolmastercard.sexmod.entity.CompanionKind.KOBOLD && path.startsWith("girls.kobold.")
+                && !path.contains("cum")) {
+            pitch *= 0.9F + 0.2F * (0.25F - girl.koboldSize()) / 0.25F; // original ff.b(SoundEvent, float)
+        }
         if (path.contains(":")) {
             // A vanilla sound (the slime girl's squishes): "minecraft:entity.slime.squish".
             SoundEvent event = SoundEvent.createVariableRangeEvent(ResourceLocation.parse(path));
