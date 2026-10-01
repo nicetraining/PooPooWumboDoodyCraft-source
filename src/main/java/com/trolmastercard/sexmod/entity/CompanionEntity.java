@@ -1886,10 +1886,19 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
         this.lockSceneTransforms(player, scene.hasPartner(), true);
         this.enterScenePhase(0);
-        if (scene == CompanionScene.GALATH_THREESOME && player instanceof ServerPlayer serverPlayer) {
+        if ((scene == CompanionScene.GALATH_THREESOME || scene == CompanionScene.GALATH_MORNING)
+                && player instanceof ServerPlayer serverPlayer) {
             CompanionEntity daughter = this.daughter();
-            daughter.setForcedSceneAnchor(player.position(), Mth.wrapDegrees(player.getYRot() + 180.0F));
-            if (!daughter.startWildScene(serverPlayer, CompanionScene.MANGLELIE_THREESOME)) {
+            if (daughter != null) {
+                boolean morning = scene == CompanionScene.GALATH_MORNING;
+                daughter.setForcedSceneAnchor(this.sceneAnchorPosition,
+                        morning ? this.sceneAnchorYaw : Mth.wrapDegrees(player.getYRot() + 180.0F));
+                if (!daughter.startWildScene(serverPlayer,
+                        morning ? CompanionScene.MANGLELIE_BED : CompanionScene.MANGLELIE_THREESOME)) {
+                    this.finishScene(false);
+                    return false;
+                }
+            } else if (scene == CompanionScene.GALATH_THREESOME) {
                 this.finishScene(false);
                 return false;
             }
@@ -2417,6 +2426,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             }
             return;
         }
+        if (scene == CompanionScene.MANGLELIE_BED) {
+            CompanionEntity mother = ManglelieBehavior.find(serverLevel, this.familyId());
+            if (mother == null || mother.currentScene() != CompanionScene.GALATH_MORNING) {
+                this.finishScene(true);
+            }
+            return;
+        }
         if (scene.isWildCorrupt() && this.currentScenePhase() == 4) {
             if (this.scenePhaseTicks == 95) {
                 for (int i = 0; i < 40; i++) {
@@ -2937,6 +2953,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             if (mother != null && mother.currentScene() == CompanionScene.GALATH_THREESOME) {
                 mother.finishScene(completed);
             }
+        }
+        if (scene == CompanionScene.GALATH_MORNING && completed && controller != null
+                && this.level() instanceof ServerLevel level) {
+            GalathBindingData.get(level.getServer()).recordCum(controller.getUUID(), level.getGameTime());
         }
         if (completed && this.slimeBehavior != null
                 && (scene == CompanionScene.SLIME_BLOWJOB || scene == CompanionScene.SLIME_DOGGY)) {

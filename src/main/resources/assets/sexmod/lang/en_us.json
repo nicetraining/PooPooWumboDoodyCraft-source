@@ -368,5 +368,9 @@
   "message.sexmod.galath_paralyzed": "Galath is paralyzed! Now it's time to corrupt her",
   "message.sexmod.galath_paralyzed_hint": "(Walk to her and right click her)",
   "message.sexmod.galath_coin_lore": "Defeating a succubus makes her accept the victor as her master, granting him a coin to which her soul is bound. Using the coin summons her, offering services on demand. If her master uses the coin on her or goes too far, she returns to the coin.",
-  "action.names.threesome": "Threesome"
+  "action.names.threesome": "Threesome",
+  "message.sexmod.morning_space": "For Galath and Manglelie to %s, you have to provide enough space to the %s of your bed. This includes the %s of the bed.",
+  "message.sexmod.morning_space.wake": "wake you up with a blowjob",
+  "message.sexmod.morning_space.side": "right side",
+  "message.sexmod.morning_space.halves": "top and bottom half"
 }

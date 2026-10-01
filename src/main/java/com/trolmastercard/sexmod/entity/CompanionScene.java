@@ -366,12 +366,16 @@ public enum CompanionScene {
      * scene looked frozen. The scene therefore renders with that combined model
      * and Galath's animation file, where all four phases exist.
      */
-    MANGLELIE_BED(
-            CompanionKind.MANGLELIE, "bed", true,
-            phase("animation.shared.bed_back", 15),
-            loop("animation.shared.bed_slow", 100),
-            loop("animation.shared.bed_fast", 60),
+    GALATH_MORNING(
+            CompanionKind.GALATH, "morning", true,
+            loop("animation.shared.bed_slow", 40),
+            loop("animation.shared.bed_soft", 44),
             phase("animation.shared.bed_cum", 78)
+    ),
+    /** Her daughter during the morning scene: she is part of the combined model, so this entity is not drawn. */
+    MANGLELIE_BED(
+            CompanionKind.MANGLELIE, "bed", false,
+            loop("animation.shared.bed_slow", 40)
     );
 
     private final CompanionKind kind;
@@ -423,17 +427,14 @@ public enum CompanionScene {
         };
     }
 
-    /**
-     * Kind whose texture, animation file and cosmetic bone rules this scene
-     * borrows, or {@code null} when the companion's own assets are used.
-     */
-    public CompanionKind renderAsKind() {
-        return this == MANGLELIE_BED ? CompanionKind.GALATH : null;
+    /** The daughter entity is not drawn while the combined Galath and Manglelie model plays the morning scene. */
+    public boolean hidesEntity() {
+        return this == MANGLELIE_BED;
     }
 
     /** Model used instead of the companion's own one, or {@code null}. */
     public ResourceLocation modelOverride() {
-        return this == MANGLELIE_BED
+        return this == GALATH_MORNING
                 ? ResourceLocation.fromNamespaceAndPath("sexmod", "geo/galath/galath_con_mang.geo.json")
                 : null;
     }
@@ -444,7 +445,7 @@ public enum CompanionScene {
      * their own "go on bed" animation and keep their own starting position.
      */
     public boolean anchorsOnBed() {
-        return this == MANGLELIE_BED;
+        return false;
     }
 
     /** The strip / dress up scenes: they swap the model at the animation's 3 s keyframe. */
@@ -453,7 +454,7 @@ public enum CompanionScene {
     }
 
     public boolean requiresBed() {
-        return this == JENNY_DOGGY || this == MANGLELIE_BED
+        return this == JENNY_DOGGY
                 || this == BIA_ANAL || this == BIA_PRONE || this == ELLIE_COWGIRL || this == ELLIE_MISSIONARY || this == LUNA_SITTING;
     }
 

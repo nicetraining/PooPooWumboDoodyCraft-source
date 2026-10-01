@@ -38,6 +38,10 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
 
     @Override
     public ResourceLocation getModelResource(CompanionEntity entity) {
+        var scene = entity.currentScene();
+        if (scene != null && scene.modelOverride() != null) {
+            return scene.modelOverride();
+        }
         return entity.kind().modelResource(entity.outfit());
     }
 

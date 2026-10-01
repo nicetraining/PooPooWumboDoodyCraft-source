@@ -835,6 +835,38 @@ public final class FapCraftGameTests {
         });
     }
 
+    @GameTest(template = "empty", timeoutTicks = 100, batch = "b_gmorn")
+    public static void morningSceneNeedsSpaceAndStartsBothGirls(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        skyFloor(helper, 30, 260);
+        var bedPos = helper.absolutePos(new net.minecraft.core.BlockPos(10, 261, 10));
+        var north = net.minecraft.core.Direction.NORTH;
+        if (!com.trolmastercard.sexmod.entity.GalathMorning.hasSpace(level, bedPos, north)) {
+            helper.fail("an empty side of the bed has enough space");
+            return;
+        }
+        level.setBlockAndUpdate(bedPos.west().above(), net.minecraft.world.level.block.Blocks.STONE.defaultBlockState());
+        if (com.trolmastercard.sexmod.entity.GalathMorning.hasSpace(level, bedPos, north)) {
+            helper.fail("a block on the right side of the bed blocks the scene");
+            return;
+        }
+        level.setBlockAndUpdate(bedPos.west().above(), net.minecraft.world.level.block.Blocks.AIR.defaultBlockState());
+        var player = serverPlayer(helper);
+        player.moveTo(helper.absoluteVec(new Vec3(10.5, 261.0, 10.5)));
+        CompanionEntity galath = spawnKind(helper, CompanionKind.GALATH);
+        galath.moveTo(helper.absoluteVec(new Vec3(10.5, 261.0, 10.5)));
+        galath.setMaster(player.getUUID());
+        var daughter = com.trolmastercard.sexmod.entity.ManglelieBehavior.spawnDaughter(level, galath);
+        if (!galath.startWildScene(player, CompanionScene.GALATH_MORNING)
+                || galath.currentScene() != CompanionScene.GALATH_MORNING
+                || daughter.currentScene() != CompanionScene.MANGLELIE_BED) {
+            helper.fail("the morning scene starts Galath and her daughter together (" + galath.currentScene() + " / " + daughter.currentScene() + ")");
+            return;
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", timeoutTicks = 700, batch = "b_mang")
     public static void galathAdoptsManglelieAndManglelieShoots(GameTestHelper helper) {
         var level = helper.getLevel();

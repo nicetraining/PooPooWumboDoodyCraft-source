@@ -30,6 +30,16 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
     }
 
     @Override
+    public void render(CompanionEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
+                       MultiBufferSource bufferSource, int packedLight) {
+        var scene = entity.currentScene();
+        if (scene != null && scene.hidesEntity()) {
+            return;
+        }
+        super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+    }
+
+    @Override
     public void preRender(
             PoseStack poseStack,
             CompanionEntity entity,
