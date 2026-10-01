@@ -26,7 +26,6 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
     );
     private static final Set<String> COMMON_SCENE_BONES = Set.of(
             "steve",
-            "items",
             "cum",
             "weapon",
             "weaponstart",

@@ -468,6 +468,10 @@ public enum CompanionScene {
     }
 
     /** Scenes that only lead into something else: no reward, no afterglow, no completion message. */
+    public boolean isPayment() {
+        return this == JENNY_PAYMENT || this == LUNA_PAYMENT || this == KOBOLD_PAYMENT;
+    }
+
     public boolean isPrelude() {
         return this.isClothingToggle() || this.isAlliePrelude() || this == BIA_TALK || this == JENNY_PAYMENT || this == LUNA_PAYMENT || this == KOBOLD_PAYMENT || this == ELLIE_DASH || this == ELLIE_HUG || this.isWaitScene();
     }
@@ -512,7 +516,7 @@ public enum CompanionScene {
     }
 
     public boolean locksControls() {
-        return this.isWild() || this == BIA_TALK || this == ELLIE_DASH || this == ELLIE_HUG || this.isAlliePrelude();
+        return this.isWild() || this == BIA_TALK || this.isPayment() || this == ELLIE_DASH || this == ELLIE_HUG || this.isAlliePrelude();
     }
 
     /** Label on the action panel; Bia's second menu uses the original's plain "Anal" / "Doggy". */

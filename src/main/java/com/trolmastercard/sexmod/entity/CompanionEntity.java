@@ -119,6 +119,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Boolean> DATA_BEE_TAMED =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
+    /** What the payment animation shows in her hand (original d_.a(): picked by the scene that follows). */
+    private static final EntityDataAccessor<Integer> DATA_PAYMENT_ITEM =
+            SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_SCARED =
             SynchedEntityData.defineId(CompanionEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_BEE_CHEST =
@@ -493,6 +496,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         builder.define(DATA_BEE_TAMED, false);
         builder.define(DATA_BEE_CHEST, false);
         builder.define(DATA_SCARED, false);
+        builder.define(DATA_PAYMENT_ITEM, 0);
         builder.define(DATA_SLIME_STATE, 0);
         builder.define(DATA_SLIME_HORNY, 0);
         builder.define(DATA_SLIME_BIRTH, -1);
@@ -807,6 +811,20 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     public boolean isDowned() {
         return this.entityData.get(DATA_DOWNED);
+    }
+
+    public ItemStack paymentItem() {
+        return switch (this.entityData.get(DATA_PAYMENT_ITEM)) {
+            case 1 -> new ItemStack(Items.DIAMOND, 2);
+            case 2 -> new ItemStack(Items.EMERALD, 3);
+            case 3 -> new ItemStack(Items.GOLD_INGOT, 1);
+            case 4 -> new ItemStack(Items.ENDER_PEARL, 2);
+            case 5 -> new ItemStack(Items.RED_DYE, 2);
+            case 6 -> new ItemStack(Items.INK_SAC, 3);
+            case 7 -> new ItemStack(Items.IRON_PICKAXE);
+            case 8 -> new ItemStack(Items.GOLD_INGOT, 3);
+            default -> ItemStack.EMPTY;
+        };
     }
 
     public CompanionAction action() {
@@ -1897,6 +1915,17 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 return false;
             }
             this.queuedScene = scene;
+            this.entityData.set(DATA_PAYMENT_ITEM, switch (scene) {
+                case JENNY_DOGGY -> 1;
+                case JENNY_BLOWJOB -> 2;
+                case JENNY_STRIP -> 3;
+                case JENNY_BOOBJOB -> 4;
+                case LUNA_TOUCH -> 5;
+                case LUNA_SITTING -> 6;
+                case KOBOLD_BLOWJOB -> 7;
+                case KOBOLD_ANAL -> 8;
+                default -> 0;
+            });
             return true;
         }
 
@@ -1938,13 +1967,20 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 || scene == CompanionScene.GOBLIN_PAIZURI || scene == CompanionScene.GOBLIN_NELSON
                 ? new SceneAnchor(player.position(), Mth.wrapDegrees(player.getYRot() + 180.0F))
                 : this.bedSpotPosition != null
-                ? new SceneAnchor(this.bedSpotPosition, this.bedSpotYaw)
+                ? new SceneAnchor(scene == CompanionScene.BIA_PRONE
+                // original e0: the doggy intro moves her one block towards the bed (ck.a(0, 0, 1, yaw))
+                ? this.bedSpotPosition.add(-Math.sin(Math.toRadians(this.bedSpotYaw)), 0.0D,
+                        Math.cos(Math.toRadians(this.bedSpotYaw)))
+                : this.bedSpotPosition, this.bedSpotYaw)
                 : scene.anchorsOnBed() ? this.bedSceneAnchor(serverLevel).orElse(null) : null;
         if (anchor == null) {
-            anchor = new SceneAnchor(
-                    this.findGroundedSceneAnchor(serverLevel),
-                    Mth.wrapDegrees(this.getYRot())
-            );
+            float yaw = Mth.wrapDegrees(this.getYRot());
+            if (scene == CompanionScene.BIA_TALK || scene.isPayment()) {
+                // she faces the player while she talks / takes the payment
+                yaw = Mth.wrapDegrees((float) (Mth.atan2(player.getZ() - this.getZ(), player.getX() - this.getX())
+                        * 57.2957763671875D) - 90.0F);
+            }
+            anchor = new SceneAnchor(this.findGroundedSceneAnchor(serverLevel), yaw);
         }
 
         this.forcedSceneAnchor = null;
@@ -2782,7 +2818,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 int dx = BED_SIDES[side][0];
                 int dz = BED_SIDES[side][1];
                 BlockPos stand = bed.offset(dx, 0, dz);
-                if (!serverLevel.getBlockState(stand).isAir()) {
+                BlockState standState = serverLevel.getBlockState(stand);
+                boolean lowSlab = standState.getBlock() instanceof net.minecraft.world.level.block.SlabBlock
+                        && standState.getValue(net.minecraft.world.level.block.SlabBlock.TYPE)
+                        == net.minecraft.world.level.block.state.properties.SlabType.BOTTOM;
+                if (!standState.isAir() && !standState.getCollisionShape(serverLevel, stand).isEmpty() && !lowSlab) {
                     continue;
                 }
                 if (doggy && !serverLevel.getBlockState(bed.offset(-dx, 0, -dz)).is(BlockTags.BEDS)) {
@@ -2790,7 +2830,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 }
                 Vec3 target = this.kind == CompanionKind.ELLIE
                         ? new Vec3(bed.getX() + ELLIE_STAND_X[side], stand.getY(), bed.getZ() + ELLIE_STAND_Z[side])
-                        : new Vec3(stand.getX() + 0.5D, stand.getY(), stand.getZ() + 0.5D);
+                        : new Vec3(stand.getX() + 0.5D, stand.getY() + (lowSlab ? 0.5D : 0.0D), stand.getZ() + 0.5D);
                 double distance = this.position().distanceToSqr(target);
                 if (distance < bestDistance) {
                     bestDistance = distance;

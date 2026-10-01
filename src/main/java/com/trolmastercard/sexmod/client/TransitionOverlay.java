@@ -9,7 +9,7 @@ import net.minecraft.util.Mth;
 
 /**
  * The original's transition screen (class fh): two scrolling wipe strips with a black band between
- * them slide across the screen right to left, roughly 90 ticks in all. Movement is locked while it runs.
+ * them slide across the screen right to left, roughly 23 ticks in all. Movement is locked while it runs.
  */
 public final class TransitionOverlay {
     private static final ResourceLocation STRIP = ResourceLocation.fromNamespaceAndPath(
@@ -36,7 +36,7 @@ public final class TransitionOverlay {
         if (!active) {
             return;
         }
-        progress += deltaTracker.getGameTimeDeltaTicks() * 0.75D;
+        progress += deltaTracker.getGameTimeDeltaTicks() * 3.0D; // 1.12.2 advanced 0.75 per frame, about 4 frames per tick
 
         int scale = (int) Minecraft.getInstance().getWindow().getGuiScale();
         double t = 0.5D * Math.cos(progress / 25.0D) + 0.5D;

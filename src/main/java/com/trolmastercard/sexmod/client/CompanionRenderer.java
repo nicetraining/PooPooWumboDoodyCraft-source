@@ -256,8 +256,26 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
 
         @Override
         protected net.minecraft.world.item.ItemStack getStackForBone(GeoBone bone, CompanionEntity entity) {
-            if (entity.kind() != CompanionKind.LUNA || !"weapon".equals(bone.getName())) {
+            if ("itemRenderer".equals(bone.getName())) {
+                var scene = entity.currentScene();
+                return scene != null && scene.isPayment() ? entity.paymentItem() : net.minecraft.world.item.ItemStack.EMPTY;
+            }
+            if (!"weapon".equals(bone.getName())) {
                 return net.minecraft.world.item.ItemStack.EMPTY;
+            }
+            if (entity.kind() != CompanionKind.LUNA) {
+                if (entity.kind() != CompanionKind.JENNY && entity.kind() != CompanionKind.ELLIE
+                        && entity.kind() != CompanionKind.BIA) {
+                    return net.minecraft.world.item.ItemStack.EMPTY;
+                }
+                return switch (entity.action()) {
+                    case ATTACK -> new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_SWORD);
+                    case BOW -> new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BOW);
+                    default -> net.minecraft.world.item.ItemStack.EMPTY;
+                };
+            }
+            if (entity.action() == com.trolmastercard.sexmod.entity.CompanionAction.ATTACK) {
+                return new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_AXE);
             }
             return switch (entity.fishState()) {
                 case com.trolmastercard.sexmod.entity.LunaFishing.START, com.trolmastercard.sexmod.entity.LunaFishing.IDLE ->

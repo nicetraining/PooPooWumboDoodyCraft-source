@@ -23,6 +23,8 @@ import java.util.UUID;
 
 @EventBusSubscriber(modid = FapCraft.MOD_ID, value = Dist.CLIENT)
 public final class ClientGameplayEvents {
+    private static boolean forcedFirstPerson;
+    private static net.minecraft.client.CameraType cameraBeforeScene;
     private static LocalPlayer cameraPlayer;
     private static Vec3 savedPlayerPosition;
     private static Vec3 savedPreviousPosition;
@@ -39,14 +41,28 @@ public final class ClientGameplayEvents {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         ClientLevel level = minecraft.level;
-        if (player == null
-                || level == null
-                || !minecraft.options.getCameraType().isFirstPerson()) {
+        if (player == null || level == null) {
             return;
         }
 
         CompanionEntity companion = findEmbeddedScenePartner(level, player.getUUID());
-        if (companion == null) {
+        boolean wantsFirstPerson = companion != null
+                && (companion.currentScene().usesBoyCam(companion.currentScenePhase())
+                || companion.currentScene() == com.trolmastercard.sexmod.entity.CompanionScene.BIA_ANAL);
+        if (wantsFirstPerson) {
+            if (!forcedFirstPerson) {
+                forcedFirstPerson = true;
+                cameraBeforeScene = minecraft.options.getCameraType();
+                minecraft.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON); // the cut to the boy's view
+            }
+        } else if (forcedFirstPerson && (companion == null || !companion.currentScene().hasPartner())) {
+            forcedFirstPerson = false;
+            if (cameraBeforeScene != null) {
+                minecraft.options.setCameraType(cameraBeforeScene);
+            }
+            cameraBeforeScene = null;
+        }
+        if (companion == null || !minecraft.options.getCameraType().isFirstPerson()) {
             return;
         }
 
