@@ -484,14 +484,14 @@ public final class KoboldBehavior {
         this.exploreTarget = new BlockPos(x, y, z);
     }
 
-    /** Original c(tribe, tasks): one fell-tree task per follower, trees within 30 blocks (4 vertically). */
+    /** Original c(tribe, tasks): one fell-tree task per follower, trees within about 15 blocks (4 vertically). */
     private void assignTrees(ServerLevel level, Tribe tribe) {
         int wanted = Math.max(0, tribe.members.size() - 1);
         BlockPos center = this.k.blockPosition();
         for (int i = 0; i < wanted; i++) {
             BlockPos found = null;
             outer:
-            for (int r = 0; r <= 30; r++) {
+            for (int r = 0; r <= 15; r++) { // original em.a(pos, BlockLog, 30, 4, null): a square spiral that reaches about 15 blocks
                 for (BlockPos pos : BlockPos.betweenClosed(center.offset(-r, -4, -r), center.offset(r, 4, r))) {
                     if (Math.max(Math.abs(pos.getX() - center.getX()), Math.abs(pos.getZ() - center.getZ())) != r) {
                         continue;

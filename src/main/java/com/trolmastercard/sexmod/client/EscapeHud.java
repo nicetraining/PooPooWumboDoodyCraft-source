@@ -24,7 +24,6 @@ import net.neoforged.neoforge.network.PacketDistributor;
 public final class EscapeHud {
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(
             FapCraft.MOD_ID, "textures/gui/escape_minigame_ui.png");
-    private static final float SCALE = 0.5F;
     private static final int SLIDE = 20;
 
     private static boolean active;
@@ -34,6 +33,7 @@ public final class EscapeHud {
     private static int ticks;
     private static int closeTicks;
     private static int key = -1;
+    private static boolean blink = true;
     private static final boolean[] WAS_DOWN = new boolean[4];
 
     private EscapeHud() {
@@ -51,6 +51,7 @@ public final class EscapeHud {
         ticks = 0;
         closeTicks = 0;
         key = -1;
+        blink = true;
     }
 
     private static KeyMapping[] keys(Minecraft mc) {
@@ -79,9 +80,15 @@ public final class EscapeHud {
             return;
         }
         ticks++;
+        if (ticks % 2 == 0) {
+            blink = !blink; // original gb.b flips on every second tick
+        }
         progress = Math.max(0.0F, progress - 0.006F);
-        if (ticks >= SLIDE && (key < 0 || (ticks - SLIDE) % 35 == 0)) {
-            key = mc.player.getRandom().nextInt(4);
+        if (ticks >= SLIDE && (key < 0 || ticks % 35 == 0)) {
+            int previous = key;
+            do {
+                key = mc.player.getRandom().nextInt(4); // original b(): never the same key twice in a row
+            } while (key == previous);
         }
         KeyMapping[] mappings = keys(mc);
         for (int i = 0; i < 4; i++) {
@@ -98,33 +105,54 @@ public final class EscapeHud {
         }
     }
 
+    /** Original b6.c / b6.d: easeOutBack and easeInBack. */
+    private static double easeOut(double t) {
+        double c = 1.70158D;
+        return 1.0D + (c + 1.0D) * Math.pow(t - 1.0D, 3.0D) + c * Math.pow(t - 1.0D, 2.0D);
+    }
+
+    private static double easeIn(double t) {
+        double c = 1.70158D;
+        return (c + 1.0D) * t * t * t - c * t * t;
+    }
+
+    private static double lerp(double a, double b, double t) {
+        return a + (b - a) * t;
+    }
+
+    /** Original gb.a(RenderGameOverlayEvent): everything is drawn at scale 0.33 after a (485, 0) shift. */
     public static void render(GuiGraphics graphics, DeltaTracker deltaTracker) {
         if (!active) {
             return;
         }
-        float slide = closing ? 1.0F - Math.min(1.0F, closeTicks / (float) SLIDE) : Math.min(1.0F, ticks / (float) SLIDE);
+        float partial = deltaTracker.getGameTimeDeltaPartialTick(false);
+        double t = closing ? 1.0D - easeIn((closeTicks + partial) / 20.0D) : Math.min(1.0D, easeOut((ticks + partial) / 20.0D));
         int width = graphics.guiWidth();
         int height = graphics.guiHeight();
-        float frameW = 174 * SCALE;
-        float frameH = 48 * SCALE;
-        float x = (width - frameW) / 2.0F;
-        float y = height - (frameH + 26 * SCALE + 12) * slide;
+        int baseY = height + 385;
+        int startY = 4 * height;
+        boolean lit = blink;
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         var pose = graphics.pose();
         pose.pushPose();
-        pose.translate(x, y, 0.0F);
-        pose.scale(SCALE, SCALE, 1.0F);
-        graphics.blit(TEXTURE, 0, 0, 0, 104, 174, 48, 256, 256);
-        int fill = Math.round(158 * progress);
+        pose.scale(0.33F, 0.33F, 1.0F);
+        pose.translate(485.0F, 0.0F, 0.0F);
+        graphics.blit(TEXTURE, width / 2 - 87, (int) lerp(startY, baseY, t), 0, 104, 174, 48, 256, 256);
+        // keys in the order of the original texture columns: W 0, A 52, S 104, D 156
+        key(graphics, (int) (width / 2.0F - 78.0F), (int) lerp(startY, baseY - 52, t), 52, lit && key == 1);
+        key(graphics, (int) (width / 2.0F - 26.0F), (int) lerp(startY, baseY - 52, t), 104, lit && key == 2);
+        key(graphics, (int) (width / 2.0F + 26.0F), (int) lerp(startY, baseY - 52, t), 156, lit && key == 3);
+        key(graphics, (int) (width / 2.0F - 26.0F), (int) lerp(startY, baseY - 104, t), 0, lit && key == 0);
+        int fill = (int) (158.0F * progress);
         if (fill > 0) {
-            graphics.blit(TEXTURE, 8, 8, 0, 152, fill, 32, 256, 256);
-        }
-        if (key >= 0 && !closing) {
-            boolean lit = (ticks / 2) % 2 == 0;
-            graphics.blit(TEXTURE, (174 - 52) / 2, -52 - 4, key * 52, lit ? 52 : 0, 52, 52, 256, 256);
+            graphics.blit(TEXTURE, width / 2 - 87 + 8, (int) lerp(startY - 8, baseY + 8, t), 8, 152, fill, 32, 256, 256);
         }
         pose.popPose();
         RenderSystem.disableBlend();
+    }
+
+    private static void key(GuiGraphics graphics, int x, int y, int u, boolean highlighted) {
+        graphics.blit(TEXTURE, x, y, u, highlighted ? 52 : 0, 52, 52, 256, 256);
     }
 }
