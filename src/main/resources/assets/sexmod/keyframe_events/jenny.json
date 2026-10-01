@@ -819,5 +819,14 @@
   },
   "bjcBlackScreen": {
     "wipe": true
+  },
+  "drawItems": {
+    "arm": "raise"
+  },
+  "removeItems": {
+    "arm": "lower"
+  },
+  "paymentDone": {
+    "arm": "lower"
   }
 }

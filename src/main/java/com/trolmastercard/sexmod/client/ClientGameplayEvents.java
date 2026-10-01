@@ -77,6 +77,19 @@ public final class ClientGameplayEvents {
             if (bone != null) {
                 org.joml.Vector3d position = bone.getWorldPosition();
                 if (position.lengthSquared() > 1.0E-6D) {
+                    // GeckoLib's world position leaves out the entity's yaw (its matrices are taken after the
+                    // rotation), so rotate the offset by hand: the camera sat off centre in every scene not at 180 degrees.
+                    float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+                    double ox = position.x - companion.getX();
+                    double oz = position.z - companion.getZ();
+                    double angle = Math.toRadians(180.0F - Mth.rotLerp(partial, companion.yBodyRotO, companion.yBodyRot));
+                    double cos = Math.cos(angle);
+                    double sin = Math.sin(angle);
+                    Vec3 base = companion.getPosition(partial);
+                    position = new org.joml.Vector3d(
+                            base.x + ox * cos + oz * sin,
+                            position.y - companion.getY() + base.y,
+                            base.z - ox * sin + oz * cos);
                     cameraPlayer = player;
                     savedPlayerPosition = player.position();
                     savedPreviousPosition = new Vec3(player.xo, player.yo, player.zo);

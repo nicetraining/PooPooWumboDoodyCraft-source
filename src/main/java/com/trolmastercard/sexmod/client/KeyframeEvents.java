@@ -89,6 +89,13 @@ public final class KeyframeEvents {
             local.setXRot(0.0F);
             local.xRotO = 0.0F;
         }
+        if (entry.has("arm") && girl.scenePartnerId().isPresent()) {
+            if ("raise".equals(entry.get("arm").getAsString())) {
+                PaymentArm.raise(girl.scenePartnerId().get());
+            } else {
+                PaymentArm.lower(girl.scenePartnerId().get());
+            }
+        }
         if (entry.has("fade") && girl.level() != null) {
             girl.allieFadeStart = girl.level().getGameTime(); // original ev: alpha 0.99, then -0.01 per rendered frame
         }
