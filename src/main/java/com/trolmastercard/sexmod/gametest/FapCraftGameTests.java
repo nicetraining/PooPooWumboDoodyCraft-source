@@ -877,6 +877,12 @@ public final class FapCraftGameTests {
         galath.moveTo(helper.absoluteVec(new Vec3(6.5, 211.0, 10.5)));
         galath.setMaster(player.getUUID());
         galath.beginGalathAmbush(player);
+        // some arenas never entity-tick (see forceArena), so drive her by hand there
+        helper.onEachTick(() -> {
+            if (!helper.getLevel().isPositionEntityTicking(galath.blockPosition())) {
+                galath.tick();
+            }
+        });
         helper.runAfterDelay(60, () -> {
             if (galath.action() != com.trolmastercard.sexmod.entity.CompanionAction.GALATH_MASTURBATE) {
                 helper.fail("she keeps masturbating for the 8 seconds: " + galath.action());

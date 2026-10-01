@@ -88,6 +88,19 @@ public final class CompanionEvents {
                 && event.getRayTraceResult() instanceof net.minecraft.world.phys.EntityHitResult hit
                 && hit.getEntity() instanceof CompanionEntity) {
             event.setCanceled(true);
+            return;
+        }
+        if (event.getProjectile() instanceof net.minecraft.world.entity.projectile.AbstractArrow arrow
+                && arrow.getPersistentData().getInt("sexmod:punch") > 0
+                && event.getRayTraceResult() instanceof net.minecraft.world.phys.EntityHitResult hit
+                && hit.getEntity() instanceof net.minecraft.world.entity.LivingEntity victim) {
+            // 1.12 punch: push along the arrow's horizontal motion, 0.6 blocks of speed per level, 0.1 up
+            var motion = arrow.getDeltaMovement();
+            double horizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
+            if (horizontal > 0.0D) {
+                double scale = arrow.getPersistentData().getInt("sexmod:punch") * 0.6D / horizontal;
+                victim.push(motion.x * scale, 0.1D, motion.z * scale);
+            }
         }
     }
 

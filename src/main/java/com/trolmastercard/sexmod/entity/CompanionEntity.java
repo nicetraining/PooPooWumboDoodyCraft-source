@@ -3094,6 +3094,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.POWER), bow);
         int flame = net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(
                 enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.FLAME), bow);
+        int punch = net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(
+                enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.PUNCH), bow);
+        if (punch > 0) {
+            arrow.getPersistentData().putInt("sexmod:punch", punch); // original setKnockbackStrength(punch)
+        }
         arrow.setBaseDamage(4.5D); // original g.e(): setDamage(4.5) overwrites the Power bonus
         if (flame > 0) {
             arrow.setRemainingFireTicks(100);
@@ -3104,6 +3109,32 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         arrow.shoot(dx, dy + Math.sqrt(dx * dx + dz * dz) * 0.2D, dz, 1.6F, 2.0F);
         serverLevel.addFreshEntity(arrow);
         this.playSound(SoundEvents.SKELETON_SHOOT, 1.0F, 1.0F / (this.random.nextFloat() * 0.4F + 0.8F));
+    }
+
+    /** Original g.d(): Sweeping Edge on the main-hand weapon hits other creatures near the target for 50/67/75 percent. */
+    private void sweep(LivingEntity target) {
+        if (!(this.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        ItemStack weapon = this.equipment.getItem(0);
+        var enchantments = serverLevel.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT);
+        int level = net.minecraft.world.item.enchantment.EnchantmentHelper.getItemEnchantmentLevel(
+                enchantments.getOrThrow(net.minecraft.world.item.enchantment.Enchantments.SWEEPING_EDGE), weapon);
+        if (level <= 0) {
+            return;
+        }
+        float factor = level >= 3 ? 0.75F : level == 2 ? 0.67F : 0.5F;
+        float damage = (float) this.getAttributeValue(Attributes.ATTACK_DAMAGE);
+        Player master = this.masterPlayer().orElse(null);
+        for (LivingEntity other : serverLevel.getEntitiesOfClass(LivingEntity.class, target.getBoundingBox().inflate(1.0D, 0.25D, 1.0D))) {
+            if (other == this || other == master || other == target || this.isAlliedTo(other)
+                    || other instanceof CompanionEntity || this.distanceToSqr(other) >= 9.0D) {
+                continue;
+            }
+            other.knockback(0.4D, Mth.sin(this.getYRot() * ((float) Math.PI / 180.0F)),
+                    -Mth.cos(this.getYRot() * ((float) Math.PI / 180.0F)));
+            other.hurt(this.damageSources().mobAttack(this), damage * factor);
+        }
     }
 
     private void tickFlight() {
@@ -3966,6 +3997,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 self.attackAnimTicks = 10;
                 self.swing(InteractionHand.MAIN_HAND);
                 self.doHurtTarget(target);
+                self.sweep(target);
                 self.swingCooldown = self.weaponSwingDelay();
             }
         }
