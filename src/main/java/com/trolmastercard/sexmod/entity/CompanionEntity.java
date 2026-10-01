@@ -808,6 +808,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 return 0.0F;
             }
         }
+        if (this.kind == CompanionKind.BEE && this.hasMaster() && !this.technicalProxy) {
+            // original f.a: a following Bee's death is cancelled
+            return Math.max(0.0F, Math.min(amount, this.getHealth() - 1.0F));
+        }
         if (!this.kind.hasMasterAI() || this.technicalProxy) {
             return amount;
         }
@@ -2258,7 +2262,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     @Override
     protected float getJumpPower() {
         return switch (this.kind) {
-            case LUNA -> 0.5F * this.getBlockJumpFactor() + this.getJumpBoostPower();
+            case LUNA -> (this.isInWater() ? 1.0F : 0.5F) * this.getBlockJumpFactor() + this.getJumpBoostPower();
             case KOBOLD -> 0.45F * this.getBlockJumpFactor() + this.getJumpBoostPower();
             default -> super.getJumpPower();
         };
@@ -2703,7 +2707,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 int dx = BED_SIDES[side][0];
                 int dz = BED_SIDES[side][1];
                 BlockPos stand = bed.offset(dx, 0, dz);
-                if (!serverLevel.getBlockState(stand).isAir() || (!jenny && !serverLevel.getBlockState(stand.above()).isAir())) {
+                if (!serverLevel.getBlockState(stand).isAir()) {
                     continue;
                 }
                 if (doggy && !serverLevel.getBlockState(bed.offset(-dx, 0, -dz)).is(BlockTags.BEDS)) {
@@ -2721,6 +2725,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         if (best == null) {
+            if (this.lunaFishing != null) {
+                this.lunaFishing.markDone(); // original eb.a sets ar before searching: no more fishing after a refusal
+            }
             this.refuseBed(serverLevel, anyBed ? "jenny.dialogue.bedobscured" : "jenny.dialogue.nobedinsight");
             return false;
         }
@@ -3808,12 +3815,21 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 self.getNavigation().stop();
                 return;
             }
-            if (distance > 24.0F) {
-                self.teleportTo(master.getX(), master.getY() + 1.0D, master.getZ());
+            if (distance > 16.0F) {
+                // original f.c(): master + random (0..9, 0..9), up to 20 tries for a free spot, else on the master
+                for (int attempt = 0; attempt < 20; attempt++) {
+                    double tx = master.getX() + self.getRandom().nextInt(10);
+                    double tz = master.getZ() + self.getRandom().nextInt(10);
+                    var box = self.getBoundingBox().move(tx - self.getX(), master.getY() - self.getY(), tz - self.getZ());
+                    if (self.level().noCollision(self, box)) {
+                        self.teleportTo(tx, master.getY(), tz);
+                        return;
+                    }
+                }
+                self.teleportTo(master.getX(), master.getY(), master.getZ());
                 return;
             }
-            double speed = Math.min(1.5D, 0.5D + Math.floor(distance / 3.0F) * 0.25D);
-            self.getNavigation().moveTo(master, speed);
+            self.getNavigation().moveTo(master, 0.5D);
         }
     }
 

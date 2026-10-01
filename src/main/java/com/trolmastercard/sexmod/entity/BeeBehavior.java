@@ -110,7 +110,7 @@ final class BeeBehavior {
             Vec3 from = this.bee.position();
             Vec3 to = new Vec3(from.x, Math.max(level.getMinBuildHeight(), from.y - 16.0D), from.z);
             var hit = level.clip(new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this.bee));
-            double height = hit.getType() == HitResult.Type.MISS ? 16.0D : from.y - hit.getLocation().y;
+            double height = hit.getType() == HitResult.Type.MISS ? 16.0D : from.y - hit.getBlockPos().getY();
             if (height > 3.0D) {
                 this.bee.setDeltaMovement(motion.x, 0.0D, motion.z);
             }
