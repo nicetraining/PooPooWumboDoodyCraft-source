@@ -48,7 +48,10 @@ public final class ClientGameplayEvents {
         CompanionEntity companion = findEmbeddedScenePartner(level, player.getUUID());
         boolean wantsFirstPerson = companion != null
                 && (companion.currentScene().usesBoyCam(companion.currentScenePhase())
-                || companion.currentScene() == com.trolmastercard.sexmod.entity.CompanionScene.BIA_ANAL);
+                || companion.currentScene() == com.trolmastercard.sexmod.entity.CompanionScene.BIA_ANAL
+                // requested extra: tamed Galath's cowgirl and anal also cut to the player's own view
+                || companion.currentScene() == com.trolmastercard.sexmod.entity.CompanionScene.GALATH_COWGIRL
+                || companion.currentScene() == com.trolmastercard.sexmod.entity.CompanionScene.GALATH_ANAL);
         if (wantsFirstPerson) {
             if (!forcedFirstPerson) {
                 forcedFirstPerson = true;

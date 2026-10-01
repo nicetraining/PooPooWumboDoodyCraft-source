@@ -1011,7 +1011,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.galathBoostTicks > 0) {
             int elapsed = 43 - this.galathBoostTicks;
             if (elapsed == 13) {
-                this.galathBoostSpeed = 1.5D; // tune: the original uses 6.0 in its own unit
+                this.galathBoostSpeed = 2.0D; // tune: the original uses 6.0 in its own unit
             }
             if (elapsed >= 13) {
                 this.setDeltaMovement(rider.getLookAngle().scale(this.galathBoostSpeed));

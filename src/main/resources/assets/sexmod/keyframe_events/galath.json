@@ -1,351 +1,360 @@
 {
- "goodTiming": {
-  "text": "Good timing boy~",
-  "sounds": [
-   "girls.galath.dialog.dialog4"
-  ],
-  "volume": 1.0
- },
- "huh": {
-  "sounds": [
-   "girls.galath.huh.huh0",
-   "girls.galath.huh.huh1",
-   "girls.galath.huh.huh2"
-  ],
-  "volume": 1.0
- },
- "giggle": {
-  "sounds": [
-   "girls.galath.giggle.giggle0",
-   "girls.galath.giggle.giggle1",
-   "girls.galath.giggle.giggle2",
-   "girls.galath.giggle.giggle3"
-  ],
-  "volume": 1.0
- },
- "dialog1": {
-  "sounds": [
-   "girls.galath.dialog.dialog1"
-  ],
-  "volume": 1.0
- },
- "dialog5": {
-  "sounds": [
-   "girls.galath.dialog.dialog5"
-  ],
-  "volume": 1.0
- },
- "moan": {
-  "sounds": [
-   "girls.galath.moan.moan0",
-   "girls.galath.moan.moan1",
-   "girls.galath.moan.moan2",
-   "girls.galath.moan.moan3",
-   "girls.galath.moan.moan4",
-   "girls.galath.moan.moan5",
-   "girls.galath.moan.moan6",
-   "girls.galath.moan.moan7"
-  ],
-  "volume": 1.0
- },
- "breath": {
-  "sounds": [
-   "girls.galath.breathing.breathing0",
-   "girls.galath.breathing.breathing1",
-   "girls.galath.breathing.breathing2",
-   "girls.galath.breathing.breathing3",
-   "girls.galath.breathing.breathing4",
-   "girls.galath.breathing.breathing5",
-   "girls.galath.breathing.breathing6"
-  ],
-  "volume": 1.0
- },
- "switchmoan": {
-  "volume": 1.0,
-  "layers": [
-   {
-    "any_of": [
-     {
-      "sounds": [
-       "girls.galath.breathing.breathing0",
-       "girls.galath.breathing.breathing1",
-       "girls.galath.breathing.breathing2",
-       "girls.galath.breathing.breathing3",
-       "girls.galath.breathing.breathing4",
-       "girls.galath.breathing.breathing5",
-       "girls.galath.breathing.breathing6"
-      ]
-     },
-     {
-      "sounds": [
-       "girls.galath.moan.moan0",
-       "girls.galath.moan.moan1",
-       "girls.galath.moan.moan2",
-       "girls.galath.moan.moan3",
-       "girls.galath.moan.moan4",
-       "girls.galath.moan.moan5",
-       "girls.galath.moan.moan6",
-       "girls.galath.moan.moan7"
-      ]
-     },
-     {
-      "sounds": [
-       "girls.galath.ahh.ahh0",
-       "girls.galath.ahh.ahh1",
-       "girls.galath.ahh.ahh2",
-       "girls.galath.ahh.ahh3",
-       "girls.galath.ahh.ahh4",
-       "girls.galath.ahh.ahh5",
-       "girls.galath.ahh.ahh6",
-       "girls.galath.ahh.ahh7"
-      ]
-     }
-    ],
-    "weights": [
-     2,
-     1,
-     1
-    ]
-   }
-  ]
- },
- "lightcharge": {
-  "sounds": [
-   "girls.galath.lightcharge.lightcharge0",
-   "girls.galath.lightcharge.lightcharge1",
-   "girls.galath.lightcharge.lightcharge2",
-   "girls.galath.lightcharge.lightcharge3",
-   "girls.galath.lightcharge.lightcharge4"
-  ],
-  "volume": 1.0
- },
- "strongcharge": {
-  "sounds": [
-   "girls.galath.strongcharge.strongcharge0",
-   "girls.galath.strongcharge.strongcharge1",
-   "girls.galath.strongcharge.strongcharge2",
-   "girls.galath.strongcharge.strongcharge3"
-  ],
-  "volume": 1.0
- },
- "hmph": {
-  "sounds": [
-   "girls.galath.hmph.hmph0",
-   "girls.galath.hmph.hmph1",
-   "girls.galath.hmph.hmph2"
-  ],
-  "volume": 1.0
- },
- "cum": {
-  "sounds": [
-   "misc.smallinserts.smallinserts0",
-   "misc.smallinserts.smallinserts1",
-   "misc.smallinserts.smallinserts2",
-   "misc.smallinserts.smallinserts3",
-   "misc.smallinserts.smallinserts4"
-  ],
-  "volume": 2.0
- },
- "giggle0": {
-  "sounds": [
-   "girls.galath.giggle.giggle0"
-  ],
-  "volume": 1.0
- },
- "orgasm": {
-  "sounds": [
-   "girls.galath.orgasm.orgasm0",
-   "girls.galath.orgasm.orgasm1",
-   "girls.galath.orgasm.orgasm2",
-   "girls.galath.orgasm.orgasm3",
-   "girls.galath.orgasm.orgasm4"
-  ],
-  "volume": 1.0
- },
- "pound": {
-  "sounds": [
-   "misc.pounding.pounding0",
-   "misc.pounding.pounding1",
-   "misc.pounding.pounding2",
-   "misc.pounding.pounding3",
-   "misc.pounding.pounding4",
-   "misc.pounding.pounding5",
-   "misc.pounding.pounding6",
-   "misc.pounding.pounding7",
-   "misc.pounding.pounding8",
-   "misc.pounding.pounding9",
-   "misc.pounding.pounding10",
-   "misc.pounding.pounding11",
-   "misc.pounding.pounding12",
-   "misc.pounding.pounding13",
-   "misc.pounding.pounding14",
-   "misc.pounding.pounding15",
-   "misc.pounding.pounding16",
-   "misc.pounding.pounding17",
-   "misc.pounding.pounding18",
-   "misc.pounding.pounding19",
-   "misc.pounding.pounding20",
-   "misc.pounding.pounding21",
-   "misc.pounding.pounding22",
-   "misc.pounding.pounding23",
-   "misc.pounding.pounding24",
-   "misc.pounding.pounding25",
-   "misc.pounding.pounding26",
-   "misc.pounding.pounding27",
-   "misc.pounding.pounding28",
-   "misc.pounding.pounding29",
-   "misc.pounding.pounding30",
-   "misc.pounding.pounding31",
-   "misc.pounding.pounding32",
-   "misc.pounding.pounding33",
-   "misc.pounding.pounding34"
-  ],
-  "volume": 1.0
- },
- "poundRape": {
-  "sounds": [
-   "misc.pounding.pounding0",
-   "misc.pounding.pounding1",
-   "misc.pounding.pounding2",
-   "misc.pounding.pounding3",
-   "misc.pounding.pounding4",
-   "misc.pounding.pounding5",
-   "misc.pounding.pounding6",
-   "misc.pounding.pounding7",
-   "misc.pounding.pounding8",
-   "misc.pounding.pounding9",
-   "misc.pounding.pounding10",
-   "misc.pounding.pounding11",
-   "misc.pounding.pounding12",
-   "misc.pounding.pounding13",
-   "misc.pounding.pounding14",
-   "misc.pounding.pounding15",
-   "misc.pounding.pounding16",
-   "misc.pounding.pounding17",
-   "misc.pounding.pounding18",
-   "misc.pounding.pounding19",
-   "misc.pounding.pounding20",
-   "misc.pounding.pounding21",
-   "misc.pounding.pounding22",
-   "misc.pounding.pounding23",
-   "misc.pounding.pounding24",
-   "misc.pounding.pounding25",
-   "misc.pounding.pounding26",
-   "misc.pounding.pounding27",
-   "misc.pounding.pounding28",
-   "misc.pounding.pounding29",
-   "misc.pounding.pounding30",
-   "misc.pounding.pounding31",
-   "misc.pounding.pounding32",
-   "misc.pounding.pounding33",
-   "misc.pounding.pounding34"
-  ],
-  "volume": 1.0,
-  "meter": 0.03
- },
- "flap": {
-  "sounds": [
-   "misc.flap.flap0",
-   "misc.flap.flap1",
-   "misc.flap.flap2",
-   "misc.flap.flap3"
-  ],
-  "volume": 1.0
- },
- "flapControlled": {
-  "sounds": [
-   "misc.flap.flap0",
-   "misc.flap.flap1",
-   "misc.flap.flap2",
-   "misc.flap.flap3"
-  ],
-  "volume": 1.0,
-  "flap": true
- },
- "creampieGalath": {
-  "sounds": [
-   "misc.smallinserts.smallinserts0",
-   "misc.smallinserts.smallinserts1",
-   "misc.smallinserts.smallinserts2",
-   "misc.smallinserts.smallinserts3",
-   "misc.smallinserts.smallinserts4"
-  ],
-  "volume": 3.0
- },
- "clap": {
-  "sounds": [
-   "misc.clap.clap0"
-  ],
-  "volume": 1.0
- },
- "energysound": {
-  "sounds": [
-   "misc.beew.beew1"
-  ],
-  "volume": 1.0
- },
- "energy2": {
-  "sounds": [
-   "misc.beew.beew2"
-  ],
-  "volume": 1.0
- },
- "tpSound": {
-  "sounds": [
-   "misc.weoweo.weoweo2"
-  ],
-  "volume": 1.0
- },
- "lick": {
-  "sounds": [
-   "girls.allie.lipsound.lipsound0",
-   "girls.allie.lipsound.lipsound1",
-   "girls.allie.lipsound.lipsound2",
-   "girls.allie.lipsound.lipsound3",
-   "girls.allie.lipsound.lipsound4",
-   "girls.allie.lipsound.lipsound5",
-   "girls.allie.lipsound.lipsound6",
-   "girls.allie.lipsound.lipsound7",
-   "girls.allie.lipsound.lipsound8",
-   "girls.allie.lipsound.lipsound9",
-   "girls.allie.lipsound.lipsound10",
-   "girls.allie.lipsound.lipsound11",
-   "girls.allie.lipsound.lipsound12",
-   "girls.allie.lipsound.lipsound13"
-  ],
-  "volume": 1.0
- },
- "boostSound": {
-  "sounds": [
-   "girls.galath.lightcharge.lightcharge0",
-   "girls.galath.lightcharge.lightcharge1",
-   "girls.galath.lightcharge.lightcharge2",
-   "girls.galath.lightcharge.lightcharge3",
-   "girls.galath.lightcharge.lightcharge4"
-  ],
-  "volume": 1.0,
-  "layers": [
-   {
+  "goodTiming": {
+    "text": "Good timing boy~",
     "sounds": [
-     "misc.flap.flap0",
-     "misc.flap.flap1",
-     "misc.flap.flap2",
-     "misc.flap.flap3"
+      "girls.galath.dialog.dialog4"
     ],
     "volume": 1.0
-   }
-  ]
- },
- "addCum": {
-  "meter": 0.03
- },
- "enableRapeUI": {
-  "hud": "show"
- },
- "setCamCorrupt": {
-  "hud": "show"
- },
- "sexui": {
-  "hud": "show"
- }
+  },
+  "huh": {
+    "sounds": [
+      "girls.galath.huh.huh0",
+      "girls.galath.huh.huh1",
+      "girls.galath.huh.huh2"
+    ],
+    "volume": 1.0
+  },
+  "giggle": {
+    "sounds": [
+      "girls.galath.giggle.giggle0",
+      "girls.galath.giggle.giggle1",
+      "girls.galath.giggle.giggle2",
+      "girls.galath.giggle.giggle3"
+    ],
+    "volume": 1.0
+  },
+  "dialog1": {
+    "sounds": [
+      "girls.galath.dialog.dialog1"
+    ],
+    "volume": 1.0
+  },
+  "dialog5": {
+    "sounds": [
+      "girls.galath.dialog.dialog5"
+    ],
+    "volume": 1.0
+  },
+  "moan": {
+    "sounds": [
+      "girls.galath.moan.moan0",
+      "girls.galath.moan.moan1",
+      "girls.galath.moan.moan2",
+      "girls.galath.moan.moan3",
+      "girls.galath.moan.moan4",
+      "girls.galath.moan.moan5",
+      "girls.galath.moan.moan6",
+      "girls.galath.moan.moan7"
+    ],
+    "volume": 1.0
+  },
+  "breath": {
+    "sounds": [
+      "girls.galath.breathing.breathing0",
+      "girls.galath.breathing.breathing1",
+      "girls.galath.breathing.breathing2",
+      "girls.galath.breathing.breathing3",
+      "girls.galath.breathing.breathing4",
+      "girls.galath.breathing.breathing5",
+      "girls.galath.breathing.breathing6"
+    ],
+    "volume": 1.0
+  },
+  "switchmoan": {
+    "volume": 1.0,
+    "layers": [
+      {
+        "any_of": [
+          {
+            "sounds": [
+              "girls.galath.breathing.breathing0",
+              "girls.galath.breathing.breathing1",
+              "girls.galath.breathing.breathing2",
+              "girls.galath.breathing.breathing3",
+              "girls.galath.breathing.breathing4",
+              "girls.galath.breathing.breathing5",
+              "girls.galath.breathing.breathing6"
+            ]
+          },
+          {
+            "sounds": [
+              "girls.galath.moan.moan0",
+              "girls.galath.moan.moan1",
+              "girls.galath.moan.moan2",
+              "girls.galath.moan.moan3",
+              "girls.galath.moan.moan4",
+              "girls.galath.moan.moan5",
+              "girls.galath.moan.moan6",
+              "girls.galath.moan.moan7"
+            ]
+          },
+          {
+            "sounds": [
+              "girls.galath.ahh.ahh0",
+              "girls.galath.ahh.ahh1",
+              "girls.galath.ahh.ahh2",
+              "girls.galath.ahh.ahh3",
+              "girls.galath.ahh.ahh4",
+              "girls.galath.ahh.ahh5",
+              "girls.galath.ahh.ahh6",
+              "girls.galath.ahh.ahh7"
+            ]
+          }
+        ],
+        "weights": [
+          2,
+          1,
+          1
+        ]
+      }
+    ]
+  },
+  "lightcharge": {
+    "sounds": [
+      "girls.galath.lightcharge.lightcharge0",
+      "girls.galath.lightcharge.lightcharge1",
+      "girls.galath.lightcharge.lightcharge2",
+      "girls.galath.lightcharge.lightcharge3",
+      "girls.galath.lightcharge.lightcharge4"
+    ],
+    "volume": 1.0
+  },
+  "strongcharge": {
+    "sounds": [
+      "girls.galath.strongcharge.strongcharge0",
+      "girls.galath.strongcharge.strongcharge1",
+      "girls.galath.strongcharge.strongcharge2",
+      "girls.galath.strongcharge.strongcharge3"
+    ],
+    "volume": 1.0
+  },
+  "hmph": {
+    "sounds": [
+      "girls.galath.hmph.hmph0",
+      "girls.galath.hmph.hmph1",
+      "girls.galath.hmph.hmph2"
+    ],
+    "volume": 1.0
+  },
+  "cum": {
+    "sounds": [
+      "misc.smallinserts.smallinserts0",
+      "misc.smallinserts.smallinserts1",
+      "misc.smallinserts.smallinserts2",
+      "misc.smallinserts.smallinserts3",
+      "misc.smallinserts.smallinserts4"
+    ],
+    "volume": 2.0
+  },
+  "giggle0": {
+    "sounds": [
+      "girls.galath.giggle.giggle0"
+    ],
+    "volume": 1.0
+  },
+  "orgasm": {
+    "sounds": [
+      "girls.galath.orgasm.orgasm0",
+      "girls.galath.orgasm.orgasm1",
+      "girls.galath.orgasm.orgasm2",
+      "girls.galath.orgasm.orgasm3",
+      "girls.galath.orgasm.orgasm4"
+    ],
+    "volume": 1.0
+  },
+  "pound": {
+    "sounds": [
+      "misc.pounding.pounding0",
+      "misc.pounding.pounding1",
+      "misc.pounding.pounding2",
+      "misc.pounding.pounding3",
+      "misc.pounding.pounding4",
+      "misc.pounding.pounding5",
+      "misc.pounding.pounding6",
+      "misc.pounding.pounding7",
+      "misc.pounding.pounding8",
+      "misc.pounding.pounding9",
+      "misc.pounding.pounding10",
+      "misc.pounding.pounding11",
+      "misc.pounding.pounding12",
+      "misc.pounding.pounding13",
+      "misc.pounding.pounding14",
+      "misc.pounding.pounding15",
+      "misc.pounding.pounding16",
+      "misc.pounding.pounding17",
+      "misc.pounding.pounding18",
+      "misc.pounding.pounding19",
+      "misc.pounding.pounding20",
+      "misc.pounding.pounding21",
+      "misc.pounding.pounding22",
+      "misc.pounding.pounding23",
+      "misc.pounding.pounding24",
+      "misc.pounding.pounding25",
+      "misc.pounding.pounding26",
+      "misc.pounding.pounding27",
+      "misc.pounding.pounding28",
+      "misc.pounding.pounding29",
+      "misc.pounding.pounding30",
+      "misc.pounding.pounding31",
+      "misc.pounding.pounding32",
+      "misc.pounding.pounding33",
+      "misc.pounding.pounding34"
+    ],
+    "volume": 1.0
+  },
+  "poundRape": {
+    "sounds": [
+      "misc.pounding.pounding0",
+      "misc.pounding.pounding1",
+      "misc.pounding.pounding2",
+      "misc.pounding.pounding3",
+      "misc.pounding.pounding4",
+      "misc.pounding.pounding5",
+      "misc.pounding.pounding6",
+      "misc.pounding.pounding7",
+      "misc.pounding.pounding8",
+      "misc.pounding.pounding9",
+      "misc.pounding.pounding10",
+      "misc.pounding.pounding11",
+      "misc.pounding.pounding12",
+      "misc.pounding.pounding13",
+      "misc.pounding.pounding14",
+      "misc.pounding.pounding15",
+      "misc.pounding.pounding16",
+      "misc.pounding.pounding17",
+      "misc.pounding.pounding18",
+      "misc.pounding.pounding19",
+      "misc.pounding.pounding20",
+      "misc.pounding.pounding21",
+      "misc.pounding.pounding22",
+      "misc.pounding.pounding23",
+      "misc.pounding.pounding24",
+      "misc.pounding.pounding25",
+      "misc.pounding.pounding26",
+      "misc.pounding.pounding27",
+      "misc.pounding.pounding28",
+      "misc.pounding.pounding29",
+      "misc.pounding.pounding30",
+      "misc.pounding.pounding31",
+      "misc.pounding.pounding32",
+      "misc.pounding.pounding33",
+      "misc.pounding.pounding34"
+    ],
+    "volume": 1.0,
+    "meter": 0.03
+  },
+  "flap": {
+    "sounds": [
+      "misc.flap.flap0",
+      "misc.flap.flap1",
+      "misc.flap.flap2",
+      "misc.flap.flap3"
+    ],
+    "volume": 1.0
+  },
+  "flapControlled": {
+    "sounds": [
+      "misc.flap.flap0",
+      "misc.flap.flap1",
+      "misc.flap.flap2",
+      "misc.flap.flap3"
+    ],
+    "volume": 1.0,
+    "flap": true
+  },
+  "creampieGalath": {
+    "sounds": [
+      "misc.smallinserts.smallinserts0",
+      "misc.smallinserts.smallinserts1",
+      "misc.smallinserts.smallinserts2",
+      "misc.smallinserts.smallinserts3",
+      "misc.smallinserts.smallinserts4"
+    ],
+    "volume": 3.0
+  },
+  "clap": {
+    "sounds": [
+      "misc.clap.clap0"
+    ],
+    "volume": 1.0
+  },
+  "energysound": {
+    "sounds": [
+      "misc.beew.beew1"
+    ],
+    "volume": 1.0
+  },
+  "energy2": {
+    "sounds": [
+      "misc.beew.beew2"
+    ],
+    "volume": 1.0
+  },
+  "tpSound": {
+    "sounds": [
+      "misc.weoweo.weoweo2"
+    ],
+    "volume": 1.0
+  },
+  "lick": {
+    "sounds": [
+      "girls.allie.lipsound.lipsound0",
+      "girls.allie.lipsound.lipsound1",
+      "girls.allie.lipsound.lipsound2",
+      "girls.allie.lipsound.lipsound3",
+      "girls.allie.lipsound.lipsound4",
+      "girls.allie.lipsound.lipsound5",
+      "girls.allie.lipsound.lipsound6",
+      "girls.allie.lipsound.lipsound7",
+      "girls.allie.lipsound.lipsound8",
+      "girls.allie.lipsound.lipsound9",
+      "girls.allie.lipsound.lipsound10",
+      "girls.allie.lipsound.lipsound11",
+      "girls.allie.lipsound.lipsound12",
+      "girls.allie.lipsound.lipsound13"
+    ],
+    "volume": 1.0
+  },
+  "boostSound": {
+    "sounds": [
+      "girls.galath.lightcharge.lightcharge0",
+      "girls.galath.lightcharge.lightcharge1",
+      "girls.galath.lightcharge.lightcharge2",
+      "girls.galath.lightcharge.lightcharge3",
+      "girls.galath.lightcharge.lightcharge4"
+    ],
+    "volume": 1.0,
+    "layers": [
+      {
+        "sounds": [
+          "misc.flap.flap0",
+          "misc.flap.flap1",
+          "misc.flap.flap2",
+          "misc.flap.flap3"
+        ],
+        "volume": 1.0
+      }
+    ]
+  },
+  "addCum": {
+    "meter": 0.03
+  },
+  "enableRapeUI": {
+    "hud": "show"
+  },
+  "setCamCorrupt": {
+    "hud": "show"
+  },
+  "sexui": {
+    "hud": "show"
+  },
+  "blackScreenTamed": {
+    "wipe": true
+  },
+  "blackScreen": {
+    "wipe": true
+  },
+  "blackScreenMaster": {
+    "wipe": true
+  }
 }

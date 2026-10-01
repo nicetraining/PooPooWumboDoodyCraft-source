@@ -1,365 +1,368 @@
 {
- "doggystartMSG1": {
-  "sounds": [
-   "misc.touch.touch0"
-  ]
- },
- "doggystartMSG2": {
-  "sounds": [
-   "misc.touch.touch1"
-  ]
- },
- "doggystartMSG4": {
-  "sounds": [
-   "misc.smallinserts.smallinserts0",
-   "misc.smallinserts.smallinserts1",
-   "misc.smallinserts.smallinserts2",
-   "misc.smallinserts.smallinserts3",
-   "misc.smallinserts.smallinserts4"
-  ],
-  "volume": 1.5
- },
- "doggystartMSG5": {
-  "sounds": [
-   "misc.pounding.pounding0",
-   "misc.pounding.pounding1",
-   "misc.pounding.pounding2",
-   "misc.pounding.pounding3",
-   "misc.pounding.pounding4",
-   "misc.pounding.pounding5",
-   "misc.pounding.pounding6",
-   "misc.pounding.pounding7",
-   "misc.pounding.pounding8",
-   "misc.pounding.pounding9",
-   "misc.pounding.pounding10",
-   "misc.pounding.pounding11",
-   "misc.pounding.pounding12",
-   "misc.pounding.pounding13",
-   "misc.pounding.pounding14",
-   "misc.pounding.pounding15",
-   "misc.pounding.pounding16",
-   "misc.pounding.pounding17",
-   "misc.pounding.pounding18",
-   "misc.pounding.pounding19",
-   "misc.pounding.pounding20",
-   "misc.pounding.pounding21",
-   "misc.pounding.pounding22",
-   "misc.pounding.pounding23",
-   "misc.pounding.pounding24",
-   "misc.pounding.pounding25",
-   "misc.pounding.pounding26",
-   "misc.pounding.pounding27",
-   "misc.pounding.pounding28",
-   "misc.pounding.pounding29",
-   "misc.pounding.pounding30",
-   "misc.pounding.pounding31",
-   "misc.pounding.pounding32",
-   "misc.pounding.pounding33",
-   "misc.pounding.pounding34"
-  ],
-  "volume": 0.33,
-  "layers": [
-   {
+  "doggystartMSG1": {
     "sounds": [
-     "minecraft:entity.slime.attack"
+      "misc.touch.touch0"
     ]
-   }
-  ]
- },
- "doggyslowMSG1": {
-  "sounds": [
-   "misc.pounding.pounding0",
-   "misc.pounding.pounding1",
-   "misc.pounding.pounding2",
-   "misc.pounding.pounding3",
-   "misc.pounding.pounding4",
-   "misc.pounding.pounding5",
-   "misc.pounding.pounding6",
-   "misc.pounding.pounding7",
-   "misc.pounding.pounding8",
-   "misc.pounding.pounding9",
-   "misc.pounding.pounding10",
-   "misc.pounding.pounding11",
-   "misc.pounding.pounding12",
-   "misc.pounding.pounding13",
-   "misc.pounding.pounding14",
-   "misc.pounding.pounding15",
-   "misc.pounding.pounding16",
-   "misc.pounding.pounding17",
-   "misc.pounding.pounding18",
-   "misc.pounding.pounding19",
-   "misc.pounding.pounding20",
-   "misc.pounding.pounding21",
-   "misc.pounding.pounding22",
-   "misc.pounding.pounding23",
-   "misc.pounding.pounding24",
-   "misc.pounding.pounding25",
-   "misc.pounding.pounding26",
-   "misc.pounding.pounding27",
-   "misc.pounding.pounding28",
-   "misc.pounding.pounding29",
-   "misc.pounding.pounding30",
-   "misc.pounding.pounding31",
-   "misc.pounding.pounding32",
-   "misc.pounding.pounding33",
-   "misc.pounding.pounding34"
-  ],
-  "volume": 0.33,
-  "meter": 0.02,
-  "layers": [
-   {
-    "any_of": [
-     {
-      "any_of": [
-       {
-        "sounds": [
-         "minecraft:entity.slime.jump"
-        ]
-       },
-       {
-        "sounds": [
-         "minecraft:entity.slime.squish"
-        ]
-       }
-      ],
-      "weights": [
-       1,
-       1
-      ]
-     },
-     {
-      "sounds": [
-       "minecraft:entity.slime.attack"
-      ]
-     }
+  },
+  "doggystartMSG2": {
+    "sounds": [
+      "misc.touch.touch1"
+    ]
+  },
+  "doggystartMSG4": {
+    "sounds": [
+      "misc.smallinserts.smallinserts0",
+      "misc.smallinserts.smallinserts1",
+      "misc.smallinserts.smallinserts2",
+      "misc.smallinserts.smallinserts3",
+      "misc.smallinserts.smallinserts4"
     ],
-    "weights": [
-     1,
-     3
-    ]
-   }
-  ]
- },
- "doggyfastMSG1": {
-  "sounds": [
-   "misc.pounding.pounding0",
-   "misc.pounding.pounding1",
-   "misc.pounding.pounding2",
-   "misc.pounding.pounding3",
-   "misc.pounding.pounding4",
-   "misc.pounding.pounding5",
-   "misc.pounding.pounding6",
-   "misc.pounding.pounding7",
-   "misc.pounding.pounding8",
-   "misc.pounding.pounding9",
-   "misc.pounding.pounding10",
-   "misc.pounding.pounding11",
-   "misc.pounding.pounding12",
-   "misc.pounding.pounding13",
-   "misc.pounding.pounding14",
-   "misc.pounding.pounding15",
-   "misc.pounding.pounding16",
-   "misc.pounding.pounding17",
-   "misc.pounding.pounding18",
-   "misc.pounding.pounding19",
-   "misc.pounding.pounding20",
-   "misc.pounding.pounding21",
-   "misc.pounding.pounding22",
-   "misc.pounding.pounding23",
-   "misc.pounding.pounding24",
-   "misc.pounding.pounding25",
-   "misc.pounding.pounding26",
-   "misc.pounding.pounding27",
-   "misc.pounding.pounding28",
-   "misc.pounding.pounding29",
-   "misc.pounding.pounding30",
-   "misc.pounding.pounding31",
-   "misc.pounding.pounding32",
-   "misc.pounding.pounding33",
-   "misc.pounding.pounding34"
-  ],
-  "volume": 0.75,
-  "meter": 0.04,
-  "layers": [
-   {
-    "any_of": [
-     {
-      "any_of": [
-       {
+    "volume": 1.5
+  },
+  "doggystartMSG5": {
+    "sounds": [
+      "misc.pounding.pounding0",
+      "misc.pounding.pounding1",
+      "misc.pounding.pounding2",
+      "misc.pounding.pounding3",
+      "misc.pounding.pounding4",
+      "misc.pounding.pounding5",
+      "misc.pounding.pounding6",
+      "misc.pounding.pounding7",
+      "misc.pounding.pounding8",
+      "misc.pounding.pounding9",
+      "misc.pounding.pounding10",
+      "misc.pounding.pounding11",
+      "misc.pounding.pounding12",
+      "misc.pounding.pounding13",
+      "misc.pounding.pounding14",
+      "misc.pounding.pounding15",
+      "misc.pounding.pounding16",
+      "misc.pounding.pounding17",
+      "misc.pounding.pounding18",
+      "misc.pounding.pounding19",
+      "misc.pounding.pounding20",
+      "misc.pounding.pounding21",
+      "misc.pounding.pounding22",
+      "misc.pounding.pounding23",
+      "misc.pounding.pounding24",
+      "misc.pounding.pounding25",
+      "misc.pounding.pounding26",
+      "misc.pounding.pounding27",
+      "misc.pounding.pounding28",
+      "misc.pounding.pounding29",
+      "misc.pounding.pounding30",
+      "misc.pounding.pounding31",
+      "misc.pounding.pounding32",
+      "misc.pounding.pounding33",
+      "misc.pounding.pounding34"
+    ],
+    "volume": 0.33,
+    "layers": [
+      {
         "sounds": [
-         "minecraft:entity.slime.jump"
+          "minecraft:entity.slime.attack"
         ]
-       },
-       {
+      }
+    ]
+  },
+  "doggyslowMSG1": {
+    "sounds": [
+      "misc.pounding.pounding0",
+      "misc.pounding.pounding1",
+      "misc.pounding.pounding2",
+      "misc.pounding.pounding3",
+      "misc.pounding.pounding4",
+      "misc.pounding.pounding5",
+      "misc.pounding.pounding6",
+      "misc.pounding.pounding7",
+      "misc.pounding.pounding8",
+      "misc.pounding.pounding9",
+      "misc.pounding.pounding10",
+      "misc.pounding.pounding11",
+      "misc.pounding.pounding12",
+      "misc.pounding.pounding13",
+      "misc.pounding.pounding14",
+      "misc.pounding.pounding15",
+      "misc.pounding.pounding16",
+      "misc.pounding.pounding17",
+      "misc.pounding.pounding18",
+      "misc.pounding.pounding19",
+      "misc.pounding.pounding20",
+      "misc.pounding.pounding21",
+      "misc.pounding.pounding22",
+      "misc.pounding.pounding23",
+      "misc.pounding.pounding24",
+      "misc.pounding.pounding25",
+      "misc.pounding.pounding26",
+      "misc.pounding.pounding27",
+      "misc.pounding.pounding28",
+      "misc.pounding.pounding29",
+      "misc.pounding.pounding30",
+      "misc.pounding.pounding31",
+      "misc.pounding.pounding32",
+      "misc.pounding.pounding33",
+      "misc.pounding.pounding34"
+    ],
+    "volume": 0.33,
+    "meter": 0.02,
+    "layers": [
+      {
+        "any_of": [
+          {
+            "any_of": [
+              {
+                "sounds": [
+                  "minecraft:entity.slime.jump"
+                ]
+              },
+              {
+                "sounds": [
+                  "minecraft:entity.slime.squish"
+                ]
+              }
+            ],
+            "weights": [
+              1,
+              1
+            ]
+          },
+          {
+            "sounds": [
+              "minecraft:entity.slime.attack"
+            ]
+          }
+        ],
+        "weights": [
+          1,
+          3
+        ]
+      }
+    ]
+  },
+  "doggyfastMSG1": {
+    "sounds": [
+      "misc.pounding.pounding0",
+      "misc.pounding.pounding1",
+      "misc.pounding.pounding2",
+      "misc.pounding.pounding3",
+      "misc.pounding.pounding4",
+      "misc.pounding.pounding5",
+      "misc.pounding.pounding6",
+      "misc.pounding.pounding7",
+      "misc.pounding.pounding8",
+      "misc.pounding.pounding9",
+      "misc.pounding.pounding10",
+      "misc.pounding.pounding11",
+      "misc.pounding.pounding12",
+      "misc.pounding.pounding13",
+      "misc.pounding.pounding14",
+      "misc.pounding.pounding15",
+      "misc.pounding.pounding16",
+      "misc.pounding.pounding17",
+      "misc.pounding.pounding18",
+      "misc.pounding.pounding19",
+      "misc.pounding.pounding20",
+      "misc.pounding.pounding21",
+      "misc.pounding.pounding22",
+      "misc.pounding.pounding23",
+      "misc.pounding.pounding24",
+      "misc.pounding.pounding25",
+      "misc.pounding.pounding26",
+      "misc.pounding.pounding27",
+      "misc.pounding.pounding28",
+      "misc.pounding.pounding29",
+      "misc.pounding.pounding30",
+      "misc.pounding.pounding31",
+      "misc.pounding.pounding32",
+      "misc.pounding.pounding33",
+      "misc.pounding.pounding34"
+    ],
+    "volume": 0.75,
+    "meter": 0.04,
+    "layers": [
+      {
+        "any_of": [
+          {
+            "any_of": [
+              {
+                "sounds": [
+                  "minecraft:entity.slime.jump"
+                ]
+              },
+              {
+                "sounds": [
+                  "minecraft:entity.slime.squish"
+                ]
+              }
+            ],
+            "weights": [
+              1,
+              1
+            ]
+          },
+          {
+            "sounds": [
+              "minecraft:entity.slime.attack"
+            ]
+          }
+        ],
+        "weights": [
+          1,
+          1
+        ]
+      }
+    ]
+  },
+  "doggycumMSG1": {
+    "sounds": [
+      "misc.cuminflation.cuminflation0"
+    ],
+    "volume": 4.0,
+    "layers": [
+      {
         "sounds": [
-         "minecraft:entity.slime.squish"
+          "misc.pounding.pounding0",
+          "misc.pounding.pounding1",
+          "misc.pounding.pounding2",
+          "misc.pounding.pounding3",
+          "misc.pounding.pounding4",
+          "misc.pounding.pounding5",
+          "misc.pounding.pounding6",
+          "misc.pounding.pounding7",
+          "misc.pounding.pounding8",
+          "misc.pounding.pounding9",
+          "misc.pounding.pounding10",
+          "misc.pounding.pounding11",
+          "misc.pounding.pounding12",
+          "misc.pounding.pounding13",
+          "misc.pounding.pounding14",
+          "misc.pounding.pounding15",
+          "misc.pounding.pounding16",
+          "misc.pounding.pounding17",
+          "misc.pounding.pounding18",
+          "misc.pounding.pounding19",
+          "misc.pounding.pounding20",
+          "misc.pounding.pounding21",
+          "misc.pounding.pounding22",
+          "misc.pounding.pounding23",
+          "misc.pounding.pounding24",
+          "misc.pounding.pounding25",
+          "misc.pounding.pounding26",
+          "misc.pounding.pounding27",
+          "misc.pounding.pounding28",
+          "misc.pounding.pounding29",
+          "misc.pounding.pounding30",
+          "misc.pounding.pounding31",
+          "misc.pounding.pounding32",
+          "misc.pounding.pounding33",
+          "misc.pounding.pounding34",
+          "misc.pounding.pounding35"
+        ],
+        "volume": 2.0
+      },
+      {
+        "sounds": [
+          "minecraft:entity.slime.hurt"
         ]
-       }
-      ],
-      "weights": [
-       1,
-       1
-      ]
-     },
-     {
-      "sounds": [
-       "minecraft:entity.slime.attack"
-      ]
-     }
+      }
+    ]
+  },
+  "bjcDone": {
+    "hud": "reset"
+  },
+  "doggyCumDone": {
+    "hud": "reset"
+  },
+  "bjcMSG2": {
+    "sounds": [
+      "minecraft:entity.slime.jump"
     ],
-    "weights": [
-     1,
-     1
-    ]
-   }
-  ]
- },
- "doggycumMSG1": {
-  "sounds": [
-   "misc.cuminflation.cuminflation0"
-  ],
-  "volume": 4.0,
-  "layers": [
-   {
+    "hud": "hide"
+  },
+  "bjiDone": {
+    "hud": "show"
+  },
+  "bjiMSG11": {
     "sounds": [
-     "misc.pounding.pounding0",
-     "misc.pounding.pounding1",
-     "misc.pounding.pounding2",
-     "misc.pounding.pounding3",
-     "misc.pounding.pounding4",
-     "misc.pounding.pounding5",
-     "misc.pounding.pounding6",
-     "misc.pounding.pounding7",
-     "misc.pounding.pounding8",
-     "misc.pounding.pounding9",
-     "misc.pounding.pounding10",
-     "misc.pounding.pounding11",
-     "misc.pounding.pounding12",
-     "misc.pounding.pounding13",
-     "misc.pounding.pounding14",
-     "misc.pounding.pounding15",
-     "misc.pounding.pounding16",
-     "misc.pounding.pounding17",
-     "misc.pounding.pounding18",
-     "misc.pounding.pounding19",
-     "misc.pounding.pounding20",
-     "misc.pounding.pounding21",
-     "misc.pounding.pounding22",
-     "misc.pounding.pounding23",
-     "misc.pounding.pounding24",
-     "misc.pounding.pounding25",
-     "misc.pounding.pounding26",
-     "misc.pounding.pounding27",
-     "misc.pounding.pounding28",
-     "misc.pounding.pounding29",
-     "misc.pounding.pounding30",
-     "misc.pounding.pounding31",
-     "misc.pounding.pounding32",
-     "misc.pounding.pounding33",
-     "misc.pounding.pounding34",
-     "misc.pounding.pounding35"
+      "minecraft:entity.slime.squish"
     ],
-    "volume": 2.0
-   },
-   {
-    "sounds": [
-     "minecraft:entity.slime.hurt"
-    ]
-   }
-  ]
- },
- "bjcDone": {
-  "hud": "reset"
- },
- "doggyCumDone": {
-  "hud": "reset"
- },
- "bjcMSG2": {
-  "sounds": [
-   "minecraft:entity.slime.jump"
-  ],
-  "hud": "hide"
- },
- "bjiDone": {
-  "hud": "show"
- },
- "bjiMSG11": {
-  "sounds": [
-   "minecraft:entity.slime.squish"
-  ],
-  "volume": 0.5,
-  "meter": 0.02
- },
- "bjiMSG12": {
-  "layers": [
-   {
-    "any_of": [
-     {
-      "sounds": [
-       "minecraft:entity.slime.squish"
-      ],
-      "volume": 0.5
-     },
-     {
-      "sounds": [
-       "minecraft:entity.slime.jump"
-      ],
-      "volume": 0.5
-     }
+    "volume": 0.5,
+    "meter": 0.02
+  },
+  "bjiMSG12": {
+    "layers": [
+      {
+        "any_of": [
+          {
+            "sounds": [
+              "minecraft:entity.slime.squish"
+            ],
+            "volume": 0.5
+          },
+          {
+            "sounds": [
+              "minecraft:entity.slime.jump"
+            ],
+            "volume": 0.5
+          }
+        ],
+        "weights": [
+          4,
+          1
+        ]
+      }
     ],
-    "weights": [
-     4,
-     1
-    ]
-   }
-  ],
-  "meter": 0.02
- },
- "bjtMSG1": {
-  "layers": [
-   {
+    "meter": 0.02
+  },
+  "bjtMSG1": {
+    "layers": [
+      {
+        "sounds": [
+          "minecraft:entity.slime.attack"
+        ]
+      },
+      {
+        "sounds": [
+          "minecraft:entity.slime.hurt"
+        ]
+      }
+    ],
+    "meter": 0.04
+  },
+  "doggystartDone": {
+    "hud": "show"
+  },
+  "sexUiOn": {
+    "hud": "show"
+  },
+  "jumpStart": {
     "sounds": [
-     "minecraft:entity.slime.attack"
+      "minecraft:entity.slime.jump"
     ]
-   },
-   {
+  },
+  "jumpEndSound": {
     "sounds": [
-     "minecraft:entity.slime.hurt"
+      "minecraft:entity.slime.squish"
     ]
-   }
-  ],
-  "meter": 0.04
- },
- "doggystartDone": {
-  "hud": "show"
- },
- "sexUiOn": {
-  "hud": "show"
- },
- "jumpStart": {
-  "sounds": [
-   "minecraft:entity.slime.jump"
-  ]
- },
- "jumpEndSound": {
-  "sounds": [
-   "minecraft:entity.slime.squish"
-  ]
- },
- "bjcMSG1": {
-  "sounds": [
-   "minecraft:entity.slime.jump"
-  ]
- },
- "doggyGoOnBedMSG1": {
-  "sounds": [
-   "minecraft:entity.slime.squish"
-  ]
- },
- "doggystartMSG3": {
-  "sounds": [
-   "minecraft:entity.slime.squish"
-  ],
-  "volume": 0.25
- }
+  },
+  "bjcMSG1": {
+    "sounds": [
+      "minecraft:entity.slime.jump"
+    ]
+  },
+  "doggyGoOnBedMSG1": {
+    "sounds": [
+      "minecraft:entity.slime.squish"
+    ]
+  },
+  "doggystartMSG3": {
+    "sounds": [
+      "minecraft:entity.slime.squish"
+    ],
+    "volume": 0.25
+  },
+  "bjcBlackScreen": {
+    "wipe": true
+  }
 }

@@ -1,299 +1,302 @@
 {
- "paymentMSG1": {
-  "sounds": [
-   "misc.plob.plob0"
-  ]
- },
- "plob": {
-  "sounds": [
-   "misc.plob.plob0"
-  ]
- },
- "lipsound": {
-  "layers": [
-   {
-    "any_of": [
-     {
-      "sounds": [
-       "girls.allie.lipsound.lipsound0",
-       "girls.allie.lipsound.lipsound1",
-       "girls.allie.lipsound.lipsound2",
-       "girls.allie.lipsound.lipsound3",
-       "girls.allie.lipsound.lipsound4",
-       "girls.allie.lipsound.lipsound5",
-       "girls.allie.lipsound.lipsound6",
-       "girls.allie.lipsound.lipsound7",
-       "girls.allie.lipsound.lipsound8",
-       "girls.allie.lipsound.lipsound9",
-       "girls.allie.lipsound.lipsound10",
-       "girls.allie.lipsound.lipsound11",
-       "girls.allie.lipsound.lipsound12",
-       "girls.allie.lipsound.lipsound13"
-      ],
-      "volume": 1.5
-     },
-     {
-      "sounds": [
-       "girls.jenny.lipsound.lipsound0",
-       "girls.jenny.lipsound.lipsound1",
-       "girls.jenny.lipsound.lipsound2",
-       "girls.jenny.lipsound.lipsound3",
-       "girls.jenny.lipsound.lipsound4",
-       "girls.jenny.lipsound.lipsound5",
-       "girls.jenny.lipsound.lipsound6",
-       "girls.jenny.lipsound.lipsound7",
-       "girls.jenny.lipsound.lipsound8",
-       "girls.jenny.lipsound.lipsound9"
-      ],
-      "volume": 1.5
-     }
-    ],
-    "weights": [
-     1,
-     1
+  "paymentMSG1": {
+    "sounds": [
+      "misc.plob.plob0"
     ]
-   }
-  ],
-  "meter": 0.02
- },
- "touch": {
-  "sounds": [
-   "misc.touch.touch0",
-   "misc.touch.touch1"
-  ]
- },
- "cumLoud": {
-  "sounds": [
-   "misc.smallinserts.smallinserts0",
-   "misc.smallinserts.smallinserts1",
-   "misc.smallinserts.smallinserts2",
-   "misc.smallinserts.smallinserts3",
-   "misc.smallinserts.smallinserts4"
-  ],
-  "volume": 3.0
- },
- "cumQuiet": {
-  "sounds": [
-   "misc.smallinserts.smallinserts0",
-   "misc.smallinserts.smallinserts1",
-   "misc.smallinserts.smallinserts2",
-   "misc.smallinserts.smallinserts3",
-   "misc.smallinserts.smallinserts4"
-  ],
-  "volume": 1.5
- },
- "pounding": {
-  "sounds": [
-   "misc.pounding.pounding0",
-   "misc.pounding.pounding1",
-   "misc.pounding.pounding2",
-   "misc.pounding.pounding3",
-   "misc.pounding.pounding4",
-   "misc.pounding.pounding5",
-   "misc.pounding.pounding6",
-   "misc.pounding.pounding7",
-   "misc.pounding.pounding8",
-   "misc.pounding.pounding9",
-   "misc.pounding.pounding10",
-   "misc.pounding.pounding11",
-   "misc.pounding.pounding12",
-   "misc.pounding.pounding13",
-   "misc.pounding.pounding14",
-   "misc.pounding.pounding15",
-   "misc.pounding.pounding16",
-   "misc.pounding.pounding17",
-   "misc.pounding.pounding18",
-   "misc.pounding.pounding19",
-   "misc.pounding.pounding20",
-   "misc.pounding.pounding21",
-   "misc.pounding.pounding22",
-   "misc.pounding.pounding23",
-   "misc.pounding.pounding24",
-   "misc.pounding.pounding25",
-   "misc.pounding.pounding26",
-   "misc.pounding.pounding27",
-   "misc.pounding.pounding28",
-   "misc.pounding.pounding29",
-   "misc.pounding.pounding30",
-   "misc.pounding.pounding31",
-   "misc.pounding.pounding32",
-   "misc.pounding.pounding33",
-   "misc.pounding.pounding34"
-  ]
- },
- "cum": {
-  "sounds": [
-   "misc.smallinserts.smallinserts0",
-   "misc.smallinserts.smallinserts1",
-   "misc.smallinserts.smallinserts2",
-   "misc.smallinserts.smallinserts3",
-   "misc.smallinserts.smallinserts4"
-  ],
-  "volume": 2.0
- },
- "giggle": {
-  "sounds": [
-   "girls.kobold.giggle.giggle0",
-   "girls.kobold.giggle.giggle1",
-   "girls.kobold.giggle.giggle2",
-   "girls.kobold.giggle.giggle3"
-  ]
- },
- "moan": {
-  "sounds": [
-   "girls.kobold.moan.moan0",
-   "girls.kobold.moan.moan1",
-   "girls.kobold.moan.moan2",
-   "girls.kobold.moan.moan3",
-   "girls.kobold.moan.moan4",
-   "girls.kobold.moan.moan5",
-   "girls.kobold.moan.moan6",
-   "girls.kobold.moan.moan7",
-   "girls.kobold.moan.moan8",
-   "girls.kobold.moan.moan9"
-  ]
- },
- "orgasm": {
-  "sounds": [
-   "girls.kobold.orgasm.orgasm0",
-   "girls.kobold.orgasm.orgasm1",
-   "girls.kobold.orgasm.orgasm2",
-   "girls.kobold.orgasm.orgasm3"
-  ]
- },
- "breath": {
-  "sounds": [
-   "girls.kobold.lightbreathing.lightbreathing0",
-   "girls.kobold.lightbreathing.lightbreathing1",
-   "girls.kobold.lightbreathing.lightbreathing2",
-   "girls.kobold.lightbreathing.lightbreathing3",
-   "girls.kobold.lightbreathing.lightbreathing4",
-   "girls.kobold.lightbreathing.lightbreathing5",
-   "girls.kobold.lightbreathing.lightbreathing6",
-   "girls.kobold.lightbreathing.lightbreathing7",
-   "girls.kobold.lightbreathing.lightbreathing9",
-   "girls.kobold.lightbreathing.lightbreathing10",
-   "girls.kobold.lightbreathing.lightbreathing11"
-  ],
-  "volume": 0.5
- },
- "haa": {
-  "sounds": [
-   "girls.kobold.haa.haa0",
-   "girls.kobold.haa.haa1",
-   "girls.kobold.haa.haa2",
-   "girls.kobold.haa.haa3",
-   "girls.kobold.haa.haa4",
-   "girls.kobold.haa.haa5",
-   "girls.kobold.haa.haa6"
-  ],
-  "volume": 0.7
- },
- "interested": {
-  "sounds": [
-   "girls.kobold.interested.interested0",
-   "girls.kobold.interested.interested1",
-   "girls.kobold.interested.interested2"
-  ]
- },
- "yep": {
-  "sounds": [
-   "girls.kobold.yep.yep0",
-   "girls.kobold.yep.yep1",
-   "girls.kobold.yep.yep2",
-   "girls.kobold.yep.yep3",
-   "girls.kobold.yep.yep4",
-   "girls.kobold.yep.yep5",
-   "girls.kobold.yep.yep6"
-  ]
- },
- "bjmoan": {
-  "sounds": [
-   "girls.kobold.bjmoan.bjmoan0",
-   "girls.kobold.bjmoan.bjmoan1",
-   "girls.kobold.bjmoan.bjmoan2",
-   "girls.kobold.bjmoan.bjmoan3",
-   "girls.kobold.bjmoan.bjmoan4",
-   "girls.kobold.bjmoan.bjmoan5",
-   "girls.kobold.bjmoan.bjmoan6",
-   "girls.kobold.bjmoan.bjmoan7",
-   "girls.kobold.bjmoan.bjmoan8",
-   "girls.kobold.bjmoan.bjmoan9"
-  ]
- },
- "blowjobStartbreath": {
-  "sounds": [
-   "girls.kobold.lightbreathing.lightbreathing0",
-   "girls.kobold.lightbreathing.lightbreathing1",
-   "girls.kobold.lightbreathing.lightbreathing2"
-  ]
- },
- "cumMsg": {
-  "sounds": [
-   "girls.kobold.sad.sad0"
-  ]
- },
- "renderEgg": {
-  "sounds": [
-   "misc.plob.plob0"
-  ],
-  "volume": 0.5
- },
- "moanMating": {
-  "sounds": [
-   "girls.kobold.moan.moan0",
-   "girls.kobold.moan.moan1",
-   "girls.kobold.moan.moan2",
-   "girls.kobold.moan.moan3",
-   "girls.kobold.moan.moan4",
-   "girls.kobold.moan.moan5",
-   "girls.kobold.moan.moan6",
-   "girls.kobold.moan.moan7",
-   "girls.kobold.moan.moan8",
-   "girls.kobold.moan.moan9"
-  ],
-  "every": 3
- },
- "analHardMSG1": {
-  "sounds": [
-   "girls.kobold.moan.moan0",
-   "girls.kobold.moan.moan1",
-   "girls.kobold.moan.moan2",
-   "girls.kobold.moan.moan3",
-   "girls.kobold.moan.moan4",
-   "girls.kobold.moan.moan5",
-   "girls.kobold.moan.moan6",
-   "girls.kobold.moan.moan7",
-   "girls.kobold.moan.moan8",
-   "girls.kobold.moan.moan9"
-  ],
-  "every": 4
- },
- "analCumDone": {
-  "hud": "hide"
- },
- "blowjobCumDone": {
-  "hud": "hide"
- },
- "analHard": {
-  "meter": 0.04
- },
- "analSoft": {
-  "meter": 0.02
- },
- "analStartDone": {
-  "hud": "show"
- },
- "blowjobStartDone": {
-  "hud": "show"
- },
- "mating_press_hardReady": {
-  "meter": 0.04
- },
- "mating_press_softReady": {
-  "meter": 0.04
- },
- "mating_press_startDone": {
-  "hud": "show"
- }
+  },
+  "plob": {
+    "sounds": [
+      "misc.plob.plob0"
+    ]
+  },
+  "lipsound": {
+    "layers": [
+      {
+        "any_of": [
+          {
+            "sounds": [
+              "girls.allie.lipsound.lipsound0",
+              "girls.allie.lipsound.lipsound1",
+              "girls.allie.lipsound.lipsound2",
+              "girls.allie.lipsound.lipsound3",
+              "girls.allie.lipsound.lipsound4",
+              "girls.allie.lipsound.lipsound5",
+              "girls.allie.lipsound.lipsound6",
+              "girls.allie.lipsound.lipsound7",
+              "girls.allie.lipsound.lipsound8",
+              "girls.allie.lipsound.lipsound9",
+              "girls.allie.lipsound.lipsound10",
+              "girls.allie.lipsound.lipsound11",
+              "girls.allie.lipsound.lipsound12",
+              "girls.allie.lipsound.lipsound13"
+            ],
+            "volume": 1.5
+          },
+          {
+            "sounds": [
+              "girls.jenny.lipsound.lipsound0",
+              "girls.jenny.lipsound.lipsound1",
+              "girls.jenny.lipsound.lipsound2",
+              "girls.jenny.lipsound.lipsound3",
+              "girls.jenny.lipsound.lipsound4",
+              "girls.jenny.lipsound.lipsound5",
+              "girls.jenny.lipsound.lipsound6",
+              "girls.jenny.lipsound.lipsound7",
+              "girls.jenny.lipsound.lipsound8",
+              "girls.jenny.lipsound.lipsound9"
+            ],
+            "volume": 1.5
+          }
+        ],
+        "weights": [
+          1,
+          1
+        ]
+      }
+    ],
+    "meter": 0.02
+  },
+  "touch": {
+    "sounds": [
+      "misc.touch.touch0",
+      "misc.touch.touch1"
+    ]
+  },
+  "cumLoud": {
+    "sounds": [
+      "misc.smallinserts.smallinserts0",
+      "misc.smallinserts.smallinserts1",
+      "misc.smallinserts.smallinserts2",
+      "misc.smallinserts.smallinserts3",
+      "misc.smallinserts.smallinserts4"
+    ],
+    "volume": 3.0
+  },
+  "cumQuiet": {
+    "sounds": [
+      "misc.smallinserts.smallinserts0",
+      "misc.smallinserts.smallinserts1",
+      "misc.smallinserts.smallinserts2",
+      "misc.smallinserts.smallinserts3",
+      "misc.smallinserts.smallinserts4"
+    ],
+    "volume": 1.5
+  },
+  "pounding": {
+    "sounds": [
+      "misc.pounding.pounding0",
+      "misc.pounding.pounding1",
+      "misc.pounding.pounding2",
+      "misc.pounding.pounding3",
+      "misc.pounding.pounding4",
+      "misc.pounding.pounding5",
+      "misc.pounding.pounding6",
+      "misc.pounding.pounding7",
+      "misc.pounding.pounding8",
+      "misc.pounding.pounding9",
+      "misc.pounding.pounding10",
+      "misc.pounding.pounding11",
+      "misc.pounding.pounding12",
+      "misc.pounding.pounding13",
+      "misc.pounding.pounding14",
+      "misc.pounding.pounding15",
+      "misc.pounding.pounding16",
+      "misc.pounding.pounding17",
+      "misc.pounding.pounding18",
+      "misc.pounding.pounding19",
+      "misc.pounding.pounding20",
+      "misc.pounding.pounding21",
+      "misc.pounding.pounding22",
+      "misc.pounding.pounding23",
+      "misc.pounding.pounding24",
+      "misc.pounding.pounding25",
+      "misc.pounding.pounding26",
+      "misc.pounding.pounding27",
+      "misc.pounding.pounding28",
+      "misc.pounding.pounding29",
+      "misc.pounding.pounding30",
+      "misc.pounding.pounding31",
+      "misc.pounding.pounding32",
+      "misc.pounding.pounding33",
+      "misc.pounding.pounding34"
+    ]
+  },
+  "cum": {
+    "sounds": [
+      "misc.smallinserts.smallinserts0",
+      "misc.smallinserts.smallinserts1",
+      "misc.smallinserts.smallinserts2",
+      "misc.smallinserts.smallinserts3",
+      "misc.smallinserts.smallinserts4"
+    ],
+    "volume": 2.0
+  },
+  "giggle": {
+    "sounds": [
+      "girls.kobold.giggle.giggle0",
+      "girls.kobold.giggle.giggle1",
+      "girls.kobold.giggle.giggle2",
+      "girls.kobold.giggle.giggle3"
+    ]
+  },
+  "moan": {
+    "sounds": [
+      "girls.kobold.moan.moan0",
+      "girls.kobold.moan.moan1",
+      "girls.kobold.moan.moan2",
+      "girls.kobold.moan.moan3",
+      "girls.kobold.moan.moan4",
+      "girls.kobold.moan.moan5",
+      "girls.kobold.moan.moan6",
+      "girls.kobold.moan.moan7",
+      "girls.kobold.moan.moan8",
+      "girls.kobold.moan.moan9"
+    ]
+  },
+  "orgasm": {
+    "sounds": [
+      "girls.kobold.orgasm.orgasm0",
+      "girls.kobold.orgasm.orgasm1",
+      "girls.kobold.orgasm.orgasm2",
+      "girls.kobold.orgasm.orgasm3"
+    ]
+  },
+  "breath": {
+    "sounds": [
+      "girls.kobold.lightbreathing.lightbreathing0",
+      "girls.kobold.lightbreathing.lightbreathing1",
+      "girls.kobold.lightbreathing.lightbreathing2",
+      "girls.kobold.lightbreathing.lightbreathing3",
+      "girls.kobold.lightbreathing.lightbreathing4",
+      "girls.kobold.lightbreathing.lightbreathing5",
+      "girls.kobold.lightbreathing.lightbreathing6",
+      "girls.kobold.lightbreathing.lightbreathing7",
+      "girls.kobold.lightbreathing.lightbreathing9",
+      "girls.kobold.lightbreathing.lightbreathing10",
+      "girls.kobold.lightbreathing.lightbreathing11"
+    ],
+    "volume": 0.5
+  },
+  "haa": {
+    "sounds": [
+      "girls.kobold.haa.haa0",
+      "girls.kobold.haa.haa1",
+      "girls.kobold.haa.haa2",
+      "girls.kobold.haa.haa3",
+      "girls.kobold.haa.haa4",
+      "girls.kobold.haa.haa5",
+      "girls.kobold.haa.haa6"
+    ],
+    "volume": 0.7
+  },
+  "interested": {
+    "sounds": [
+      "girls.kobold.interested.interested0",
+      "girls.kobold.interested.interested1",
+      "girls.kobold.interested.interested2"
+    ]
+  },
+  "yep": {
+    "sounds": [
+      "girls.kobold.yep.yep0",
+      "girls.kobold.yep.yep1",
+      "girls.kobold.yep.yep2",
+      "girls.kobold.yep.yep3",
+      "girls.kobold.yep.yep4",
+      "girls.kobold.yep.yep5",
+      "girls.kobold.yep.yep6"
+    ]
+  },
+  "bjmoan": {
+    "sounds": [
+      "girls.kobold.bjmoan.bjmoan0",
+      "girls.kobold.bjmoan.bjmoan1",
+      "girls.kobold.bjmoan.bjmoan2",
+      "girls.kobold.bjmoan.bjmoan3",
+      "girls.kobold.bjmoan.bjmoan4",
+      "girls.kobold.bjmoan.bjmoan5",
+      "girls.kobold.bjmoan.bjmoan6",
+      "girls.kobold.bjmoan.bjmoan7",
+      "girls.kobold.bjmoan.bjmoan8",
+      "girls.kobold.bjmoan.bjmoan9"
+    ]
+  },
+  "blowjobStartbreath": {
+    "sounds": [
+      "girls.kobold.lightbreathing.lightbreathing0",
+      "girls.kobold.lightbreathing.lightbreathing1",
+      "girls.kobold.lightbreathing.lightbreathing2"
+    ]
+  },
+  "cumMsg": {
+    "sounds": [
+      "girls.kobold.sad.sad0"
+    ]
+  },
+  "renderEgg": {
+    "sounds": [
+      "misc.plob.plob0"
+    ],
+    "volume": 0.5
+  },
+  "moanMating": {
+    "sounds": [
+      "girls.kobold.moan.moan0",
+      "girls.kobold.moan.moan1",
+      "girls.kobold.moan.moan2",
+      "girls.kobold.moan.moan3",
+      "girls.kobold.moan.moan4",
+      "girls.kobold.moan.moan5",
+      "girls.kobold.moan.moan6",
+      "girls.kobold.moan.moan7",
+      "girls.kobold.moan.moan8",
+      "girls.kobold.moan.moan9"
+    ],
+    "every": 3
+  },
+  "analHardMSG1": {
+    "sounds": [
+      "girls.kobold.moan.moan0",
+      "girls.kobold.moan.moan1",
+      "girls.kobold.moan.moan2",
+      "girls.kobold.moan.moan3",
+      "girls.kobold.moan.moan4",
+      "girls.kobold.moan.moan5",
+      "girls.kobold.moan.moan6",
+      "girls.kobold.moan.moan7",
+      "girls.kobold.moan.moan8",
+      "girls.kobold.moan.moan9"
+    ],
+    "every": 4
+  },
+  "analCumDone": {
+    "hud": "hide"
+  },
+  "blowjobCumDone": {
+    "hud": "hide"
+  },
+  "analHard": {
+    "meter": 0.04
+  },
+  "analSoft": {
+    "meter": 0.02
+  },
+  "analStartDone": {
+    "hud": "show"
+  },
+  "blowjobStartDone": {
+    "hud": "show"
+  },
+  "mating_press_hardReady": {
+    "meter": 0.04
+  },
+  "mating_press_softReady": {
+    "meter": 0.04
+  },
+  "mating_press_startDone": {
+    "hud": "show"
+  },
+  "blackScreen": {
+    "wipe": true
+  }
 }
