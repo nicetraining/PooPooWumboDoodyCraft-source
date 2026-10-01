@@ -516,8 +516,19 @@ public final class FapCraftGameTests {
         Player player = helper.makeMockPlayer(GameType.SURVIVAL);
         CompanionEntity jenny = spawnKind(helper, CompanionKind.JENNY);
 
-        if (jenny.beginBedWalk(helper.getLevel(), player, CompanionScene.JENNY_DOGGY) || jenny.isBedWalking()) {
-            helper.fail("with no bed Jenny refuses and does not walk");
+        boolean strangerBed = false; // other tests' arenas sit a few blocks away and some of them place beds
+        for (var pos : net.minecraft.core.BlockPos.betweenClosed(jenny.blockPosition().offset(-24, -6, -24), jenny.blockPosition().offset(24, 6, 24))) {
+            strangerBed |= helper.getLevel().getBlockState(pos).getBlock() instanceof net.minecraft.world.level.block.BedBlock;
+        }
+        if (!strangerBed && (jenny.beginBedWalk(helper.getLevel(), player, CompanionScene.JENNY_DOGGY) || jenny.isBedWalking())) {
+            StringBuilder beds = new StringBuilder();
+            var origin = jenny.blockPosition();
+            for (var pos : net.minecraft.core.BlockPos.betweenClosed(origin.offset(-24, -6, -24), origin.offset(24, 6, 24))) {
+                if (helper.getLevel().getBlockState(pos).getBlock() instanceof net.minecraft.world.level.block.BedBlock) {
+                    beds.append(pos.toShortString()).append(' ');
+                }
+            }
+            helper.fail("with no bed Jenny refuses and does not walk (jenny " + origin.toShortString() + ", beds " + beds + ")");
         }
         net.minecraft.world.level.block.state.BlockState bed = net.minecraft.world.level.block.Blocks.RED_BED.defaultBlockState()
                 .setValue(net.minecraft.world.level.block.BedBlock.FACING, net.minecraft.core.Direction.SOUTH);
@@ -621,6 +632,15 @@ public final class FapCraftGameTests {
         }
     }
 
+    /** A platform far above the other arenas so mobs from other tests (they sit a few blocks apart) never meet. */
+    private static void skyFloor(GameTestHelper helper, int size, int up) {
+        for (int x = -1; x <= size; x++) {
+            for (int z = -1; z <= size; z++) {
+                helper.setBlock(new net.minecraft.core.BlockPos(x, up, z), net.minecraft.world.level.block.Blocks.STONE);
+            }
+        }
+    }
+
     private static void floor(GameTestHelper helper, int size) {
         for (int x = -1; x <= size; x++) {
             for (int z = -1; z <= size; z++) {
@@ -684,15 +704,15 @@ public final class FapCraftGameTests {
     public static void wildGalathHuntsAPlayer(GameTestHelper helper) {
         var level = helper.getLevel();
         forceArena(helper);
-        floor(helper, 30);
+        skyFloor(helper, 30, 60);
         CompanionEntity galath = spawnKind(helper, CompanionKind.GALATH);
-        galath.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 15.5)));
+        galath.moveTo(helper.absoluteVec(new Vec3(8.5, 61.0, 8.5)));
         var player = serverPlayer(helper);
-        player.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 5.5)));
+        player.moveTo(helper.absoluteVec(new Vec3(8.5, 61.0, 2.5)));
         player.getAbilities().instabuild = false;
         helper.runAfterDelay(60, () -> {
             if (galath.hasMaster() || !galath.wildBoss() || galath.bossTargetId() != player.getId()) {
-                helper.fail("a wild Galath targets the player within 20 blocks (target " + galath.bossTargetId() + ")");
+                helper.fail("a wild Galath targets the player within 20 blocks (target " + galath.bossTargetId() + ", galath " + galath.position() + " state " + galath.bossState() + " alive " + galath.isAlive() + ", player " + player.position() + " id " + player.getId() + " creative " + player.isCreative() + " inLevel " + level.players().contains(player) + ")");
                 return;
             }
             if (galath.boss().attack() == null) {
@@ -703,18 +723,18 @@ public final class FapCraftGameTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 300, batch = "b_galath")
+    @GameTest(template = "empty", timeoutTicks = 300, batch = "b_galath2")
     public static void reflectedEnergyBallKnocksGalathOut(GameTestHelper helper) {
         var level = helper.getLevel();
         forceArena(helper);
-        floor(helper, 30);
+        skyFloor(helper, 30, 100);
         CompanionEntity galath = spawnKind(helper, CompanionKind.GALATH);
-        galath.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 12.5)));
+        galath.moveTo(helper.absoluteVec(new Vec3(8.5, 101.0, 5.5)));
         var player = serverPlayer(helper);
-        player.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 18.5)), 180.0F, 0.0F);
+        player.moveTo(helper.absoluteVec(new Vec3(8.5, 101.0, 11.5)), 180.0F, 0.0F);
         player.getAbilities().instabuild = true; // she ignores creative players, so she just hangs there
         var ball = com.trolmastercard.sexmod.registry.ModEntities.ENERGY_BALL.get().create(level);
-        ball.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 15.5)).add(0.0D, player.getEyeHeight(), 0.0D));
+        ball.moveTo(helper.absoluteVec(new Vec3(8.5, 101.0, 8.5)).add(0.0D, player.getEyeHeight(), 0.0D));
         level.addFreshEntity(ball);
         helper.runAfterDelay(2, () -> {
             player.setYRot(180.0F);
@@ -730,15 +750,15 @@ public final class FapCraftGameTests {
         });
     }
 
-    @GameTest(template = "empty", timeoutTicks = 400, batch = "b_galath")
+    @GameTest(template = "empty", timeoutTicks = 400, batch = "b_galath3")
     public static void galathIsParalysedInsteadOfDyingAndCanBeCorrupted(GameTestHelper helper) {
         var level = helper.getLevel();
         forceArena(helper);
-        floor(helper, 30);
+        skyFloor(helper, 30, 140);
         CompanionEntity galath = spawnKind(helper, CompanionKind.GALATH);
-        galath.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 15.5)));
+        galath.moveTo(helper.absoluteVec(new Vec3(8.5, 141.0, 8.5)));
         var player = serverPlayer(helper);
-        player.moveTo(helper.absoluteVec(new Vec3(15.5, 1.0, 18.5)));
+        player.moveTo(helper.absoluteVec(new Vec3(8.5, 141.0, 11.5)));
         player.getAbilities().instabuild = true;
         helper.runAfterDelay(5, () -> galath.hurt(level.damageSources().generic(), 1000.0F));
         helper.runAfterDelay(200, () -> {
@@ -750,9 +770,36 @@ public final class FapCraftGameTests {
                 helper.fail("a paralysed Galath lies on the ground (state " + galath.bossState() + ")");
                 return;
             }
-            galath.interact(player, net.minecraft.world.InteractionHand.MAIN_HAND);
+            player.moveTo(galath.getX() + 2.0D, galath.getY(), galath.getZ());
+            var interaction = galath.interact(player, net.minecraft.world.InteractionHand.MAIN_HAND);
             if (galath.currentScene() != com.trolmastercard.sexmod.entity.CompanionScene.GALATH_WILD_CORRUPT) {
-                helper.fail("right-clicking her starts the corrupt scene (scene " + galath.currentScene() + ")");
+                helper.fail("right-clicking her starts the corrupt scene (scene " + galath.currentScene() + ", result " + interaction + ", wild " + galath.wildBoss() + ", dist " + player.distanceToSqr(galath) + ", inScene " + galath.isInScene() + ")");
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 400, batch = "b_gfollow")
+    public static void tamedGalathFollowsAndTeleportsToHerOwner(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        skyFloor(helper, 30, 180);
+        var player = serverPlayer(helper);
+        player.moveTo(helper.absoluteVec(new Vec3(4.5, 181.0, 1.5)));
+        CompanionEntity near = spawnKind(helper, CompanionKind.GALATH);
+        near.moveTo(helper.absoluteVec(new Vec3(14.5, 181.0, 1.5)));
+        near.setMaster(player.getUUID());
+        CompanionEntity far = spawnKind(helper, CompanionKind.GALATH);
+        far.moveTo(helper.absoluteVec(new Vec3(4.5, 181.0, 19.5)));
+        far.setMaster(player.getUUID());
+        helper.runAfterDelay(150, () -> {
+            if (near.distanceTo(player) > 6.0F) {
+                helper.fail("a tamed Galath within 16 blocks walks to her owner (distance " + near.distanceTo(player) + ")");
+                return;
+            }
+            if (far.distanceTo(player) > 6.0F) {
+                helper.fail("a tamed Galath beyond 16 blocks teleports to her owner (distance " + far.distanceTo(player) + ", state " + far.bossState() + ", action " + far.action() + ", master " + far.hasMaster() + ", ai " + far.isNoAi() + ")");
                 return;
             }
             helper.succeed();
@@ -795,6 +842,7 @@ public final class FapCraftGameTests {
                 helper.fail("damage to Manglelie goes to Galath (" + mang.getHealth() + " / " + galath.getHealth() + ")");
                 return;
             }
+            galath.setNoAi(true); // she would wander off and turn away from the zombie
             // a hostile mob in front of Galath within 15 blocks is shot
             var zombie = EntityType.ZOMBIE.create(level);
             double yaw = Math.toRadians(galath.getYRot());

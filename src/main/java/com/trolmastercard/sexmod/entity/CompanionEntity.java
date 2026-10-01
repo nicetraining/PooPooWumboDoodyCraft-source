@@ -378,7 +378,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     /** Manglelie and the wild Galath boss run entirely on their own scripts. */
     boolean noGenericAi() {
-        return this.kind == CompanionKind.MANGLELIE || this.wildBoss();
+        return this.kind == CompanionKind.MANGLELIE || this.kind == CompanionKind.GALATH;
     }
 
     public boolean wildBoss() {
@@ -821,6 +821,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return amount;
     }
 
+    private GalathFollowAi galathFollow;
     private int galathDespawnTicks = -1;
     private long galathHurtSoundAt;
 
@@ -2301,6 +2302,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if (this.boss != null) {
             this.boss.tick(serverLevel);
+            if (this.hasMaster()) {
+                if (this.galathFollow == null) {
+                    this.galathFollow = new GalathFollowAi(this);
+                }
+                this.galathFollow.tick(serverLevel);
+                if (this.familyId() != null && !this.isInScene()) {
+                    this.boss.tickTamedCombat(serverLevel); // original ao(): a mother with a daughter fights near her
+                }
+            }
         }
         this.tickEllieHorny(serverLevel);
         this.tickTargetSanity();
