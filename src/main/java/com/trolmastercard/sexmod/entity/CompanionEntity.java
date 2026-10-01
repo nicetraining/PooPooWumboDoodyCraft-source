@@ -840,6 +840,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.setNoGravity(true);
             return;
         }
+        if (this.ambushTicks >= 0) {
+            this.tickGalathAmbush(serverLevel);
+            return;
+        }
         if (this.summonedByGalathCoin && this.tickCount <= 15 && !this.isInScene()) {
             // original GALATH_SUMMON: she materialises for 15 ticks before she acts
             this.setAction(CompanionAction.GALATH_SUMMON);
@@ -855,6 +859,36 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     this.discard();
                 }
             });
+        }
+    }
+
+    private int ambushTicks = -1;
+
+    /**
+     * Original coin summon, 10 % of the time: she is masturbating with her back to you and after 8 s ambushes you with
+     * the cowgirl scene instead of the summon animation.
+     */
+    public void beginGalathAmbush(Player owner) {
+        this.ambushTicks = 160;
+        this.setAction(CompanionAction.GALATH_MASTURBATE);
+        this.getNavigation().stop();
+        this.setYRot((float) (180.0D - Math.toDegrees(Mth.atan2(owner.getX() - this.getX(), owner.getZ() - this.getZ()))));
+        this.yBodyRot = this.getYRot();
+        this.yHeadRot = this.getYRot();
+    }
+
+    private void tickGalathAmbush(ServerLevel serverLevel) {
+        this.getNavigation().stop();
+        this.setDeltaMovement(Vec3.ZERO);
+        if (--this.ambushTicks > 0) {
+            return;
+        }
+        this.ambushTicks = -1;
+        this.setAction(CompanionAction.NONE);
+        ServerPlayer owner = this.masterId().map(id -> serverLevel.getServer().getPlayerList().getPlayer(id)).orElse(null);
+        if (owner != null && owner.isAlive() && owner.level() == serverLevel && !this.isInScene()) {
+            this.setForcedSceneAnchor(owner.position(), Mth.wrapDegrees(owner.getYRot() + 180.0F));
+            this.startWildScene(owner, CompanionScene.GALATH_COWGIRL);
         }
     }
 
@@ -1353,7 +1387,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     }
 
     public boolean openControlMenu(ServerPlayer player) {
-        if (!this.canUsePanel(player) || player.distanceToSqr(this) > 64.0D) {
+        if (this.action() == CompanionAction.GALATH_MASTURBATE || !this.canUsePanel(player) || player.distanceToSqr(this) > 64.0D) {
             return false;
         }
         player.openMenu(
@@ -3568,6 +3602,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return state.setAndContinue(this.entityData.get(DATA_GALATH_BOOST) > 0
                     ? software.bernie.geckolib.animation.RawAnimation.begin().thenPlay("animation.galath.boost")
                     : software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.galath.controlled_flight"));
+        }
+        if (this.kind == CompanionKind.GALATH && this.action() == CompanionAction.GALATH_MASTURBATE) {
+            return state.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin().thenLoop("animation.galath.masterbate"));
         }
         if (this.kind == CompanionKind.GALATH && this.action() == CompanionAction.GALATH_HUG_MANG) {
             return state.setAndContinue(software.bernie.geckolib.animation.RawAnimation.begin().thenPlayAndHold("animation.galath.hug_mang"));

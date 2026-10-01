@@ -18,7 +18,8 @@ public enum CompanionAction {
     GALATH_DESUMMON,
     GALATH_HUG_MANG,
     MANG_RUN,
-    MANG_RIDE;
+    MANG_RIDE,
+    GALATH_MASTURBATE;
 
     public String animationSuffix(int attackVariant) {
         return switch (this) {
@@ -33,6 +34,7 @@ public enum CompanionAction {
             case GALATH_HUG_MANG -> "hug_mang";
             case MANG_RUN -> "running";
             case MANG_RIDE -> "sit_on_galath";
+            case GALATH_MASTURBATE -> "masterbate";
             case NONE -> "idle";
         };
     }

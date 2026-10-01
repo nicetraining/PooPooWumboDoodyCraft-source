@@ -116,6 +116,9 @@ public final class GalathCoinItem extends LegacyPurposeItem {
                     if (bindings.hasMang(player.getUUID())) {
                         com.trolmastercard.sexmod.entity.ManglelieBehavior.spawnDaughter(serverLevel, galath);
                     }
+                    if (serverLevel.random.nextFloat() < 0.1F) {
+                        galath.beginGalathAmbush(player);
+                    }
                 }
             }
         }

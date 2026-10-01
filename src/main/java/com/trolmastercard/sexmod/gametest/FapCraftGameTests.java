@@ -732,7 +732,7 @@ public final class FapCraftGameTests {
         galath.moveTo(helper.absoluteVec(new Vec3(8.5, 101.0, 5.5)));
         var player = serverPlayer(helper);
         player.moveTo(helper.absoluteVec(new Vec3(8.5, 101.0, 11.5)), 180.0F, 0.0F);
-        player.getAbilities().instabuild = true; // she ignores creative players, so she just hangs there
+        player.setGameMode(GameType.CREATIVE);
         var ball = com.trolmastercard.sexmod.registry.ModEntities.ENERGY_BALL.get().create(level);
         ball.moveTo(helper.absoluteVec(new Vec3(8.5, 101.0, 8.5)).add(0.0D, player.getEyeHeight(), 0.0D));
         level.addFreshEntity(ball);
@@ -759,7 +759,7 @@ public final class FapCraftGameTests {
         galath.moveTo(helper.absoluteVec(new Vec3(8.5, 141.0, 8.5)));
         var player = serverPlayer(helper);
         player.moveTo(helper.absoluteVec(new Vec3(8.5, 141.0, 11.5)));
-        player.getAbilities().instabuild = true;
+        player.setGameMode(GameType.CREATIVE);
         helper.runAfterDelay(5, () -> galath.hurt(level.damageSources().generic(), 1000.0F));
         helper.runAfterDelay(200, () -> {
             if (!galath.isAlive() || galath.getHealth() <= 0.0F || !galath.boss().paralysed()) {
@@ -865,6 +865,30 @@ public final class FapCraftGameTests {
             return;
         }
         helper.succeed();
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 220, batch = "b_gambush")
+    public static void galathAmbushMasturbatesThenStops(GameTestHelper helper) {
+        forceArena(helper);
+        skyFloor(helper, 30, 210);
+        var player = serverPlayer(helper);
+        player.moveTo(helper.absoluteVec(new Vec3(6.5, 211.0, 6.5)));
+        CompanionEntity galath = spawnKind(helper, CompanionKind.GALATH);
+        galath.moveTo(helper.absoluteVec(new Vec3(6.5, 211.0, 10.5)));
+        galath.setMaster(player.getUUID());
+        galath.beginGalathAmbush(player);
+        helper.runAfterDelay(60, () -> {
+            if (galath.action() != com.trolmastercard.sexmod.entity.CompanionAction.GALATH_MASTURBATE) {
+                helper.fail("she keeps masturbating for the 8 seconds: " + galath.action());
+            }
+        });
+        helper.runAfterDelay(200, () -> {
+            if (galath.action() == com.trolmastercard.sexmod.entity.CompanionAction.GALATH_MASTURBATE) {
+                helper.fail("after 8 seconds she is done (tick " + galath.tickCount + ", entityTicking " + helper.getLevel().isPositionEntityTicking(galath.blockPosition()) + ", pos " + galath.blockPosition() + ", alive " + galath.isAlive() + ", noAi " + galath.isNoAi() + ")");
+                return;
+            }
+            helper.succeed();
+        });
     }
 
     @GameTest(template = "empty", timeoutTicks = 700, batch = "b_mang")
