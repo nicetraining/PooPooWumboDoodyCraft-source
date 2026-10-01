@@ -813,6 +813,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return this.entityData.get(DATA_DOWNED);
     }
 
+    /** Client only: game time at which Allie's fade-out started, or -1 (original ev.U). */
+    public long allieFadeStart = -1L;
+
     public ItemStack paymentItem() {
         return switch (this.entityData.get(DATA_PAYMENT_ITEM)) {
             case 1 -> new ItemStack(Items.DIAMOND, 2);
@@ -2195,12 +2198,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         int faster = scene.nextLoopPhase(current);
         int slower = scene.previousLoopPhase(current);
         if (faster >= 0 && this.sceneFastHeld) {
-            this.enterScenePhase(faster);
+            int via = scene.transitionVia(current, faster);
+            this.enterScenePhase(via >= 0 ? via : faster);
             return;
         }
         if (this.scenePhaseTicks >= phase.durationTicks()) {
             if (slower >= 0 && !this.sceneFastHeld) {
-                this.enterScenePhase(slower);
+                int via = scene.transitionVia(current, slower);
+                this.enterScenePhase(via >= 0 ? via : slower);
                 return;
             }
             this.scenePhaseTicks = 0;
@@ -2242,7 +2247,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         this.sceneControlCooldown = SCENE_CONTROL_COOLDOWN;
-        this.enterScenePhase(target);
+        int via = scene.transitionVia(this.currentScenePhase(), target);
+        this.enterScenePhase(via >= 0 ? via : target);
         return true;
     }
 
@@ -2596,6 +2602,11 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 }
             }
         }
+        if ((scene == CompanionScene.ALLIE_RICH && this.scenePhaseTicks >= 50)
+                || (scene == CompanionScene.ALLIE_RICH_NORMAL && this.scenePhaseTicks >= 51)) {
+            this.finishScene(true); // original: the scene ends once her fade-out has run through
+            return;
+        }
         if ((scene == CompanionScene.ALLIE_RICH && this.scenePhaseTicks == 1)
                 || (scene == CompanionScene.ALLIE_RICH_NORMAL && this.scenePhaseTicks == 10)) {
             this.dropAllieRewards(serverLevel);
@@ -2638,6 +2649,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         int nextPhase = this.currentScenePhase() + 1;
+        int transitionTarget = scene.transitionTarget(this.currentScenePhase());
+        if (transitionTarget >= 0) {
+            nextPhase = transitionTarget;
+        }
         if (nextPhase >= scene.phases().size()) {
             this.finishScene(true);
         } else {

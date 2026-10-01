@@ -1,379 +1,382 @@
 {
- "aftermoan": {
-  "sounds": [
-   "girls.allie.aftersessionmoan.aftersessionmoan0",
-   "girls.allie.aftersessionmoan.aftersessionmoan1",
-   "girls.allie.aftersessionmoan.aftersessionmoan2",
-   "girls.allie.aftersessionmoan.aftersessionmoan3"
-  ]
- },
- "cum": {
-  "sounds": [
-   "misc.inserts.inserts0",
-   "misc.inserts.inserts1",
-   "misc.inserts.inserts2",
-   "misc.inserts.inserts3",
-   "misc.inserts.inserts4"
-  ],
-  "volume": 6.0
- },
- "fastMoan": {
-  "sounds": [
-   "girls.allie.moan.moan0",
-   "girls.allie.moan.moan1",
-   "girls.allie.moan.moan2",
-   "girls.allie.moan.moan3",
-   "girls.allie.moan.moan4",
-   "girls.allie.moan.moan5",
-   "girls.allie.moan.moan6",
-   "girls.allie.moan.moan7"
-  ],
-  "every": 2,
-  "meter": 0.04
- },
- "giggle": {
-  "sounds": [
-   "girls.allie.giggle.giggle0",
-   "girls.allie.giggle.giggle1",
-   "girls.allie.giggle.giggle2",
-   "girls.allie.giggle.giggle3",
-   "girls.allie.giggle.giggle4"
-  ]
- },
- "mmm": {
-  "sounds": [
-   "girls.allie.mmm.mmm0",
-   "girls.allie.mmm.mmm1",
-   "girls.allie.mmm.mmm2",
-   "girls.allie.mmm.mmm3",
-   "girls.allie.mmm.mmm4",
-   "girls.allie.mmm.mmm5",
-   "girls.allie.mmm.mmm6",
-   "girls.allie.mmm.mmm7",
-   "girls.allie.mmm.mmm8",
-   "girls.allie.mmm.mmm9"
-  ]
- },
- "moan": {
-  "sounds": [
-   "girls.allie.moan.moan0",
-   "girls.allie.moan.moan1",
-   "girls.allie.moan.moan2",
-   "girls.allie.moan.moan3",
-   "girls.allie.moan.moan4",
-   "girls.allie.moan.moan5",
-   "girls.allie.moan.moan6",
-   "girls.allie.moan.moan7"
-  ]
- },
- "pounding": {
-  "sounds": [
-   "misc.pounding.pounding0",
-   "misc.pounding.pounding1",
-   "misc.pounding.pounding2",
-   "misc.pounding.pounding3",
-   "misc.pounding.pounding4",
-   "misc.pounding.pounding5",
-   "misc.pounding.pounding6",
-   "misc.pounding.pounding7",
-   "misc.pounding.pounding8",
-   "misc.pounding.pounding9",
-   "misc.pounding.pounding10",
-   "misc.pounding.pounding11",
-   "misc.pounding.pounding12",
-   "misc.pounding.pounding13",
-   "misc.pounding.pounding14",
-   "misc.pounding.pounding15",
-   "misc.pounding.pounding16",
-   "misc.pounding.pounding17",
-   "misc.pounding.pounding18",
-   "misc.pounding.pounding19",
-   "misc.pounding.pounding20",
-   "misc.pounding.pounding21",
-   "misc.pounding.pounding22",
-   "misc.pounding.pounding23",
-   "misc.pounding.pounding24",
-   "misc.pounding.pounding25",
-   "misc.pounding.pounding26",
-   "misc.pounding.pounding27",
-   "misc.pounding.pounding28",
-   "misc.pounding.pounding29",
-   "misc.pounding.pounding30",
-   "misc.pounding.pounding31",
-   "misc.pounding.pounding32",
-   "misc.pounding.pounding33",
-   "misc.pounding.pounding34"
-  ]
- },
- "scream": {
-  "sounds": [
-   "misc.scream.scream0",
-   "misc.scream.scream1"
-  ]
- },
- "slide": {
-  "sounds": [
-   "misc.slide.slide0",
-   "misc.slide.slide1",
-   "misc.slide.slide4",
-   "misc.slide.slide6"
-  ]
- },
- "slowMoan": {
-  "layers": [
-   {
+  "aftermoan": {
     "sounds": [
-     "girls.allie.ahh.ahh0",
-     "girls.allie.ahh.ahh1",
-     "girls.allie.ahh.ahh2",
-     "girls.allie.ahh.ahh3",
-     "girls.allie.ahh.ahh4",
-     "girls.allie.ahh.ahh5",
-     "girls.allie.ahh.ahh6",
-     "girls.allie.ahh.ahh7",
-     "girls.allie.ahh.ahh8",
-     "girls.allie.ahh.ahh9"
-    ],
-    "chance": 0.5
-   }
-  ],
-  "meter": 0.02
- },
- "summonMSG1": {
-  "chat": "allie.dialogue.summon1",
-  "sounds": [
-   "girls.allie.scawy.scawy0"
-  ],
-  "volume": 0.5
- },
- "summonMSG2": {
-  "chat": "allie.dialogue.summon2",
-  "sounds": [
-   "girls.allie.giggle.giggle0",
-   "girls.allie.giggle.giggle1",
-   "girls.allie.giggle.giggle2",
-   "girls.allie.giggle.giggle3"
-  ]
- },
- "summonMSG3": {
-  "chat": "allie.dialogue.summon3"
- },
- "summonMSG4": {
-  "chat": "allie.dialogue.summon4",
-  "sounds": [
-   "girls.allie.lightbreathing.lightbreathing2"
-  ]
- },
- "summonMSG5": {
-  "chat": "allie.dialogue.summon5",
-  "sounds": [
-   "girls.allie.hmph.hmph4"
-  ]
- },
- "summonMSG6": {
-  "chat": "allie.dialogue.summon6",
-  "sounds": [
-   "girls.allie.giggle.giggle3"
-  ]
- },
- "summonMSG8": {
-  "chat": "allie.dialogue.summon8",
-  "sounds": [
-   "girls.allie.huh.huh0",
-   "girls.allie.huh.huh1"
-  ]
- },
- "deepthroat_prepareMSG1": {
-  "chat": "allie.dialogue.hihi",
-  "sounds": [
-   "girls.allie.giggle.giggle0",
-   "girls.allie.giggle.giggle1",
-   "girls.allie.giggle.giggle2",
-   "girls.allie.giggle.giggle3",
-   "girls.allie.giggle.giggle4"
-  ]
- },
- "deepthroat_prepareMSG2": {
-  "chat": "allie.dialogue.boys",
-  "sounds": [
-   "girls.allie.sigh.sigh0"
-  ]
- },
- "deepthroat_fastMSG1": {
-  "sounds": [
-   "girls.allie.bjmoan.bjmoan0",
-   "girls.allie.bjmoan.bjmoan1",
-   "girls.allie.bjmoan.bjmoan2",
-   "girls.allie.bjmoan.bjmoan3",
-   "girls.allie.bjmoan.bjmoan4",
-   "girls.allie.bjmoan.bjmoan5",
-   "girls.allie.bjmoan.bjmoan6",
-   "girls.allie.bjmoan.bjmoan7",
-   "girls.allie.bjmoan.bjmoan8",
-   "girls.allie.bjmoan.bjmoan9",
-   "girls.allie.bjmoan.bjmoan10",
-   "girls.allie.bjmoan.bjmoan11",
-   "girls.allie.bjmoan.bjmoan12",
-   "girls.allie.bjmoan.bjmoan13"
-  ],
-  "hud": "show",
-  "meter": 0.04
- },
- "deepthroat_slowMSG1": {
-  "layers": [
-   {
-    "any_of": [
-     {
-      "sounds": [
-       "girls.allie.lipsound.lipsound0",
-       "girls.allie.lipsound.lipsound1",
-       "girls.allie.lipsound.lipsound2",
-       "girls.allie.lipsound.lipsound3",
-       "girls.allie.lipsound.lipsound4",
-       "girls.allie.lipsound.lipsound5",
-       "girls.allie.lipsound.lipsound6",
-       "girls.allie.lipsound.lipsound7",
-       "girls.allie.lipsound.lipsound8",
-       "girls.allie.lipsound.lipsound9",
-       "girls.allie.lipsound.lipsound10",
-       "girls.allie.lipsound.lipsound11",
-       "girls.allie.lipsound.lipsound12",
-       "girls.allie.lipsound.lipsound13"
-      ]
-     },
-     {
-      "sounds": [
-       "girls.allie.bjmoan.bjmoan0",
-       "girls.allie.bjmoan.bjmoan1",
-       "girls.allie.bjmoan.bjmoan2",
-       "girls.allie.bjmoan.bjmoan3",
-       "girls.allie.bjmoan.bjmoan4",
-       "girls.allie.bjmoan.bjmoan5",
-       "girls.allie.bjmoan.bjmoan6",
-       "girls.allie.bjmoan.bjmoan7",
-       "girls.allie.bjmoan.bjmoan8",
-       "girls.allie.bjmoan.bjmoan9",
-       "girls.allie.bjmoan.bjmoan10",
-       "girls.allie.bjmoan.bjmoan11",
-       "girls.allie.bjmoan.bjmoan12",
-       "girls.allie.bjmoan.bjmoan13"
-      ]
-     }
-    ],
-    "weights": [
-     67,
-     33
+      "girls.allie.aftersessionmoan.aftersessionmoan0",
+      "girls.allie.aftersessionmoan.aftersessionmoan1",
+      "girls.allie.aftersessionmoan.aftersessionmoan2",
+      "girls.allie.aftersessionmoan.aftersessionmoan3"
     ]
-   }
-  ],
-  "hud": "show",
-  "meter": 0.02
- },
- "deepthroat_cumMSG1": {
-  "sounds": [
-   "girls.allie.moan.moan0",
-   "girls.allie.moan.moan1",
-   "girls.allie.moan.moan2",
-   "girls.allie.moan.moan3",
-   "girls.allie.moan.moan4",
-   "girls.allie.moan.moan5",
-   "girls.allie.moan.moan6",
-   "girls.allie.moan.moan7"
-  ],
-  "layers": [
-   {
-    "sounds": [
-     "girls.allie.lipsound.lipsound0",
-     "girls.allie.lipsound.lipsound1",
-     "girls.allie.lipsound.lipsound2",
-     "girls.allie.lipsound.lipsound3",
-     "girls.allie.lipsound.lipsound4",
-     "girls.allie.lipsound.lipsound5",
-     "girls.allie.lipsound.lipsound6",
-     "girls.allie.lipsound.lipsound7",
-     "girls.allie.lipsound.lipsound8",
-     "girls.allie.lipsound.lipsound9",
-     "girls.allie.lipsound.lipsound10",
-     "girls.allie.lipsound.lipsound11",
-     "girls.allie.lipsound.lipsound12",
-     "girls.allie.lipsound.lipsound13"
-    ],
-    "volume": 1.0
-   },
-   {
-    "sounds": [
-     "misc.cuminflation.cuminflation0"
-    ],
-    "volume": 1.5
-   }
-  ]
- },
- "summon_normalMSG1": {
-  "chat": "allie.dialogue.sup",
-  "sounds": [
-   "girls.allie.giggle.giggle0",
-   "girls.allie.giggle.giggle1",
-   "girls.allie.giggle.giggle2",
-   "girls.allie.giggle.giggle3"
-  ]
- },
- "summon_normalMSG2": {
-  "chat": "allie.dialogue.youhave"
- },
- "summon_normalMSG3": {
-  "chat_by_uses": {
-   "2": "allie.dialogue.2wishes",
-   "default": "allie.dialogue.1wish"
   },
-  "sounds": [
-   "girls.allie.hmph.hmph4"
-  ]
- },
- "summon_normalMSG4": {
-  "text": "So..."
- },
- "summon_normalMSG5": {
-  "chat": "allie.dialogue.tellme",
-  "sounds": [
-   "girls.allie.huh.huh0",
-   "girls.allie.huh.huh1"
-  ]
- },
- "deepthroat_normal_prepareMSG1": {
-  "chat": "allie.dialogue.alright",
-  "sounds": [
-   "girls.allie.giggle.giggle0",
-   "girls.allie.giggle.giggle1",
-   "girls.allie.giggle.giggle2",
-   "girls.allie.giggle.giggle3",
-   "girls.allie.giggle.giggle4"
-  ]
- },
- "rich_MSG1": {
-  "chat": "allie.dialogue.wishgranted",
-  "sounds": [
-   "misc.plob.plob0"
-  ]
- },
- "summon_sandMSG1": {
-  "chat": "allie.dialogue.nooo",
-  "sounds": [
-   "girls.allie.scawy.scawy2"
-  ]
- },
- "deepthroat_prepareDone": {
-  "hud": "reset"
- },
- "openSexUi": {
-  "hud": "show"
- },
- "summon_sandMSG2": {
-  "actionbar": "allie.dialogue.phobia"
- },
- "blackscreen": {
-  "wipe": true
- },
- "summonMSG7": {
-  "chat": "allie.dialogue.summon7"
- }
+  "cum": {
+    "sounds": [
+      "misc.inserts.inserts0",
+      "misc.inserts.inserts1",
+      "misc.inserts.inserts2",
+      "misc.inserts.inserts3",
+      "misc.inserts.inserts4"
+    ],
+    "volume": 6.0
+  },
+  "fastMoan": {
+    "sounds": [
+      "girls.allie.moan.moan0",
+      "girls.allie.moan.moan1",
+      "girls.allie.moan.moan2",
+      "girls.allie.moan.moan3",
+      "girls.allie.moan.moan4",
+      "girls.allie.moan.moan5",
+      "girls.allie.moan.moan6",
+      "girls.allie.moan.moan7"
+    ],
+    "every": 2,
+    "meter": 0.04
+  },
+  "giggle": {
+    "sounds": [
+      "girls.allie.giggle.giggle0",
+      "girls.allie.giggle.giggle1",
+      "girls.allie.giggle.giggle2",
+      "girls.allie.giggle.giggle3",
+      "girls.allie.giggle.giggle4"
+    ]
+  },
+  "mmm": {
+    "sounds": [
+      "girls.allie.mmm.mmm0",
+      "girls.allie.mmm.mmm1",
+      "girls.allie.mmm.mmm2",
+      "girls.allie.mmm.mmm3",
+      "girls.allie.mmm.mmm4",
+      "girls.allie.mmm.mmm5",
+      "girls.allie.mmm.mmm6",
+      "girls.allie.mmm.mmm7",
+      "girls.allie.mmm.mmm8",
+      "girls.allie.mmm.mmm9"
+    ]
+  },
+  "moan": {
+    "sounds": [
+      "girls.allie.moan.moan0",
+      "girls.allie.moan.moan1",
+      "girls.allie.moan.moan2",
+      "girls.allie.moan.moan3",
+      "girls.allie.moan.moan4",
+      "girls.allie.moan.moan5",
+      "girls.allie.moan.moan6",
+      "girls.allie.moan.moan7"
+    ]
+  },
+  "pounding": {
+    "sounds": [
+      "misc.pounding.pounding0",
+      "misc.pounding.pounding1",
+      "misc.pounding.pounding2",
+      "misc.pounding.pounding3",
+      "misc.pounding.pounding4",
+      "misc.pounding.pounding5",
+      "misc.pounding.pounding6",
+      "misc.pounding.pounding7",
+      "misc.pounding.pounding8",
+      "misc.pounding.pounding9",
+      "misc.pounding.pounding10",
+      "misc.pounding.pounding11",
+      "misc.pounding.pounding12",
+      "misc.pounding.pounding13",
+      "misc.pounding.pounding14",
+      "misc.pounding.pounding15",
+      "misc.pounding.pounding16",
+      "misc.pounding.pounding17",
+      "misc.pounding.pounding18",
+      "misc.pounding.pounding19",
+      "misc.pounding.pounding20",
+      "misc.pounding.pounding21",
+      "misc.pounding.pounding22",
+      "misc.pounding.pounding23",
+      "misc.pounding.pounding24",
+      "misc.pounding.pounding25",
+      "misc.pounding.pounding26",
+      "misc.pounding.pounding27",
+      "misc.pounding.pounding28",
+      "misc.pounding.pounding29",
+      "misc.pounding.pounding30",
+      "misc.pounding.pounding31",
+      "misc.pounding.pounding32",
+      "misc.pounding.pounding33",
+      "misc.pounding.pounding34"
+    ]
+  },
+  "scream": {
+    "sounds": [
+      "misc.scream.scream0",
+      "misc.scream.scream1"
+    ]
+  },
+  "slide": {
+    "sounds": [
+      "misc.slide.slide0",
+      "misc.slide.slide1",
+      "misc.slide.slide4",
+      "misc.slide.slide6"
+    ]
+  },
+  "slowMoan": {
+    "layers": [
+      {
+        "sounds": [
+          "girls.allie.ahh.ahh0",
+          "girls.allie.ahh.ahh1",
+          "girls.allie.ahh.ahh2",
+          "girls.allie.ahh.ahh3",
+          "girls.allie.ahh.ahh4",
+          "girls.allie.ahh.ahh5",
+          "girls.allie.ahh.ahh6",
+          "girls.allie.ahh.ahh7",
+          "girls.allie.ahh.ahh8",
+          "girls.allie.ahh.ahh9"
+        ],
+        "chance": 0.5
+      }
+    ],
+    "meter": 0.02
+  },
+  "summonMSG1": {
+    "chat": "allie.dialogue.summon1",
+    "sounds": [
+      "girls.allie.scawy.scawy0"
+    ],
+    "volume": 0.5
+  },
+  "summonMSG2": {
+    "chat": "allie.dialogue.summon2",
+    "sounds": [
+      "girls.allie.giggle.giggle0",
+      "girls.allie.giggle.giggle1",
+      "girls.allie.giggle.giggle2",
+      "girls.allie.giggle.giggle3"
+    ]
+  },
+  "summonMSG3": {
+    "chat": "allie.dialogue.summon3"
+  },
+  "summonMSG4": {
+    "chat": "allie.dialogue.summon4",
+    "sounds": [
+      "girls.allie.lightbreathing.lightbreathing2"
+    ]
+  },
+  "summonMSG5": {
+    "chat": "allie.dialogue.summon5",
+    "sounds": [
+      "girls.allie.hmph.hmph4"
+    ]
+  },
+  "summonMSG6": {
+    "chat": "allie.dialogue.summon6",
+    "sounds": [
+      "girls.allie.giggle.giggle3"
+    ]
+  },
+  "summonMSG8": {
+    "chat": "allie.dialogue.summon8",
+    "sounds": [
+      "girls.allie.huh.huh0",
+      "girls.allie.huh.huh1"
+    ]
+  },
+  "deepthroat_prepareMSG1": {
+    "chat": "allie.dialogue.hihi",
+    "sounds": [
+      "girls.allie.giggle.giggle0",
+      "girls.allie.giggle.giggle1",
+      "girls.allie.giggle.giggle2",
+      "girls.allie.giggle.giggle3",
+      "girls.allie.giggle.giggle4"
+    ]
+  },
+  "deepthroat_prepareMSG2": {
+    "chat": "allie.dialogue.boys",
+    "sounds": [
+      "girls.allie.sigh.sigh0"
+    ]
+  },
+  "deepthroat_fastMSG1": {
+    "sounds": [
+      "girls.allie.bjmoan.bjmoan0",
+      "girls.allie.bjmoan.bjmoan1",
+      "girls.allie.bjmoan.bjmoan2",
+      "girls.allie.bjmoan.bjmoan3",
+      "girls.allie.bjmoan.bjmoan4",
+      "girls.allie.bjmoan.bjmoan5",
+      "girls.allie.bjmoan.bjmoan6",
+      "girls.allie.bjmoan.bjmoan7",
+      "girls.allie.bjmoan.bjmoan8",
+      "girls.allie.bjmoan.bjmoan9",
+      "girls.allie.bjmoan.bjmoan10",
+      "girls.allie.bjmoan.bjmoan11",
+      "girls.allie.bjmoan.bjmoan12",
+      "girls.allie.bjmoan.bjmoan13"
+    ],
+    "hud": "show",
+    "meter": 0.04
+  },
+  "deepthroat_slowMSG1": {
+    "layers": [
+      {
+        "any_of": [
+          {
+            "sounds": [
+              "girls.allie.lipsound.lipsound0",
+              "girls.allie.lipsound.lipsound1",
+              "girls.allie.lipsound.lipsound2",
+              "girls.allie.lipsound.lipsound3",
+              "girls.allie.lipsound.lipsound4",
+              "girls.allie.lipsound.lipsound5",
+              "girls.allie.lipsound.lipsound6",
+              "girls.allie.lipsound.lipsound7",
+              "girls.allie.lipsound.lipsound8",
+              "girls.allie.lipsound.lipsound9",
+              "girls.allie.lipsound.lipsound10",
+              "girls.allie.lipsound.lipsound11",
+              "girls.allie.lipsound.lipsound12",
+              "girls.allie.lipsound.lipsound13"
+            ]
+          },
+          {
+            "sounds": [
+              "girls.allie.bjmoan.bjmoan0",
+              "girls.allie.bjmoan.bjmoan1",
+              "girls.allie.bjmoan.bjmoan2",
+              "girls.allie.bjmoan.bjmoan3",
+              "girls.allie.bjmoan.bjmoan4",
+              "girls.allie.bjmoan.bjmoan5",
+              "girls.allie.bjmoan.bjmoan6",
+              "girls.allie.bjmoan.bjmoan7",
+              "girls.allie.bjmoan.bjmoan8",
+              "girls.allie.bjmoan.bjmoan9",
+              "girls.allie.bjmoan.bjmoan10",
+              "girls.allie.bjmoan.bjmoan11",
+              "girls.allie.bjmoan.bjmoan12",
+              "girls.allie.bjmoan.bjmoan13"
+            ]
+          }
+        ],
+        "weights": [
+          67,
+          33
+        ]
+      }
+    ],
+    "hud": "show",
+    "meter": 0.02
+  },
+  "deepthroat_cumMSG1": {
+    "sounds": [
+      "girls.allie.moan.moan0",
+      "girls.allie.moan.moan1",
+      "girls.allie.moan.moan2",
+      "girls.allie.moan.moan3",
+      "girls.allie.moan.moan4",
+      "girls.allie.moan.moan5",
+      "girls.allie.moan.moan6",
+      "girls.allie.moan.moan7"
+    ],
+    "layers": [
+      {
+        "sounds": [
+          "girls.allie.lipsound.lipsound0",
+          "girls.allie.lipsound.lipsound1",
+          "girls.allie.lipsound.lipsound2",
+          "girls.allie.lipsound.lipsound3",
+          "girls.allie.lipsound.lipsound4",
+          "girls.allie.lipsound.lipsound5",
+          "girls.allie.lipsound.lipsound6",
+          "girls.allie.lipsound.lipsound7",
+          "girls.allie.lipsound.lipsound8",
+          "girls.allie.lipsound.lipsound9",
+          "girls.allie.lipsound.lipsound10",
+          "girls.allie.lipsound.lipsound11",
+          "girls.allie.lipsound.lipsound12",
+          "girls.allie.lipsound.lipsound13"
+        ],
+        "volume": 1.0
+      },
+      {
+        "sounds": [
+          "misc.cuminflation.cuminflation0"
+        ],
+        "volume": 1.5
+      }
+    ]
+  },
+  "summon_normalMSG1": {
+    "chat": "allie.dialogue.sup",
+    "sounds": [
+      "girls.allie.giggle.giggle0",
+      "girls.allie.giggle.giggle1",
+      "girls.allie.giggle.giggle2",
+      "girls.allie.giggle.giggle3"
+    ]
+  },
+  "summon_normalMSG2": {
+    "chat": "allie.dialogue.youhave"
+  },
+  "summon_normalMSG3": {
+    "chat_by_uses": {
+      "2": "allie.dialogue.2wishes",
+      "default": "allie.dialogue.1wish"
+    },
+    "sounds": [
+      "girls.allie.hmph.hmph4"
+    ]
+  },
+  "summon_normalMSG4": {
+    "text": "So..."
+  },
+  "summon_normalMSG5": {
+    "chat": "allie.dialogue.tellme",
+    "sounds": [
+      "girls.allie.huh.huh0",
+      "girls.allie.huh.huh1"
+    ]
+  },
+  "deepthroat_normal_prepareMSG1": {
+    "chat": "allie.dialogue.alright",
+    "sounds": [
+      "girls.allie.giggle.giggle0",
+      "girls.allie.giggle.giggle1",
+      "girls.allie.giggle.giggle2",
+      "girls.allie.giggle.giggle3",
+      "girls.allie.giggle.giggle4"
+    ]
+  },
+  "rich_MSG1": {
+    "chat": "allie.dialogue.wishgranted",
+    "sounds": [
+      "misc.plob.plob0"
+    ]
+  },
+  "summon_sandMSG1": {
+    "chat": "allie.dialogue.nooo",
+    "sounds": [
+      "girls.allie.scawy.scawy2"
+    ]
+  },
+  "deepthroat_prepareDone": {
+    "hud": "reset"
+  },
+  "openSexUi": {
+    "hud": "show"
+  },
+  "summon_sandMSG2": {
+    "actionbar": "allie.dialogue.phobia"
+  },
+  "blackscreen": {
+    "wipe": true
+  },
+  "summonMSG7": {
+    "chat": "allie.dialogue.summon7"
+  },
+  "disappear": {
+    "fade": true
+  }
 }

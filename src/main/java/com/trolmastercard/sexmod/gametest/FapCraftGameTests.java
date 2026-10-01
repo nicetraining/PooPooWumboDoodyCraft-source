@@ -867,6 +867,26 @@ public final class FapCraftGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = "empty", timeoutTicks = 10, batch = "b_gtrans")
+    public static void bedAndThreesomeScenesHaveSoftAndBackTransitions(GameTestHelper helper) {
+        for (CompanionScene scene : new CompanionScene[] {CompanionScene.GALATH_MORNING, CompanionScene.MANGLELIE_THREESOME}) {
+            boolean ok = scene.nextLoopPhase(0) == 1
+                    && scene.transitionVia(0, 1) == 3
+                    && scene.transitionTarget(3) == 1
+                    && scene.transitionVia(1, 0) == 4
+                    && scene.transitionTarget(4) == 0
+                    && scene.finalePhase() == 2
+                    && !scene.phase(3).loop()
+                    && !scene.phase(4).loop()
+                    && scene.phaseRole(3) == CompanionScene.PhaseRole.AUTO;
+            if (!ok) {
+                helper.fail(scene + " transitions are wired slow -> soft -> fast and fast -> back -> slow");
+                return;
+            }
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = "empty", timeoutTicks = 220, batch = "b_gambush")
     public static void galathAmbushMasturbatesThenStops(GameTestHelper helper) {
         forceArena(helper);

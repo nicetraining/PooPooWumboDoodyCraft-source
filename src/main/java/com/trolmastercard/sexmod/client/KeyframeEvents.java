@@ -81,6 +81,9 @@ public final class KeyframeEvents {
         if (entry.has("wipe") && partner) {
             TransitionOverlay.start(); // original blackscreen: fh.b() for the owner
         }
+        if (entry.has("fade") && girl.level() != null) {
+            girl.allieFadeStart = girl.level().getGameTime(); // original ev: alpha 0.99, then -0.01 per rendered frame
+        }
         if (entry.has("actionbar") && partner) {
             Minecraft.getInstance().gui.setOverlayMessage(Component.translatable(entry.get("actionbar").getAsString()), false);
         }

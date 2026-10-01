@@ -359,7 +359,9 @@ public enum CompanionScene {
             CompanionKind.MANGLELIE, "threesome", true,
             loop("animation.shared.double_holding_slow", 20),
             loop("animation.shared.double_holding_hard", 10),
-            phase("animation.shared.double_holding_cum", 64)
+            phase("animation.shared.double_holding_cum", 64),
+            phase("animation.shared.double_holding_soft", 20), // slow -> hard transition
+            phase("animation.shared.double_holding_back", 15) // hard -> slow transition
     ),
 
     /**
@@ -372,8 +374,10 @@ public enum CompanionScene {
     GALATH_MORNING(
             CompanionKind.GALATH, "morning", true,
             loop("animation.shared.bed_slow", 40),
-            loop("animation.shared.bed_soft", 44),
-            phase("animation.shared.bed_cum", 78)
+            loop("animation.shared.bed_fast", 12),
+            phase("animation.shared.bed_cum", 78),
+            phase("animation.shared.bed_soft", 44), // slow -> fast transition
+            phase("animation.shared.bed_back", 15) // fast -> slow transition
     ),
     /** Her daughter during the morning scene: she is part of the combined model, so this entity is not drawn. */
     MANGLELIE_BED(
@@ -548,6 +552,9 @@ public enum CompanionScene {
         if (phase.loop()) {
             return PhaseRole.INTENSITY;
         }
+        if (this.transitionTarget(index) >= 0) {
+            return PhaseRole.AUTO;
+        }
         return index > this.lastLoopPhase() ? PhaseRole.FINALE : PhaseRole.AUTO;
     }
 
@@ -589,6 +596,29 @@ public enum CompanionScene {
             }
         }
         return -1;
+    }
+
+    /**
+     * Original state machine: moving between the slow and the fast loop plays a one-shot transition animation
+     * first (soft going up, back going down). Returns the phase index of that transition, or -1 when the scene
+     * has none for this pair.
+     */
+    public int transitionVia(int from, int to) {
+        if (this != GALATH_MORNING && this != MANGLELIE_THREESOME) {
+            return -1;
+        }
+        if (from == 0 && to == 1) {
+            return 3;
+        }
+        return from == 1 && to == 0 ? 4 : -1;
+    }
+
+    /** The loop a one-shot transition phase leads into, or -1 if the phase is not a transition. */
+    public int transitionTarget(int phaseIndex) {
+        if (this != GALATH_MORNING && this != MANGLELIE_THREESOME) {
+            return -1;
+        }
+        return phaseIndex == 3 ? 1 : phaseIndex == 4 ? 0 : -1;
     }
 
     public int finalePhase() {

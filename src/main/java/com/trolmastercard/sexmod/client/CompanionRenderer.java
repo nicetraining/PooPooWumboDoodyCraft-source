@@ -111,6 +111,16 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
             buffer = bufferSource.getBuffer(renderType);
         }
 
+        if (entity.allieFadeStart >= 0L && entity.level() != null) {
+            float fade = 1.0F - (entity.level().getGameTime() + partialTick - entity.allieFadeStart) / 33.0F;
+            if (fade <= 0.0F) {
+                return;
+            }
+            renderType = RenderType.entityTranslucent(this.getTextureLocation(entity));
+            buffer = bufferSource.getBuffer(renderType);
+            renderColor = (Math.min(255, (int) (fade * 255.0F)) << 24) | (renderColor & 0xFFFFFF);
+        }
+
         if (entity.kind() == CompanionKind.KOBOLD) {
             renderColor = koboldTint(entity, bone.getName(), renderColor);
         }

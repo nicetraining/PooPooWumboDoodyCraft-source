@@ -251,6 +251,11 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
             }
         }
 
+        if (kind == CompanionKind.SLIME && (normalized.equals("bedslime") || normalized.equals("bedslimelayer"))) {
+            // original cr: the bed slime is part of the doggy states only
+            return entity.currentScene() != com.trolmastercard.sexmod.entity.CompanionScene.SLIME_DOGGY;
+        }
+
         if (kind == CompanionKind.BEE) {
             return normalized.equals("chest");
         }
