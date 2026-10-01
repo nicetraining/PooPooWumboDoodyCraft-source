@@ -102,6 +102,9 @@ public final class ManglelieBehavior {
     private void tickManglelie(ServerLevel level) {
         CompanionEntity self = this.self;
         this.follow(level);
+        if (self.isInScene()) {
+            return;
+        }
         this.relink(level);
         this.seekMother(level);
         this.dropBadTarget(level);

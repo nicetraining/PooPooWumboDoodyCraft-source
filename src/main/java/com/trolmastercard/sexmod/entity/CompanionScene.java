@@ -345,6 +345,21 @@ public enum CompanionScene {
     ),
 
     /**
+     * Original THREESOME_*: started from Galath's menu while she carries Manglelie. Both stand at the player's position;
+     * the player controls Manglelie's scene, Galath loops her own animation (original PUSSY_LICKING) until it ends.
+     */
+    GALATH_THREESOME(
+            CompanionKind.GALATH, "threesome", false,
+            loop("animation.galath.pussy_licking", 20)
+    ),
+    MANGLELIE_THREESOME(
+            CompanionKind.MANGLELIE, "threesome", true,
+            loop("animation.shared.double_holding_slow", 20),
+            loop("animation.shared.double_holding_hard", 10),
+            phase("animation.shared.double_holding_cum", 64)
+    ),
+
+    /**
      * The bed animations are authored for the combined Galath and Manglelie
      * model, which is the only geometry that contains both skeletons. Played on
      * Manglelie's own model the keyframes that exist there are static, so the
@@ -499,6 +514,7 @@ public enum CompanionScene {
             case ELLIE_CARRY -> "action.names.facefuck";
             case ELLIE_COWGIRL, GALATH_COWGIRL -> "action.names.cowgirl";
             case GALATH_ANAL -> "action.names.anal";
+            case GALATH_THREESOME -> "action.names.threesome";
             case GALATH_RIDE -> "action.names.ride";
             case GOBLIN_USE_HER -> "action.names.goblin_use_her";
             case GOBLIN_TAKE_BACK -> "action.names.goblin_take_back";

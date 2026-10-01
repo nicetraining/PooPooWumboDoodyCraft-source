@@ -295,7 +295,7 @@ public enum CompanionKind {
     }
 
     public boolean canFly() {
-        return this == BEE || this == GALATH || this == MANGLELIE;
+        return this == BEE;
     }
 
     public static CompanionKind byName(String value) {

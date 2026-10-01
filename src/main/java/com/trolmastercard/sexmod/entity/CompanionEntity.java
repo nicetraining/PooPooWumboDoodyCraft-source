@@ -1284,7 +1284,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     /** Kobolds sell their scene menu to anyone. */
     public boolean mayUseSceneActions(Player player) {
         return this.kind.opensMenuToStrangers() || this.canUsePanel(player)
-                || (this.wildBoss() && this.currentScene() == CompanionScene.GALATH_WILD_CORRUPT);
+                || (this.wildBoss() && this.currentScene() == CompanionScene.GALATH_WILD_CORRUPT)
+                || (this.kind == CompanionKind.MANGLELIE && this.currentScene() == CompanionScene.MANGLELIE_THREESOME);
     }
 
     /** The original's go-home routine: throw an ender pearl home, then teleport there. */
@@ -1740,6 +1741,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 && this.startWildScene(serverPlayer, CompanionScene.GALATH_WILD_CORRUPT);
     }
 
+    /** The Manglelie this Galath carries (server side only), or null. */
+    public CompanionEntity daughter() {
+        if (this.kind != CompanionKind.GALATH || this.familyId() == null || !(this.level() instanceof ServerLevel level)) {
+            return null;
+        }
+        CompanionEntity found = ManglelieBehavior.find(level, this.familyId());
+        return found != null && found.mangRiding() ? found : null;
+    }
+
     private boolean wildStart;
 
     /** Scenes the wild Galath starts herself (catch or corruption): no ownership, distance or room checks. */
@@ -1777,6 +1787,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     && player.distanceToSqr(this) <= 64.0D
                     && this.startRide(player);
         }
+        if (scene == CompanionScene.GALATH_THREESOME && this.daughter() == null) {
+            return false;
+        }
         if (!(this.level() instanceof ServerLevel serverLevel)
                 || scene == null
                 || scene.kind() != this.kind
@@ -1806,7 +1819,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         if (this.kind == CompanionKind.GALATH && !this.skipDelay
-                && (scene == CompanionScene.GALATH_COWGIRL || scene == CompanionScene.GALATH_ANAL)) {
+                && (scene == CompanionScene.GALATH_COWGIRL || scene == CompanionScene.GALATH_ANAL
+                || scene == CompanionScene.GALATH_THREESOME)) {
             // Original: fade out and lock, the scene itself starts 1200 ms later.
             if (player instanceof ServerPlayer serverPlayer) {
                 net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(
@@ -1827,6 +1841,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             scene = CompanionScene.JENNY_STRIP;
         }
 
+        if (scene == CompanionScene.GALATH_THREESOME) {
+            this.forcedSceneAnchor = player.position();
+            this.forcedSceneAnchorYaw = Mth.wrapDegrees(player.getYRot());
+        }
         SceneAnchor anchor = this.forcedSceneAnchor != null
                 ? new SceneAnchor(this.forcedSceneAnchor, this.forcedSceneAnchorYaw)
                 : scene == CompanionScene.ELLIE_HUG
@@ -1868,6 +1886,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
         this.lockSceneTransforms(player, scene.hasPartner(), true);
         this.enterScenePhase(0);
+        if (scene == CompanionScene.GALATH_THREESOME && player instanceof ServerPlayer serverPlayer) {
+            CompanionEntity daughter = this.daughter();
+            daughter.setForcedSceneAnchor(player.position(), Mth.wrapDegrees(player.getYRot() + 180.0F));
+            if (!daughter.startWildScene(serverPlayer, CompanionScene.MANGLELIE_THREESOME)) {
+                this.finishScene(false);
+                return false;
+            }
+        }
         return true;
     }
 
@@ -2384,6 +2410,13 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.tickWildScene(serverLevel, scene, controller, phase);
             return;
         }
+        if (scene == CompanionScene.GALATH_THREESOME) {
+            CompanionEntity daughter = this.daughter();
+            if (daughter == null || daughter.currentScene() != CompanionScene.MANGLELIE_THREESOME) {
+                this.finishScene(true); // her daughter's scene is over
+            }
+            return;
+        }
         if (scene.isWildCorrupt() && this.currentScenePhase() == 4) {
             if (this.scenePhaseTicks == 95) {
                 for (int i = 0; i < 40; i++) {
@@ -2894,6 +2927,15 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
             if (!completed && controller != null && this.kind != CompanionKind.ALLIE) {
                 controller.displayClientMessage(Component.translatable("message.sexmod.scene_stopped"), true);
+            }
+        }
+        if (scene == CompanionScene.MANGLELIE_THREESOME && this.level() instanceof ServerLevel level) {
+            if (completed && controller != null) {
+                GalathBindingData.get(level.getServer()).recordCum(controller.getUUID(), level.getGameTime());
+            }
+            CompanionEntity mother = ManglelieBehavior.find(level, this.familyId());
+            if (mother != null && mother.currentScene() == CompanionScene.GALATH_THREESOME) {
+                mother.finishScene(completed);
             }
         }
         if (completed && this.slimeBehavior != null

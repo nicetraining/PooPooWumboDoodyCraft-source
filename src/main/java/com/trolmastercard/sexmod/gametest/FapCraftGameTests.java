@@ -806,6 +806,35 @@ public final class FapCraftGameTests {
         });
     }
 
+    @GameTest(template = "empty", timeoutTicks = 200, batch = "b_gmenu")
+    public static void galathMenuOffersThreesomeOnlyWithADaughter(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        skyFloor(helper, 30, 220);
+        var player = serverPlayer(helper);
+        player.moveTo(helper.absoluteVec(new Vec3(4.5, 221.0, 2.5)));
+        CompanionEntity alone = spawnKind(helper, CompanionKind.GALATH);
+        alone.moveTo(helper.absoluteVec(new Vec3(4.5, 221.0, 4.5)));
+        alone.setMaster(player.getUUID());
+        CompanionEntity mother = spawnKind(helper, CompanionKind.GALATH);
+        mother.moveTo(helper.absoluteVec(new Vec3(14.5, 221.0, 4.5)));
+        mother.setMaster(player.getUUID());
+        com.trolmastercard.sexmod.entity.ManglelieBehavior.spawnDaughter(level, mother);
+        helper.runAfterDelay(30, () -> {
+            var plain = com.trolmastercard.sexmod.entity.CompanionActions.actionsFor(alone, player);
+            var family = com.trolmastercard.sexmod.entity.CompanionActions.actionsFor(mother, player);
+            if (plain.contains(CompanionScene.GALATH_THREESOME) || !plain.contains(CompanionScene.GALATH_COWGIRL)) {
+                helper.fail("without a daughter her menu has cowgirl, anal, ride only: " + plain);
+                return;
+            }
+            if (!family.contains(CompanionScene.GALATH_THREESOME) || mother.daughter() == null) {
+                helper.fail("with a daughter on her head the menu adds the threesome: " + family + " daughter " + mother.daughter());
+                return;
+            }
+            helper.succeed();
+        });
+    }
+
     @GameTest(template = "empty", timeoutTicks = 700, batch = "b_mang")
     public static void galathAdoptsManglelieAndManglelieShoots(GameTestHelper helper) {
         var level = helper.getLevel();
