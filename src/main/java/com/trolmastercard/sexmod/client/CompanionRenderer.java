@@ -111,6 +111,11 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
             buffer = bufferSource.getBuffer(renderType);
         }
 
+        if (entity.currentScene() != null && entity.currentScene().hasPartner() && isPartnerProp(bone)) {
+            // original d_: the skin gets two painted patches (0,0,4,3 skin tone; 4,0,3,3 pink) that this mesh samples
+            renderType = RenderType.entityCutoutNoCull(propTexture());
+            buffer = bufferSource.getBuffer(renderType);
+        }
         if (entity.allieFadeStart >= 0L && entity.level() != null) {
             float fade = 1.0F - (entity.level().getGameTime() + partialTick - entity.allieFadeStart) / 33.0F;
             if (fade <= 0.0F) {
@@ -246,6 +251,38 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
                     .withStyle(entity.bodyColor().chat()));
         }
         super.renderNameTag(entity, displayName, poseStack, bufferSource, packedLight, partialTick);
+    }
+
+    private static net.minecraft.resources.ResourceLocation propTextureLocation;
+
+    private static boolean isPartnerProp(GeoBone bone) {
+        for (GeoBone current = bone; current != null; current = current.getParent()) {
+            String name = current.getName();
+            if (name.equals("cock") || name.equals("ballL") || name.equals("ballR")) {
+                return true;
+            }
+            if (name.equals("steve")) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private static net.minecraft.resources.ResourceLocation propTexture() {
+        if (propTextureLocation == null) {
+            com.mojang.blaze3d.platform.NativeImage image = new com.mojang.blaze3d.platform.NativeImage(64, 64, true);
+            for (int y = 0; y < 3; y++) {
+                for (int x = 0; x < 7; x++) {
+                    // NativeImage pixels are ABGR
+                    image.setPixelRGBA(x, y, x < 4 ? 0xFFA5C7F5 : 0xFFA99DF5);
+                }
+            }
+            propTextureLocation = net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                    com.trolmastercard.sexmod.FapCraft.MOD_ID, "dynamic/partner_prop");
+            Minecraft.getInstance().getTextureManager().register(
+                    propTextureLocation, new net.minecraft.client.renderer.texture.DynamicTexture(image));
+        }
+        return propTextureLocation;
     }
 
     static PlayerSkin partnerSkin(CompanionEntity entity) {

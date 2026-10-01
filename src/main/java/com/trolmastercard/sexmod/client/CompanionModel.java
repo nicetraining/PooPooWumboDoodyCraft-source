@@ -256,6 +256,13 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
             return entity.currentScene() != com.trolmastercard.sexmod.entity.CompanionScene.SLIME_DOGGY;
         }
 
+        if (kind == CompanionKind.ALLIE && (normalized.equals("vagina") || normalized.equals("frontandinside")
+                || normalized.equals("fuckhole") || normalized.equals("rside") || normalized.equals("lside")
+                || normalized.equals("bone5"))) {
+            // only the reverse cowgirl scene undresses her; the body detail stays out of every other state
+            return entity.currentScene() != com.trolmastercard.sexmod.entity.CompanionScene.ALLIE_REVERSE_COWGIRL;
+        }
+
         if (kind == CompanionKind.BEE) {
             return normalized.equals("chest");
         }
