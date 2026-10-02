@@ -95,19 +95,23 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
         } else if (entity.kind() != CompanionKind.MANGLELIE) {
             this.trackLook(entity, animationState);
         }
-        if (entity.kind() == com.trolmastercard.sexmod.entity.CompanionKind.MANGLELIE && entity.mangRiding()) {
-            // original f8.af / W: she looks at the nearest player or her target while sitting on her mother's head
-            GeoBone head = this.bone("Head2");
-            if (head != null) {
-                head.setRotY(head.getRotY() + (float) Math.toRadians(entity.mangLookYaw));
-                head.setRotX(head.getRotX() + entity.mangLookPitch);
-            }
+        if (entity.kind() == CompanionKind.MANGLELIE) {
+            ManglelieRide.pose(this, entity, animationState.getPartialTick()); // original ce: seat pose, arms, head look
         }
         if (entity.kind() == CompanionKind.LUNA) {
             this.lunaHair(entity);
         }
         if (entity.kind() == CompanionKind.GALATH) {
             this.galathPose(entity, animationState.getPartialTick());
+            GeoBone head = this.bone("head");
+            GeoBone body = this.bone("body");
+            if (head != null) {
+                entity.galathHeadPitch = head.getRotX(); // original cb: f_.aE, read by her daughter's pose
+            }
+            if (body != null) {
+                entity.galathBodyYaw = body.getRotY();
+                entity.galathBodyScale = body.getScaleY();
+            }
         }
     }
 
@@ -419,7 +423,7 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
         }
     }
 
-    private GeoBone bone(String name) {
+    GeoBone bone(String name) {
         for (GeoBone bone : this.getAnimationProcessor().getRegisteredBones()) {
             if (bone.getName().equals(name)) {
                 return bone;
@@ -461,18 +465,22 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
         if (state == com.trolmastercard.sexmod.entity.GoblinBehavior.THROWING) {
             boolean hide = false;
             if (localCarrier) {
-                hide = goblin.goblinPhase() < 15 || firstPerson;
+                hide = goblin.goblinPhase() < 15;
             }
             body.setHidden(hide);
             if (steve != null) {
                 steve.setHidden(true);
             }
         }
-        if (state == com.trolmastercard.sexmod.entity.GoblinBehavior.PICK_UP && localCarrier && firstPerson) {
-            body.setPosY(body.getPosY() - 32.0F);
-            if (steve != null) {
-                steve.setPosY(steve.getPosY() - 32.0F);
-            }
+        body.setPivotY(-0.15F); // original dg/dy bone rule; the first-person shoulder pass below moves it
+        if (CompanionRenderer.goblinFirstPersonShoulder) {
+            // original dy.a(em, bone) and dy.a(u, bone, ...): in her first-person shoulder pass she tilts with the view and sways
+            body.setPivotY(8.0F);
+            body.setRotX(body.getRotX() + (float) Math.toRadians(-Minecraft.getInstance().gameRenderer.getMainCamera().getXRot()));
+            this.sway("LegR", 25.0F, 25.0F);
+            this.sway("boobR", 30.0F, 30.0F);
+            this.sway("boobR1", 10.0F, 15.0F);
+            this.sway("boobR2", 5.0F, 3.0F);
         }
         if ((state == com.trolmastercard.sexmod.entity.GoblinBehavior.THROWING
                 || state == com.trolmastercard.sexmod.entity.GoblinBehavior.PICK_UP) && goblin.goblinCarrier().isPresent()) {
@@ -487,7 +495,8 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
                 right.setRotX(-swing);
             }
         }
-        if (state == com.trolmastercard.sexmod.entity.GoblinBehavior.THROWN) {
+        if (state == com.trolmastercard.sexmod.entity.GoblinBehavior.THROWN
+                || (state == com.trolmastercard.sexmod.entity.GoblinBehavior.THROWING && !body.isHidden())) {
             net.minecraft.world.phys.Vec3 move = new net.minecraft.world.phys.Vec3(goblin.getX() - goblin.xOld,
                     goblin.getY() - goblin.yOld, goblin.getZ() - goblin.zOld);
             net.minecraft.world.phys.Vec3 abs = new net.minecraft.world.phys.Vec3(Math.abs(move.x), Math.abs(move.y), Math.abs(move.z));
@@ -500,6 +509,14 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
             body.setRotX(rotX);
             body.setPosY(posY);
             body.setPosZ(posZ);
+        }
+    }
+
+    private void sway(String name, float limitX, float limitZ) {
+        GeoBone bone = this.bone(name);
+        if (bone != null && !Minecraft.getInstance().isPaused()) {
+            bone.setRotX(bone.getRotX() + (float) Math.toRadians(net.minecraft.util.Mth.clamp(CompanionRenderer.goblinSwayX, -limitX, limitX)));
+            bone.setRotZ(bone.getRotZ() + (float) Math.toRadians(net.minecraft.util.Mth.clamp(CompanionRenderer.goblinSwayZ, -limitZ, limitZ)));
         }
     }
 

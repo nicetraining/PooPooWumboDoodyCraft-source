@@ -258,9 +258,19 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private GoblinBehavior goblinBehavior;
     private ManglelieBehavior manglelieBehavior;
     private GalathBoss boss;
-    /** Client: Manglelie's head turn towards the nearest player or her arrow target (original f8.af / W). */
+    /** Client: Manglelie's head turn towards the nearest player or her arrow target (original f8.af in radians / W). */
     public float mangLookYaw;
     public float mangLookPitch;
+    /** Client: eased head turn (original f8.T / ai), arm blend (V), last "had no target" flag (aj) and target point (R). */
+    public float mangSmoothYaw;
+    public float mangSmoothPitch;
+    public float mangBlend;
+    public boolean mangNoTargetPrev = true;
+    public net.minecraft.world.phys.Vec3 mangTargetPos;
+    /** Client: Galath's head pitch, body yaw and body scale bones as last animated (original f_.aE / bw / bm). */
+    public float galathHeadPitch;
+    public float galathBodyYaw;
+    public float galathBodyScale;
     private CompanionScene queuedScene;
     /** A scene to queue after {@link #queuedScene} has started (Allie: prepare, then the chosen scene). */
     private CompanionScene chainedScene;
@@ -822,6 +832,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     public boolean galathBlade;
     /** Client only: the "setNude" keyframe's burst, spawned by the renderer where the clothing bones are. */
     public boolean galathNudeBurst;
+    /** Client only (original f_.U): set by the setCamCorrupt keyframe, cleared by enableBoyCam. */
+    public boolean galathCorruptCam;
     public long galathBladeTick = -1L;
     /** Client only: original ff.Q, the Kobold's egg bone is shown from the renderEgg keyframe until the scene ends. */
     public boolean koboldEggShown;
@@ -1031,44 +1043,6 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 this.entityData.set(DATA_GALATH_BOOST, 0);
             }
         }
-    }
-
-    /** Original f8.m (client, every 7 ticks): the daughter turns her head to the nearest player within 6 blocks or her arrow target. */
-    private void updateMangLook() {
-        CompanionEntity mother = null;
-        if (this.familyId() != null) {
-            for (CompanionEntity candidate : this.level().getEntitiesOfClass(CompanionEntity.class, this.getBoundingBox().inflate(4.0D),
-                    c -> c.kind == CompanionKind.GALATH && this.familyId().equals(c.getUUID()))) {
-                mother = candidate;
-            }
-        }
-        if (mother == null || !this.mangRiding()) {
-            return;
-        }
-        Entity look = this.mangTarget();
-        if (look == null) {
-            double best = 36.0D;
-            for (Player player : this.level().players()) {
-                double d = player.distanceToSqr(this);
-                if (d <= best) {
-                    best = d;
-                    look = player;
-                }
-            }
-        }
-        if (look == null) {
-            this.mangLookYaw = 0.0F;
-            this.mangLookPitch = 0.0F;
-            return;
-        }
-        Vec3 eyes = look.position().add(0.0D, look.getEyeHeight(), 0.0D);
-        Vec3 head = mother.position().add(0.0D, ManglelieBehavior.HEAD_HEIGHT + 0.4D, 0.0D);
-        Vec3 delta = head.subtract(eyes);
-        float yaw = (float) (Math.toDegrees(Math.atan2(delta.z, delta.x)) + 90.0D) - mother.yHeadRot;
-        float wrapped = net.minecraft.util.Mth.wrapDegrees(yaw);
-        this.mangLookYaw = Math.abs(wrapped) < 80.0F ? -wrapped : 0.0F;
-        this.mangLookPitch = this.mangLookYaw == 0.0F ? 0.0F
-                : (float) net.minecraft.util.Mth.clamp(-delta.y / 2.0D, -0.75D, 0.75D);
     }
 
     /** Original f8.attackEntityFrom: while she has a mother, all damage (except the void and /kill) goes to the mother. */
@@ -2491,8 +2465,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.kind == CompanionKind.KOBOLD && this.level().isClientSide) {
             com.trolmastercard.sexmod.client.ClientHooks.koboldGreeting(this);
         }
-        if (this.kind == CompanionKind.MANGLELIE && this.level().isClientSide && this.tickCount % 7 == 0) {
-            this.updateMangLook();
+        if (this.kind == CompanionKind.MANGLELIE && this.level().isClientSide) {
+            com.trolmastercard.sexmod.client.ClientHooks.mangLook(this);
         }
         if (this.kind == CompanionKind.ALLIE && this.level().isClientSide) {
             if (this.tickCount == 1) {
@@ -2712,12 +2686,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             this.setGoblinPreggo(true); // original e3.b(fp): the belly shows while NELSON_CUM plays
         }
         if (scene == CompanionScene.KOBOLD_PAYMENT && this.scenePhaseTicks == 10) {
-            Component line = Component.literal("<").append(controller.getDisplayName()).append("> I'd like to use ur services owo");
-            for (ServerPlayer other : serverLevel.players()) {
-                if (other.distanceToSqr(this) <= 40.0D * 40.0D) {
-                    other.sendSystemMessage(line);
-                }
-            }
+            controller.sendSystemMessage(Component.literal("<").append(controller.getDisplayName())
+                    .append("> I'd like to use ur services owo")); // original em.a(ae(), msg): partner's name, shown to the partner
         }
         if ((scene == CompanionScene.ALLIE_RICH && this.scenePhaseTicks >= 50)
                 || (scene == CompanionScene.ALLIE_RICH_NORMAL && this.scenePhaseTicks >= 51)) {

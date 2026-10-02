@@ -23,6 +23,32 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
         return BOY_CAMS.get(entityId);
     }
 
+    private static final java.util.Map<Integer, java.util.Map<String, GeoBone>> POSE_BONES = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static boolean poseBone(CompanionEntity entity, String name) {
+        return (entity.kind() == CompanionKind.GALATH && name.equals("mangPos"))
+                || (entity.kind() == CompanionKind.MANGLELIE && (name.equals("armR") || name.equals("armL") || name.equals("head")));
+    }
+
+    /**
+     * Original f_.b(name): where a bone of this companion was in the last frame, relative to the entity and turned into world
+     * directions (the same correction as the first-person camera uses), or null before it has been drawn.
+     */
+    static net.minecraft.world.phys.Vec3 boneOffset(CompanionEntity entity, String name) {
+        java.util.Map<String, GeoBone> bones = POSE_BONES.get(entity.getId());
+        GeoBone bone = bones == null ? null : bones.get(name);
+        if (bone == null) {
+            return null;
+        }
+        org.joml.Vector3d position = bone.getWorldPosition();
+        double ox = position.x - entity.getX();
+        double oz = position.z - entity.getZ();
+        double angle = Math.toRadians(180.0F - net.minecraft.util.Mth.rotLerp(1.0F, entity.yBodyRotO, entity.yBodyRot));
+        double cos = Math.cos(angle);
+        double sin = Math.sin(angle);
+        return new net.minecraft.world.phys.Vec3(ox * cos + oz * sin, position.y - entity.getY(), -ox * sin + oz * cos);
+    }
+
     public CompanionRenderer(EntityRendererProvider.Context context) {
         super(context, new CompanionModel());
         this.shadowRadius = 0.2F;
@@ -39,7 +65,151 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
         if (scene != null && scene.hidesEntity()) {
             return;
         }
+        if (entity.goblin() != null && entity.goblinCarrier().isPresent()
+                && renderCarriedGoblin(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight)) {
+            return;
+        }
+        if (ManglelieRide.riding(entity)) {
+            // original f8.a(Vec3d, float): she is drawn on her mother's animated mangPos bone, not at a fixed height
+            CompanionEntity mother = ManglelieRide.mother(entity);
+            net.minecraft.world.phys.Vec3 seat = mother == null ? null : boneOffset(mother, "mangPos");
+            if (seat != null) {
+                net.minecraft.world.phys.Vec3 at = mother.getPosition(partialTick).add(seat);
+                net.minecraft.world.phys.Vec3 self = entity.getPosition(partialTick);
+                poseStack.pushPose();
+                poseStack.translate(at.x - self.x, at.y - self.y, at.z - self.z);
+                super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+                poseStack.popPose();
+                return;
+            }
+        }
         super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+    }
+
+    /** True while the goblin on the local player's shoulder is drawn in first person (original dy.u): her legs and chest sway. */
+    static boolean goblinFirstPersonShoulder;
+    /** Original dy.x / dy.N: the sway the carrier's view movement gives the goblin (forwards/pitch and sideways). */
+    static float goblinSwayX;
+    static float goblinSwayZ;
+    private static float swayPrevYaw;
+    private static float swayPrevPitch;
+
+    private static boolean carryState(int state) {
+        return state == com.trolmastercard.sexmod.entity.GoblinBehavior.CATCH
+                || state == com.trolmastercard.sexmod.entity.GoblinBehavior.CATCH_BJ
+                || state == com.trolmastercard.sexmod.entity.GoblinBehavior.CATCH_BJ_IDLE
+                || state == com.trolmastercard.sexmod.entity.GoblinBehavior.PICK_UP
+                || state == com.trolmastercard.sexmod.entity.GoblinBehavior.THROWING;
+    }
+
+    /** Original am (first person hold on the camera) and dy.a (where and how a carried goblin is drawn for everyone else). */
+    private boolean renderCarriedGoblin(CompanionEntity goblin, float entityYaw, float partial, PoseStack poseStack,
+                                        MultiBufferSource bufferSource, int packedLight) {
+        int state = goblin.goblinState();
+        boolean shoulder = state == com.trolmastercard.sexmod.entity.GoblinBehavior.SHOULDER;
+        if (!carryState(state) && !shoulder) {
+            return false;
+        }
+        java.util.UUID carrierId = goblin.goblinCarrier().get();
+        net.minecraft.world.entity.player.Player carrier = goblin.level().getPlayerByUUID(carrierId);
+        Minecraft minecraft = Minecraft.getInstance();
+        if (carrier == null || minecraft.player == null) {
+            return false;
+        }
+        boolean first = minecraft.options.getCameraType().isFirstPerson();
+        boolean localCarrier = minecraft.player.getUUID().equals(carrierId);
+        net.minecraft.world.phys.Vec3 self = goblin.getPosition(partial);
+        net.minecraft.world.phys.Vec3 target = self;
+        float yaw = Float.NaN;
+        float previousYaw = Float.NaN;
+        float tilt = 0.0F;
+        boolean sneaking = carrier.isShiftKeyDown();
+        if (localCarrier && first) {
+            net.minecraft.world.entity.player.Player me = minecraft.player;
+            net.minecraft.world.phys.Vec3 feet = me.getPosition(partial);
+            updateSway(me);
+            if (shoulder) {
+                // original dy.a: the goblin sits beside the view, bobbing with the camera
+                float yawRad = me.getYRot();
+                double side = net.minecraft.util.Mth.lerp(minecraft.options.fov().get() / 110.0F, -0.1F, 0.2F);
+                double radians = Math.toRadians(yawRad);
+                double dx = -Math.cos(radians) * side;
+                double dz = -Math.sin(radians) * side;
+                float walk = -(me.walkDist + (me.walkDist - me.walkDistO) * partial);
+                float bob = net.minecraft.util.Mth.lerp(partial, me.oBob, me.bob);
+                double swing = Math.sin(walk * Math.PI) * bob * 0.5D;
+                target = feet.add(dx + Math.cos(radians) * swing, Math.abs(Math.cos(walk * Math.PI) * bob) - (sneaking ? 0.075D : 0.0D),
+                        dz + Math.sin(radians) * swing);
+                yaw = me.getYRot();
+                previousYaw = me.yRotO;
+                goblinFirstPersonShoulder = true;
+            } else {
+                net.minecraft.world.phys.Vec3 look = me.getLookAngle();
+                target = feet.add(look.x, look.y + me.getEyeHeight(), look.z);
+                yaw = me.getYRot() + 180.0F;
+                previousYaw = yaw;
+                tilt = me.getXRot();
+            }
+        } else {
+            net.minecraft.world.phys.Vec3 at = carrier.getPosition(partial);
+            if (state == com.trolmastercard.sexmod.entity.GoblinBehavior.PICK_UP) {
+                previousYaw = carrier.yHeadRotO; // the carrier's head turns the goblin while she is lifted
+                yaw = carrier.yHeadRot;
+            } else if (shoulder) {
+                target = at.add(0.0D, sneaking ? -0.32D : 0.0D, 0.0D);
+                yaw = net.minecraft.util.Mth.rotLerp(partial, carrier.yBodyRotO, carrier.yBodyRot);
+                previousYaw = yaw;
+            } else {
+                target = at;
+                if (state != com.trolmastercard.sexmod.entity.GoblinBehavior.THROWING) {
+                    yaw = carrier.getYRot();
+                    previousYaw = yaw;
+                }
+            }
+        }
+        if (!Float.isNaN(yaw)) {
+            goblin.yBodyRotO = Float.isNaN(previousYaw) ? yaw : previousYaw;
+            goblin.yBodyRot = yaw;
+        }
+        this.shadowRadius = state == com.trolmastercard.sexmod.entity.GoblinBehavior.PICK_UP || shoulder ? 0.0F : 0.2F;
+        poseStack.pushPose();
+        poseStack.translate(target.x - self.x, target.y - self.y, target.z - self.z);
+        if (tilt != 0.0F) {
+            double yawRad = Math.toRadians(minecraft.player.getYRot());
+            poseStack.mulPose(new org.joml.Quaternionf().rotationAxis((float) Math.toRadians(tilt),
+                    (float) Math.cos(yawRad), 0.0F, (float) Math.sin(yawRad)));
+        }
+        super.render(goblin, entityYaw, partial, poseStack, bufferSource, packedLight);
+        poseStack.popPose();
+        goblinFirstPersonShoulder = false;
+        return true;
+    }
+
+    /** Original am.a: the view movement is eased into the sway the first-person goblin shows. */
+    private static void updateSway(net.minecraft.world.entity.player.Player me) {
+        float yaw = me.getYRot();
+        float pitch = -me.getXRot();
+        float strafe = me instanceof net.minecraft.client.player.LocalPlayer local ? local.input.leftImpulse : 0.0F;
+        float forward = me instanceof net.minecraft.client.player.LocalPlayer local ? local.input.forwardImpulse : 0.0F;
+        float n = strafe * 10.0F + -(yaw - swayPrevYaw) * 3.0F;
+        n = goblinSwayZ + (n - goblinSwayZ) * 0.1F;
+        float x = (float) (forward * -10.0D + (float) me.getDeltaMovement().y * -20.0D) + -(pitch - swayPrevPitch) * 3.0F;
+        x = goblinSwayX + (x - goblinSwayX) * 0.1F;
+        swayPrevYaw = yaw;
+        swayPrevPitch = pitch;
+        goblinSwayZ = n;
+        goblinSwayX = x;
+    }
+
+    @Override
+    public boolean shouldRender(CompanionEntity entity, net.minecraft.client.renderer.culling.Frustum frustum,
+                                double camX, double camY, double camZ) {
+        if (entity.goblin() != null && entity.goblinCarrier().isPresent() && Minecraft.getInstance().player != null
+                && Minecraft.getInstance().options.getCameraType().isFirstPerson()
+                && entity.goblinCarrier().get().equals(Minecraft.getInstance().player.getUUID())) {
+            return true; // original am drew her from RenderWorldLast, outside the frustum test
+        }
+        return super.shouldRender(entity, frustum, camX, camY, camZ);
     }
 
     @Override
@@ -108,6 +278,10 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
             bone.setHidden(localPartner && minecraft.options.getCameraType().isFirstPerson());
             bone.setChildrenHidden(false); // setHidden also hides children, which would freeze the camera bone
         }
+        if (poseBone(entity, bone.getName())) {
+            bone.setTrackingMatrices(true);
+            POSE_BONES.computeIfAbsent(entity.getId(), id -> new java.util.concurrent.ConcurrentHashMap<>()).put(bone.getName(), bone);
+        }
         if (GalathMeshLayer.tracks(bone.getName())) {
             bone.setTrackingMatrices(true);
         }
@@ -149,10 +323,11 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
         }
 
         if (entity.kind() == CompanionKind.GALATH && Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
-            // original f_.v(): in first person she is half transparent while she fights with the sword or is knocked out
+            // original f_.v(): in first person she is half transparent in the corrupt scene (the intro only after setCamCorrupt)
             String animation = GalathMeshLayer.playing(entity);
-            if (animation.equals("animation.galath.attack") || animation.equals("animation.galath.knockout_air")
-                    || animation.equals("animation.galath.knocked_out")) {
+            if (animation.equals("animation.galath.corrupt_slow") || animation.equals("animation.galath.corrupt_soft")
+                    || animation.equals("animation.galath.corrupt_hard") || animation.equals("animation.galath.corrupt_cum")
+                    || (animation.equals("animation.galath.corrupt_intro") && entity.galathCorruptCam)) {
                 renderType = RenderType.entityTranslucent(this.getTextureLocation(entity));
                 buffer = bufferSource.getBuffer(renderType);
                 renderColor = 0x80000000 | (renderColor & 0xFFFFFF);
@@ -296,9 +471,24 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
         return alpha | 0xFFFFFF;
     }
 
+    /** Original fp.hideNameTag, matched on the animation each flagged state plays. */
+    private static boolean hidesNameTag(String animation) {
+        return animation.startsWith("animation.goblin.paizuri") || animation.startsWith("animation.goblin.nelson")
+                || animation.startsWith("animation.goblin.pick_up") || animation.equals("animation.goblin.shoulder_idle")
+                || animation.startsWith("animation.ellie.carry") || animation.startsWith("animation.bia.prone_doggy")
+                || animation.equals("animation.bia.wave") || animation.equals("animation.bia.wave_idle")
+                || animation.equals("animation.jenny.wave") || animation.equals("animation.jenny.wave_idle")
+                || animation.startsWith("animation.allie.summon")
+                || animation.equals("animation.galath.controlled_flight") || animation.equals("animation.galath.boost")
+                || animation.equals("animation.galath.give_coin") || animation.equals("animation.galath.pussy_licking");
+    }
+
     /** Original dj: tribe members show their coloured tribe name over their head. */
     @Override
     public boolean shouldShowName(CompanionEntity entity) {
+        if (hidesNameTag(GalathMeshLayer.playing(entity))) {
+            return false; // original fp.hideNameTag
+        }
         if (entity.kind() == CompanionKind.KOBOLD && !"null".equals(entity.tribeName())) {
             return Minecraft.getInstance().getEntityRenderDispatcher().distanceToSqr(entity) < 64.0D * 64.0D;
         }

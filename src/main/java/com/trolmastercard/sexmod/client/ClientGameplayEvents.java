@@ -86,11 +86,20 @@ public final class ClientGameplayEvents {
             minecraft.options.setCameraType(KeyframeEvents.viewBefore); // the scene ended: back to the player's own view
             KeyframeEvents.viewBefore = null;
         }
+        boolean flying = false;
+        if (companion == null && minecraft.options.getCameraType().isFirstPerson()
+                && player.getVehicle() instanceof CompanionEntity mount && mount.kind() == com.trolmastercard.sexmod.entity.CompanionKind.GALATH) {
+            String playing = GalathMeshLayer.playing(mount);
+            if (playing.equals("animation.galath.controlled_flight") || playing.equals("animation.galath.boost")) {
+                companion = mount; // original fp.useBoyCam for CONTROLLED_FLIGHT and BOOST: the view sits on her boyCam bone
+                flying = true;
+            }
+        }
         if (companion == null || !minecraft.options.getCameraType().isFirstPerson()) {
             return;
         }
 
-        if (!companion.currentScene().usesBoyCam(companion.currentScenePhase())) {
+        if (!flying && !companion.currentScene().usesBoyCam(companion.currentScenePhase())) {
             return; // original l.a: no other scene moves the first-person camera
         }
         {

@@ -62,6 +62,8 @@ public final class KeyframeEvents {
                     girl.galathBlade = false;
                 }
                 case "setNude" -> girl.galathNudeBurst = true;
+                case "setCamCorrupt" -> girl.galathCorruptCam = true;
+                case "enableBoyCam" -> girl.galathCorruptCam = false;
                 default -> {
                 }
             }

@@ -59,6 +59,10 @@ public final class ClientHooks {
     private static long koboldGreetingAt = -300L;
 
     /** Original ff.w: an idle Kobold greets her owner when he walks up from over 2 blocks to under 2 (300 tick cooldown for all Kobolds). */
+    public static void mangLook(CompanionEntity daughter) {
+        ManglelieRide.tick(daughter);
+    }
+
     public static void koboldGreeting(CompanionEntity kobold) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || kobold.koboldState() != com.trolmastercard.sexmod.tribe.KoboldBehavior.ST_NONE
