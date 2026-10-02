@@ -28,6 +28,7 @@ public final class ClientGameplayEvents {
     private static LocalPlayer cameraPlayer;
     private static Vec3 savedPlayerPosition;
     private static Vec3 savedPreviousPosition;
+    private static boolean lunaFrontView;
     private static Vec3 sceneCameraEye;
     private static Vec3 sceneCameraTarget;
 
@@ -52,6 +53,22 @@ public final class ClientGameplayEvents {
                 // requested extra: tamed Galath's cowgirl and anal also cut to the player's own view
                 || companion.currentScene() == com.trolmastercard.sexmod.entity.CompanionScene.GALATH_COWGIRL
                 || companion.currentScene() == com.trolmastercard.sexmod.entity.CompanionScene.GALATH_ANAL);
+        net.minecraft.client.CameraType sceneView = companion == null ? null : switch (companion.currentScene()) {
+            case LUNA_SITTING -> net.minecraft.client.CameraType.THIRD_PERSON_FRONT; // original eb.a(player, 25)
+            case MANGLELIE_THREESOME, GALATH_THREESOME -> net.minecraft.client.CameraType.THIRD_PERSON_BACK; // original f_ menu: thirdPersonView = 1
+            default -> null;
+        };
+        if (sceneView != null) {
+            if (!lunaFrontView) {
+                lunaFrontView = true;
+                if (KeyframeEvents.viewBefore == null) {
+                    KeyframeEvents.viewBefore = minecraft.options.getCameraType();
+                }
+                minecraft.options.setCameraType(sceneView);
+            }
+        } else if (companion == null) {
+            lunaFrontView = false;
+        }
         if (wantsFirstPerson) {
             if (!forcedFirstPerson) {
                 forcedFirstPerson = true;
@@ -64,6 +81,10 @@ public final class ClientGameplayEvents {
                 minecraft.options.setCameraType(cameraBeforeScene);
             }
             cameraBeforeScene = null;
+        }
+        if (companion == null && KeyframeEvents.viewBefore != null && !hasAnyPartner(level, player.getUUID())) {
+            minecraft.options.setCameraType(KeyframeEvents.viewBefore); // the scene ended: back to the player's own view
+            KeyframeEvents.viewBefore = null;
         }
         if (companion == null || !minecraft.options.getCameraType().isFirstPerson()) {
             return;
@@ -203,6 +224,13 @@ public final class ClientGameplayEvents {
         CompanionEntity interactive = null;
         UUID id = minecraft.player.getUUID();
         for (Entity loaded : minecraft.level.entitiesForRendering()) {
+            if (loaded instanceof CompanionEntity queen && !queen.isInScene()
+                    && queen.kind() == com.trolmastercard.sexmod.entity.CompanionKind.GOBLIN
+                    && queen.scenePartnerId().filter(id::equals).isPresent()) {
+                locked = true; // original e3.E(): gz(false) locks the player's input while the breeding jump plays
+            }
+        }
+        for (Entity loaded : minecraft.level.entitiesForRendering()) {
             if (loaded instanceof CompanionEntity companion
                     && companion.isInScene()
                     && companion.scenePartnerId().filter(id::equals).isPresent()) {
@@ -304,7 +332,8 @@ public final class ClientGameplayEvents {
     @SubscribeEvent
     public static void hideScenePartner(RenderPlayerEvent.Pre event) {
         if (event.getEntity().level() instanceof ClientLevel level
-                && findEmbeddedScenePartner(level, event.getEntity().getUUID()) != null) {
+                && (findEmbeddedScenePartner(level, event.getEntity().getUUID()) != null
+                || isCarriedByGoblin(level, event.getEntity().getUUID()))) {
             event.setCanceled(true);
         }
     }
@@ -314,7 +343,8 @@ public final class ClientGameplayEvents {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level != null
                 && minecraft.player != null
-                && findEmbeddedScenePartner(minecraft.level, minecraft.player.getUUID()) != null) {
+                && (findEmbeddedScenePartner(minecraft.level, minecraft.player.getUUID()) != null
+                || isCarriedByGoblin(minecraft.level, minecraft.player.getUUID()))) {
             event.setCanceled(true);
         }
     }
@@ -367,6 +397,30 @@ public final class ClientGameplayEvents {
         savedPreviousPosition = null;
         sceneCameraEye = null;
         sceneCameraTarget = null;
+    }
+
+    private static boolean hasAnyPartner(ClientLevel level, UUID playerId) {
+        for (Entity loaded : level.entitiesForRendering()) {
+            if (loaded instanceof CompanionEntity companion
+                    && companion.scenePartnerId().filter(playerId::equals).isPresent()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Original am: while a goblin picks someone up or throws them, the carried player's body and hand are not drawn. */
+    private static boolean isCarriedByGoblin(ClientLevel level, UUID playerId) {
+        for (Entity loaded : level.entitiesForRendering()) {
+            if (loaded instanceof CompanionEntity companion
+                    && companion.kind() == com.trolmastercard.sexmod.entity.CompanionKind.GOBLIN
+                    && (companion.goblinState() == com.trolmastercard.sexmod.entity.GoblinBehavior.PICK_UP
+                    || companion.goblinState() == com.trolmastercard.sexmod.entity.GoblinBehavior.THROWING)
+                    && companion.goblinCarrier().filter(playerId::equals).isPresent()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static CompanionEntity findEmbeddedScenePartner(ClientLevel level, UUID playerId) {

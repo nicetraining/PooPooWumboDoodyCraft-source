@@ -29,25 +29,35 @@ public final class EnergyBallRenderer extends EntityRenderer<EnergyBallEntity> {
 
     @Override
     public void render(EnergyBallEntity ball, float yaw, float partialTick, PoseStack poseStack, MultiBufferSource buffers, int light) {
-        float t = (Mth.sin((ball.tickCount + partialTick) * 0.2F) + 1.0F) * 0.5F;
-        int red = (int) (255 * t);
-        int green = (int) (255 * (1.0F - t));
-        int blue = (int) (251 - 15 * t);
-        int colour = 0xFF000000 | red << 16 | green << 8 | blue;
+        // original ag: t = 0.5 * sin((worldTime + partialTick) * 0.5) + 0.5; a second quad (0.75 scale, +0.075 up, reversed colours)
+        float t = 0.5F * Mth.sin((ball.level().getGameTime() + partialTick) * 0.5F) + 0.5F;
         poseStack.pushPose();
         poseStack.translate(0.0F, 0.25F, 0.0F);
         poseStack.mulPose(this.entityRenderDispatcher.cameraOrientation());
-        PoseStack.Pose pose = poseStack.last();
         VertexConsumer consumer = buffers.getBuffer(TYPE);
-        vertex(consumer, pose, colour, -0.25F, -0.25F, 0, 1);
-        vertex(consumer, pose, colour, 0.25F, -0.25F, 1, 1);
-        vertex(consumer, pose, colour, 0.25F, 0.25F, 1, 0);
-        vertex(consumer, pose, colour, -0.25F, 0.25F, 0, 0);
+        quad(consumer, poseStack.last(), mix(t), 0.0F);
+        poseStack.scale(0.75F, 0.75F, 0.75F);
+        poseStack.translate(0.0F, 0.075F, 0.0F);
+        quad(consumer, poseStack.last(), mix(1.0F - t), 0.001F);
         poseStack.popPose();
     }
 
-    private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, int colour, float x, float y, float u, float v) {
-        consumer.addVertex(pose, x, y, 0.0F).setColor(colour).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY)
+    private static int mix(float t) {
+        int red = (int) (255 * t);
+        int green = (int) (255 * (1.0F - t));
+        int blue = (int) (251 - 15 * t);
+        return 0xFF000000 | red << 16 | green << 8 | blue;
+    }
+
+    private static void quad(VertexConsumer consumer, PoseStack.Pose pose, int colour, float z) {
+        vertex(consumer, pose, colour, -0.25F, -0.25F, z, 0, 1);
+        vertex(consumer, pose, colour, 0.25F, -0.25F, z, 1, 1);
+        vertex(consumer, pose, colour, 0.25F, 0.25F, z, 1, 0);
+        vertex(consumer, pose, colour, -0.25F, 0.25F, z, 0, 0);
+    }
+
+    private static void vertex(VertexConsumer consumer, PoseStack.Pose pose, int colour, float x, float y, float z, float u, float v) {
+        consumer.addVertex(pose, x, y, z).setColor(colour).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY)
                 .setLight(15728880).setNormal(pose, 0.0F, 1.0F, 0.0F);
     }
 }

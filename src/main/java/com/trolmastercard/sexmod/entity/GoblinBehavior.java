@@ -53,7 +53,7 @@ public final class GoblinBehavior {
     private static final Vec3[] THRONE = {new Vec3(5, 1, 1), new Vec3(9, 1, 5), new Vec3(5, 1, 9), new Vec3(1, 1, 5)};
     private static final Vec3[] BREED_SPOT = {new Vec3(3, -1, 6), new Vec3(-6, -1, 3), new Vec3(-3, -1, -6), new Vec3(6, -1, -3)};
 
-    private static final Set<Item> VALUABLES = Set.of(Items.GOLD_INGOT, Items.GOLD_NUGGET, Items.GOLDEN_APPLE, Items.GOLDEN_CARROT,
+    private static final Set<Item> VALUABLES = Set.of(Items.GOLD_INGOT, Items.GOLD_NUGGET, Items.GOLDEN_APPLE, Items.ENCHANTED_GOLDEN_APPLE, Items.GOLDEN_CARROT,
             Items.GOLDEN_HORSE_ARMOR, Items.GOLDEN_SWORD, Items.GOLDEN_PICKAXE, Items.GOLDEN_SHOVEL, Items.GOLDEN_AXE,
             Items.GOLDEN_HOE, Items.GOLDEN_HELMET, Items.GOLDEN_CHESTPLATE, Items.GOLDEN_LEGGINGS, Items.GOLDEN_BOOTS,
             Items.GOLD_BLOCK, Items.GOLD_ORE);
@@ -407,12 +407,18 @@ public final class GoblinBehavior {
         if (player == null) {
             return;
         }
-        if (++this.fleeTicks % 10 != 1 && !this.k.getNavigation().isDone()) {
-            return;
-        }
-        Vec3 away = this.k.position().subtract(player.position()).multiply(1.0D, 0.0D, 1.0D).normalize();
-        for (double distance = 20.0D; distance >= 1.0D; distance -= 1.0D) {
-            Vec3 target = this.k.position().add(away.scale(distance));
+        // original J(): every tick the path is dropped and re-issued; the direction away from the player is split by
+        // |dx| / (|dx| + |dz|) (not normalised), the height is unchanged, and the target is tried from 20 blocks down to 1
+        Vec3 diff = this.k.position().subtract(player.position());
+        double ax = Math.abs(diff.x);
+        double az = Math.abs(diff.z);
+        double sum = ax + az;
+        double fx = ax / sum;
+        double fz = az / sum;
+        for (double distance = 20.0D; distance > 0.0D; distance -= 1.0D) {
+            Vec3 target = this.k.position().add((diff.x > 0.0D ? 1 : -1) * fx * distance, 0.0D,
+                    (diff.z > 0.0D ? 1 : -1) * fz * distance);
+            this.k.getNavigation().stop();
             if (this.k.getNavigation().moveTo(target.x, target.y, target.z, 0.825D)) {
                 return;
             }
@@ -461,7 +467,7 @@ public final class GoblinBehavior {
             return;
         }
         List<Integer> slots = new java.util.ArrayList<>();
-        for (int i = 0; i < best.getInventory().getContainerSize(); i++) {
+        for (int i = 0; i < best.getInventory().items.size(); i++) {
             ItemStack candidate = best.getInventory().getItem(i);
             if (!candidate.isEmpty() && VALUABLES.contains(candidate.getItem())) {
                 slots.add(i);
@@ -490,7 +496,7 @@ public final class GoblinBehavior {
     }
 
     private static int slotOfValuable(Player player) {
-        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+        for (int slot = 0; slot < player.getInventory().items.size(); slot++) {
             ItemStack stack = player.getInventory().getItem(slot);
             if (!stack.isEmpty() && VALUABLES.contains(stack.getItem())) {
                 return slot;
@@ -520,7 +526,7 @@ public final class GoblinBehavior {
         double r = Math.toRadians(yaw);
         double cos = Math.cos(r);
         double sin = Math.sin(r);
-        return new Vec3(v.x * cos - v.z * sin, v.y, v.x * sin + v.z * cos);
+        return new Vec3(-v.x * cos - v.z * sin, v.y, -v.x * sin + v.z * cos); // original e3.b(Vec3d,float) mirrors x
     }
 
     /** The hall's interior as a box (original E(): throne minus its offset in the hall template). */
@@ -569,6 +575,7 @@ public final class GoblinBehavior {
             }
         }
         this.breedPlayer = player.getUUID();
+        this.k.setJumpPartner(player.getUUID());
         this.breedStage = 1;
         this.breedTicks = 0;
         this.setState(JUMP);
@@ -628,6 +635,7 @@ public final class GoblinBehavior {
     }
 
     private void abortBreeding(List<CompanionEntity> guards) {
+        this.k.setJumpPartner(null);
         this.breedStage = 0;
         guards.forEach(CompanionEntity::discard);
         this.guards.clear();
@@ -637,7 +645,7 @@ public final class GoblinBehavior {
     /** While the scene runs the guards stand in the same spot and play the animation of the current phase. */
     private void mirrorGuards(ServerLevel level) {
         List<CompanionEntity> guards = this.aliveGuards(level);
-        int phase = this.k.currentScenePhase();
+        int phase = CompanionScene.GOBLIN_BREEDING.canonicalPhase(this.k.currentScenePhase());
         Vec3 spot = this.thronePos.add(BREED_SPOT[this.throneIndex()]);
         for (CompanionEntity guard : guards) {
             guard.setPos(spot);
@@ -678,7 +686,16 @@ public final class GoblinBehavior {
             sp.teleportTo(at.x, at.y, at.z);
             sp.setYRot(yaw);
             sp.setXRot(30.0F);
-            sp.sendSystemMessage(Component.literal("<").append(this.k.getDisplayName()).append("> Thanks to you, my clan is soon going to get a few new members! In return I will bear of one of my guards to serve as your personal Onahole. Choose wisely~"));
+        }
+        this.broadcast(level, Component.literal("<").append(this.k.getDisplayName()).append("> Thanks to you, my clan is soon going to get a few new members! In return I will bear of one of my guards to serve as your personal Onahole. Choose wisely~"));
+    }
+
+    /** Original em.h(): girl chat goes to every player within 40 blocks. */
+    private void broadcast(ServerLevel level, Component line) {
+        for (ServerPlayer other : level.players()) {
+            if (other.distanceToSqr(this.k) <= 40.0D * 40.0D) {
+                other.sendSystemMessage(line);
+            }
         }
     }
 
@@ -698,10 +715,8 @@ public final class GoblinBehavior {
             return;
         }
         Player player = this.breedPlayer == null ? null : level.getPlayerByUUID(this.breedPlayer);
-        if (player != null) {
-            player.sendSystemMessage(Component.literal("<").append(this.k.getDisplayName())
-                    .append("> Farewell my knight. You are welcome once I am breedable again."));
-        }
+        this.broadcast(level, Component.literal("<").append(this.k.getDisplayName())
+                .append("> Farewell my knight. You are welcome once I am breedable again."));
         for (CompanionEntity guard : guards) {
             if (!guard.goblinTamed()) {
                 guard.goblin().setState(VANISH);

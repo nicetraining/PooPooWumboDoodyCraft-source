@@ -25,7 +25,7 @@ final class BeeBehavior {
     }
 
     void tick(ServerLevel level) {
-        if (this.bee.hasEffect(ModPotions.HORNY_EFFECT) && this.seek < SEEK_AT && !this.bee.hasMaster()) {
+        if (this.bee.hasEffect(ModPotions.HORNY_EFFECT) && this.seek < SEEK_AT && !this.bee.isInScene()) {
             this.bee.removeEffect(ModPotions.HORNY_EFFECT);
             this.seek = 6.9420184E7F; // forces the seek phase at once
         }
@@ -73,8 +73,11 @@ final class BeeBehavior {
         }
         this.mood++;
         double x = this.bee.getX();
-        double y = this.bee.getY() + 0.8D;
+        double y = this.bee.getY() + 0.3D;
         double z = this.bee.getZ();
+        if (this.mood != 200 && this.mood < 250) {
+            level.sendParticles(ParticleTypes.EFFECT, x, y, z, 10, 0.2D, 0.3D, 0.2D, 0.25D); // original: extra burst while mood != 0
+        }
         if (this.bee.isBeeTamed()) {
             if (this.mood < 40) {
                 level.sendParticles(ParticleTypes.HEART, x, y, z, 1, 0.2D, 0.3D, 0.2D, 0.25D);

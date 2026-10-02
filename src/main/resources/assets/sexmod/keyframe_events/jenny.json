@@ -91,6 +91,7 @@
     "volume": 1.0
   },
   "bjiMSG8": {
+    "player_chat": "jenny.dialogue.blowjobtext7",
     "sounds": [
       "misc.plob.plob0"
     ],

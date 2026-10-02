@@ -148,7 +148,12 @@
     "text": "hmm...",
     "sounds": [
       "misc.plob.plob0"
-    ]
+    ],
+    "view": {
+      "yaw": 180.0,
+      "pitch": -15.0,
+      "perspective": 0
+    }
   },
   "breedingFound": {
     "text": "guess we found a worthy breeding partner!",
@@ -173,7 +178,12 @@
     "volume": 2.0
   },
   "breedingCam2": {
-    "hud": "show"
+    "hud": "show",
+    "view": {
+      "yaw": -120.0,
+      "pitch": -30.0,
+      "perspective": 2
+    }
   },
   "breedingIntroDone": {
     "hud": "show"
@@ -186,5 +196,24 @@
   },
   "blackScreen": {
     "wipe": true
+  },
+  "paizruiCam": {
+    "view": {
+      "pitch": 70.0
+    }
+  },
+  "jumpCam": {
+    "view": {
+      "yaw": 170.0,
+      "pitch": -20.0,
+      "perspective": 2
+    }
+  },
+  "breeding_cumCam": {
+    "view": {
+      "yaw": 180.0,
+      "pitch": -15.0,
+      "perspective": 0
+    }
   }
 }

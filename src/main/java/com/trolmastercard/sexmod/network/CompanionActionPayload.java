@@ -14,6 +14,8 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 /** Client to server: the player picked an entry in the companion action panel. */
 public record CompanionActionPayload(int entityId, String action) implements CustomPacketPayload {
+    /** Pseudo action sent when the panel closes. */
+    public static final String CLOSE = "__close";
     public static final Type<CompanionActionPayload> TYPE = new Type<>(
             ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, "companion_action"));
     public static final StreamCodec<RegistryFriendlyByteBuf, CompanionActionPayload> CODEC = StreamCodec.composite(
@@ -36,6 +38,12 @@ public record CompanionActionPayload(int entityId, String action) implements Cus
                 return;
             }
             Entity entity = player.level().getEntity(payload.entityId());
+            if (CLOSE.equals(payload.action())) {
+                if (entity instanceof CompanionEntity companion) {
+                    companion.endKoboldInteraction(player);
+                }
+                return;
+            }
             if (entity instanceof CompanionEntity companion
                     && companion.mayUseSceneActions(player)
                     && player.distanceToSqr(companion) <= 64.0D) {

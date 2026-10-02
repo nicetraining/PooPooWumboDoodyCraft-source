@@ -252,53 +252,60 @@ public enum CompanionScene {
     /** Original PAYMENT for a Kobold: the backpack rummage before a stranger's scene (no owner, no horny effect). */
     KOBOLD_PAYMENT(
             CompanionKind.KOBOLD, "payment", false,
-            phase("animation.kobold.paymentBackpack", 149)
+            phase("animation.kobold.paymentBackpack", 144)
     ),
     KOBOLD_ANAL(
             CompanionKind.KOBOLD, "anal", true,
-            phase("animation.kobold.analStart", 43),
-            loop("animation.kobold.analSoft", 85),
-            loop("animation.kobold.analHard", 70),
-            phase("animation.kobold.analCum", 102)
+            phase("animation.kobold.analStart", 42),
+            loop("animation.kobold.analSoft", 28),
+            loop("animation.kobold.analHard", 28),
+            phase("animation.kobold.analCum", 81)
     ),
     KOBOLD_BLOWJOB(
             CompanionKind.KOBOLD, "blowjob", true,
-            phase("animation.kobold.blowjobStart", 226),
-            loop("animation.kobold.blowjobSlowR", 100),
-            loop("animation.kobold.blowjobFast", 60),
-            phase("animation.kobold.blowjobCum", 84),
-            loop("animation.kobold.blowjobSlowL", 100), // variant of the slow loop (side flag a4)
+            phase("animation.kobold.blowjobStart", 225),
+            loop("animation.kobold.blowjobSlowR", 50),
+            loop("animation.kobold.blowjobFast", 20),
+            phase("animation.kobold.blowjobCum", 76),
+            loop("animation.kobold.blowjobSlowL", 50), // variant of the slow loop (side flag a4)
             phase("animation.kobold.blowjobSlowLSwitch", 50), // slow R -> slow L
             phase("animation.kobold.blowjobSlowRSwitch", 50) // slow L -> slow R
     ),
     KOBOLD_MATING_PRESS(
             CompanionKind.KOBOLD, "mating_press", true,
-            phase("animation.kobold.mating_press_start", 55),
-            loop("animation.kobold.mating_press_soft", 100),
-            loop("animation.kobold.mating_press_hard", 75),
-            phase("animation.kobold.mating_press_cum", 145)
+            phase("animation.kobold.mating_press_start", 54),
+            loop("animation.kobold.mating_press_soft", 33),
+            loop("animation.kobold.mating_press_hard", 31),
+            phase("animation.kobold.mating_press_cum", 144)
     ),
 
     GOBLIN_PAIZURI(
             CompanionKind.GOBLIN, "paizuri", true,
-            phase("animation.goblin.paizuri_start", 100),
-            loop("animation.goblin.paizuri_slow", 134),
-            loop("animation.goblin.paizuri_fast", 75),
-            phase("animation.goblin.paizuri_cum", 50)
+            phase("animation.goblin.paizuri_start", 98),
+            loop("animation.goblin.paizuri_idle", 120), // waits until the fast key is held (original PAIZURI_IDLE)
+            loop("animation.goblin.paizuri_slow", 67),
+            loop("animation.goblin.paizuri_fast", 25),
+            phase("animation.goblin.paizuri_cum", 50),
+            loop("animation.goblin.paizuri_slow2", 67), // variant of the slow loop (paizuriSwitch, 50 %)
+            loop("animation.goblin.paizuri_fast_countinues", 25) // variant of the fast loop while the key stays held
     ),
     GOBLIN_BREEDING(
             CompanionKind.GOBLIN, "breeding", true,
-            phase("animation.goblin.breeding_intro_1", 245),
-            loop("animation.goblin.breeding_slow_1l", 90),
-            loop("animation.goblin.breeding_fast_1s", 65),
-            phase("animation.goblin.breeding_cum_1", 100)
+            phase("animation.goblin.breeding_intro_1", 244),
+            loop("animation.goblin.breeding_slow_1l", 38),
+            loop("animation.goblin.breeding_fast_1s", 25),
+            phase("animation.goblin.breeding_cum_1", 100),
+            loop("animation.goblin.breeding_slow_1r", 38), // variant of the slow loop (breeding_slow1Done, 50 %)
+            loop("animation.goblin.breeding_fast_1c", 25) // variant of the fast loop while the key stays held
     ),
     GOBLIN_NELSON(
             CompanionKind.GOBLIN, "nelson", true,
-            phase("animation.goblin.nelson_intro", 41),
-            loop("animation.goblin.nelson_slow", 93),
-            loop("animation.goblin.nelson_fasts", 75),
-            phase("animation.goblin.nelson_cum", 35)
+            phase("animation.goblin.nelson_intro", 38),
+            loop("animation.goblin.nelson_slow", 31),
+            loop("animation.goblin.nelson_fasts", 38),
+            phase("animation.goblin.nelson_cum", 35),
+            loop("animation.goblin.nelson_slow2", 31), // variant of the slow loop (nelson_slowDone, 50 %)
+            loop("animation.goblin.nelson_fastc", 30) // variant of the fast loop while the key stays held
     ),
 
     /** Not real scenes: the two entries of the goblin catch menu ("use her" -> paizuri, "take ur stuff back"). */
@@ -313,23 +320,27 @@ public enum CompanionScene {
     /** Tamed "cowgirl": original RAPE_INTRO -> RAPE_ON_GOING -> RAPE_CUM (no damage, no minigame when tamed). */
     GALATH_COWGIRL(
             CompanionKind.GALATH, "cowgirl", true,
-            phase("animation.galath.rape_intro", 46),
-            loop("animation.galath.rape0", 19),
-            phase("animation.galath.rape_cum", 28)
+            phase("animation.galath.rape_intro", 43), // original rapeIntroDone at 2.125 s
+            loop("animation.galath.rape0", 16),
+            phase("animation.galath.rape_cum", 28),
+            loop("animation.galath.rape1", 16), // original rape_switch picks a different one of rape0..2 each loop
+            loop("animation.galath.rape2", 16)
     ),
     /** Tamed "anal": starts straight in CORRUPT_SLOW (the intro is skipped). */
     GALATH_ANAL(
             CompanionKind.GALATH, "anal", true,
-            loop("animation.galath.corrupt_slow", 88),
-            loop("animation.galath.corrupt_hard", 75),
-            phase("animation.galath.corrupt_cum", 57)
+            loop("animation.galath.corrupt_slow", 28),
+            loop("animation.galath.corrupt_soft", 24), // the fast loop starts soft; held past 0.5 s it turns hard
+            phase("animation.galath.corrupt_cum", 57),
+            loop("animation.galath.corrupt_hard", 24)
     ),
     GALATH_CORRUPT(
             CompanionKind.GALATH, "corrupt", true,
             phase("animation.galath.corrupt_intro", 30),
-            loop("animation.galath.corrupt_slow", 88),
-            loop("animation.galath.corrupt_hard", 75),
-            phase("animation.galath.corrupt_cum", 57)
+            loop("animation.galath.corrupt_slow", 28),
+            loop("animation.galath.corrupt_soft", 24),
+            phase("animation.galath.corrupt_cum", 57),
+            loop("animation.galath.corrupt_hard", 24)
     ),
     /** Original wild Galath catch (h8 rape): she drains the player with the succubus damage until he escapes or dies. */
     GALATH_WILD_RAPE(
@@ -344,10 +355,11 @@ public enum CompanionScene {
     GALATH_WILD_CORRUPT(
             CompanionKind.GALATH, "wild_corrupt", true,
             phase("animation.galath.corrupt_intro", 30),
-            loop("animation.galath.corrupt_slow", 88),
-            loop("animation.galath.corrupt_hard", 75),
+            loop("animation.galath.corrupt_slow", 28),
+            loop("animation.galath.corrupt_soft", 24),
             phase("animation.galath.corrupt_cum", 30),
-            phase("animation.galath.give_coin", 140)
+            phase("animation.galath.give_coin", 140),
+            loop("animation.galath.corrupt_hard", 24)
     ),
 
     /**
@@ -567,11 +579,61 @@ public enum CompanionScene {
 
     /** Loop phases that only vary a slow loop (the Kobold's left side); navigation treats them as their base loop. */
     public boolean isVariantPhase(int index) {
-        return this == KOBOLD_BLOWJOB && index == 4;
+        return this.variantBase(index) >= 0;
+    }
+
+    /** The loop a variant phase stands in for, or -1. */
+    private int variantBase(int index) {
+        return switch (this) {
+            case KOBOLD_BLOWJOB -> index == 4 ? 1 : -1;
+            case GOBLIN_PAIZURI -> index == 5 ? 2 : index == 6 ? 3 : -1;
+            case GOBLIN_BREEDING, GOBLIN_NELSON -> index == 4 ? 1 : index == 5 ? 2 : -1;
+            case GALATH_COWGIRL -> index == 3 || index == 4 ? 1 : -1;
+            case GALATH_ANAL -> index == 3 ? 1 : -1;
+            case GALATH_CORRUPT -> index == 4 ? 2 : -1;
+            case GALATH_WILD_CORRUPT -> index == 5 ? 2 : -1;
+            default -> -1;
+        };
     }
 
     public int canonicalPhase(int index) {
-        return this.isVariantPhase(index) ? 1 : index;
+        int base = this.variantBase(index);
+        return base >= 0 ? base : index;
+    }
+
+    /**
+     * Original per-loop random/held switches for the goblin scenes: when a slow loop ends she plays either
+     * variant (50 %), and a fast loop whose key is still held continues with the "continues" animation.
+     * Returns the phase to enter, or -1 to simply repeat the current one.
+     */
+    public int loopEndVariant(int current, boolean fastHeld, net.minecraft.util.RandomSource random) {
+        if (this == GALATH_COWGIRL) {
+            // original rape_switch: a random one of the three loops, never the same twice in a row
+            int[] loops = {1, 3, 4};
+            int pick;
+            do {
+                pick = loops[random.nextInt(3)];
+            } while (pick == current);
+            return pick;
+        }
+        int slow;
+        int slowVariant;
+        int fast;
+        int fastVariant;
+        switch (this) {
+            case GOBLIN_PAIZURI -> { slow = 2; slowVariant = 5; fast = 3; fastVariant = 6; }
+            case GOBLIN_BREEDING, GOBLIN_NELSON -> { slow = 1; slowVariant = 4; fast = 2; fastVariant = 5; }
+            default -> { return -1; }
+        }
+        int base = this.canonicalPhase(current);
+        if (base == slow && !fastHeld) {
+            int pick = random.nextBoolean() ? slowVariant : slow;
+            return pick == current ? -1 : pick;
+        }
+        if (base == fast && fastHeld && current == fast) {
+            return fastVariant;
+        }
+        return -1;
     }
 
     public int firstLoopPhase() {
@@ -593,6 +655,9 @@ public enum CompanionScene {
     }
 
     public int previousLoopPhase(int current) {
+        if (this == GOBLIN_PAIZURI && this.canonicalPhase(current) == 2) {
+            return -1; // the idle loop is only the first wait
+        }
         for (int index = Math.min(this.canonicalPhase(current) - 1, this.phases.size() - 1); index >= 0; index--) {
             if (this.phases.get(index).loop() && !this.isVariantPhase(index)) {
                 return index;
@@ -602,6 +667,9 @@ public enum CompanionScene {
     }
 
     public int nextLoopPhase(int current) {
+        if (this == GOBLIN_PAIZURI && this.canonicalPhase(current) == 1) {
+            return 3; // original c(): the idle loop goes straight to the fast loop
+        }
         for (int index = Math.max(0, this.canonicalPhase(current) + 1); index < this.phases.size(); index++) {
             if (this.phases.get(index).loop() && !this.isVariantPhase(index)) {
                 return index;
@@ -623,6 +691,54 @@ public enum CompanionScene {
             return 3;
         }
         return from == 1 && to == 0 ? 4 : -1;
+    }
+
+    /**
+     * Original per-keyframe TeleportPlayer (a8) for the partner: where the player's eye sits relative to the girl (before
+     * the scene yaw + 180 rotation), the yaw added to the scene yaw and the pitch.
+     */
+    public record PartnerView(double x, double eyeY, double z, float yawAdd, float pitch) {
+    }
+
+    public PartnerView partnerView(int phase, int ticks) {
+        return switch (this) {
+            case KOBOLD_BLOWJOB -> phase != 0 ? null
+                    : ticks == 2 || ticks == 203 ? new PartnerView(0.0D, 0.625D, -1.0D, 180.0F, 0.0F)
+                    : ticks == 83 ? new PartnerView(0.5D, 0.5D, -0.6875D, 140.0F, 0.0F) : null;
+            case KOBOLD_ANAL -> phase == 0 && ticks == 1 ? new PartnerView(0.0D, 0.5625D, 0.5625D, 0.0F, 0.0F) : null;
+            case KOBOLD_MATING_PRESS -> phase == 0 && ticks == 1 ? new PartnerView(0.0D, 0.4375D, -0.6875D, 180.0F, 10.0F)
+                    : phase == 3 && ticks == 11 ? new PartnerView(0.0D, 1.1875D, 0.125D, 180.0F, 70.0F) : null;
+            default -> null;
+        };
+    }
+
+    /** Original corruptSwitch / corrupt_hard_end: Galath's corrupt scenes change speed only when a loop ends. */
+    public boolean switchesAtLoopEnd() {
+        return this == GALATH_ANAL || this == GALATH_CORRUPT || this == GALATH_WILD_CORRUPT;
+    }
+
+    /**
+     * Original corrupt_hard_end: the fast loop always falls back to the slow one when it ends (even with the key held,
+     * which then starts the fast loop again at the end of the slow one).
+     */
+    public boolean fastAlwaysEndsSlow() {
+        return this.switchesAtLoopEnd();
+    }
+
+    /**
+     * Original corrupt_hard keyframe (0.5 s into the fast loop): a fast key still held turns the soft loop into the hard
+     * one. Returns the phase to switch to, or -1.
+     */
+    public int loopMidVariant(int current, int phaseTicks, boolean fastHeld) {
+        if (!fastHeld || phaseTicks != 10) {
+            return -1;
+        }
+        return switch (this) {
+            case GALATH_ANAL -> current == 1 ? 3 : -1;
+            case GALATH_CORRUPT -> current == 2 ? 4 : -1;
+            case GALATH_WILD_CORRUPT -> current == 2 ? 5 : -1;
+            default -> -1;
+        };
     }
 
     /** The loop a one-shot transition phase leads into, or -1 if the phase is not a transition. */

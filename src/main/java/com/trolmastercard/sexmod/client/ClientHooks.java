@@ -62,7 +62,7 @@ public final class ClientHooks {
     public static void koboldGreeting(CompanionEntity kobold) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || kobold.koboldState() != com.trolmastercard.sexmod.tribe.KoboldBehavior.ST_NONE
-                || kobold.isInScene() || !kobold.masterId().filter(minecraft.player.getUUID()::equals).isPresent()) {
+                || kobold.isInScene() || kobold.tribeFollow() || !kobold.masterId().filter(minecraft.player.getUUID()::equals).isPresent()) {
             return;
         }
         double distance = kobold.distanceTo(minecraft.player);
@@ -80,5 +80,13 @@ public final class ClientHooks {
     /** Original ff: opening a Kobold's menu as its owner plays one of the "master" voice lines. */
     public static void koboldMasterSound(CompanionEntity kobold) {
         kobold.playCue("girls.kobold.master.master" + kobold.getRandom().nextInt(6), 1.0F);
+    }
+
+    /** Original em ambient roll: the nearby local player (under 10 blocks) reads the girl's "whopa". */
+    public static void whopa(CompanionEntity girl) {
+        net.minecraft.client.player.LocalPlayer local = net.minecraft.client.Minecraft.getInstance().player;
+        if (local != null && local.position().distanceTo(girl.position()) < 10.0D) {
+            local.sendSystemMessage(net.minecraft.network.chat.Component.literal("<").append(girl.getDisplayName()).append("> whopa"));
+        }
     }
 }

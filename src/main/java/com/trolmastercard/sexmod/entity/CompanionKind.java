@@ -33,7 +33,7 @@ public enum CompanionKind {
             "textures/entity/slime/slime.png",
             "animations/slime/slime.animation.json",
             "animation.slime.idle", "animation.slime.walk",
-            0.70F, 1.80F, 20.0D, 0.28D, 0xC8ECA4, 0x7DCC6A
+            0.60F, 1.80F, 20.0D, 0.28D, 0xC8ECA4, 0x7DCC6A
     ),
     BIA(
             "bia", "Bia",
@@ -89,7 +89,7 @@ public enum CompanionKind {
             "textures/entity/galath/galath.png",
             "animations/galath/galath.animation.json",
             "animation.galath.idle", "animation.galath.walk",
-            1.20F, 2.40F, 110.0D, 0.60D, 0xFF0000, 0xFF0000
+            0.60F, 1.80F, 110.0D, 0.60D, 0xFF0000, 0xFF0000
     ),
     MANGLELIE(
             "manglelie", "Manglelie",
@@ -97,7 +97,7 @@ public enum CompanionKind {
             "textures/entity/manglelie/manglelie.png",
             "animations/manglelie/manglelie.animation.json",
             "animation.manglelie.idle", "animation.manglelie.walk",
-            0.90F, 2.20F, 60.0D, 0.32D, 0xF9F9F9, 0x817AC6
+            0.60F, 1.80F, 20.0D, 0.50D, 0xF9F9F9, 0x817AC6
     );
 
     private final String registryPath;

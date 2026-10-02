@@ -82,6 +82,14 @@ public final class CompanionActionScreen extends Screen {
         }
     }
 
+    @Override
+    public void removed() {
+        super.removed();
+        if (this.companion.kind() == com.trolmastercard.sexmod.entity.CompanionKind.KOBOLD) {
+            PacketDistributor.sendToServer(new CompanionActionPayload(this.companion.getId(), CompanionActionPayload.CLOSE));
+        }
+    }
+
     private void choose(String action) {
         PacketDistributor.sendToServer(new CompanionActionPayload(this.companion.getId(), action));
         this.onClose();

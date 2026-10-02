@@ -228,13 +228,16 @@ public final class ManglelieBehavior {
             return;
         }
         AABB box = new AABB(mother.blockPosition()).inflate(15.0D);
+        Monster chosen = null;
         for (Monster mob : level.getEntitiesOfClass(Monster.class, box)) {
             if (this.invalidTarget(mob, mother)) {
                 continue;
             }
-            self.setMangTarget(mob.getId(), level.getGameTime());
+            chosen = mob; // original f8.n() has no break: the last valid mob wins
+        }
+        if (chosen != null) {
+            self.setMangTarget(chosen.getId(), level.getGameTime());
             this.shotFired = false;
-            return;
         }
     }
 
@@ -288,7 +291,7 @@ public final class ManglelieBehavior {
         arrow.setPos(from);
         Vec3 dir = target.position().subtract(from).normalize().scale(ARROW_SPEED);
         arrow.setDeltaMovement(dir);
-        level.playSound(null, mother.getX(), mother.getY(), mother.getZ(), SoundEvents.SKELETON_SHOOT, SoundSource.NEUTRAL, 1.0F, 1.0F);
+        level.playSound(null, mother.getX(), mother.getY(), mother.getZ(), SoundEvents.ARROW_SHOOT, SoundSource.AMBIENT, 1.0F, 1.0F);
         level.addFreshEntity(arrow);
         this.shotFired = true;
     }

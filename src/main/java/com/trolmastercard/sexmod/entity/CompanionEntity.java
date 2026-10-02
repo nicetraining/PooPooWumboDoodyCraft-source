@@ -357,9 +357,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     case JENNY, ELLIE, BIA, LUNA -> 0.0D;
                     default -> 3.0D;
                 })
-                .add(Attributes.FLYING_SPEED, 0.4D)
-                .add(Attributes.ARMOR, kind == CompanionKind.GALATH ? 4.0D : 0.0D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, kind == CompanionKind.GALATH ? 0.20D : 0.0D);
+                .add(Attributes.FLYING_SPEED, kind == CompanionKind.GALATH ? 0.6D : 0.4D);
     }
 
     public static boolean checkNaturalSpawnRules(
@@ -1084,7 +1082,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
-        if (this.goblinHeld() && !source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL)) {
+        if (this.goblinHeld() && !source.is(net.minecraft.world.damagesource.DamageTypes.GENERIC_KILL)
+                && !source.is(net.minecraft.world.damagesource.DamageTypes.FELL_OUT_OF_WORLD)) {
             return true; // a carried goblin takes no damage except /kill
         }
         if (this.kind == CompanionKind.GALATH
@@ -1303,8 +1302,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.koboldBehavior.isBusy() || this.isInScene()) {
             return InteractionResult.PASS;
         }
-        if (this.isMaster(player) && held.is(Items.NAME_TAG) && held.has(net.minecraft.core.component.DataComponents.CUSTOM_NAME)
-                && !this.koboldUnderAttack() && this.koboldState() != com.trolmastercard.sexmod.tribe.KoboldBehavior.ST_SLEEP) {
+        if (this.isMaster(player) && held.is(Items.NAME_TAG)) { // original ff: any name tag, before the attack and sleep checks
             if (!client) {
                 this.setKoboldName(held.getHoverName().getString());
                 held.shrink(1);
@@ -1396,6 +1394,18 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         return this.entityData.get(DATA_SCENE_PARTNER);
     }
 
+    /** Client menu closed: a frozen Kobold walks on again. */
+    public void endKoboldInteraction(Player player) {
+        if (this.koboldBehavior != null) {
+            this.koboldBehavior.endInteract(player.getUUID());
+        }
+    }
+
+    /** Goblin breeding jump: the player is the partner for the camera and wipe keyframes before the scene object exists. */
+    public void setJumpPartner(UUID player) {
+        this.entityData.set(DATA_SCENE_PARTNER, Optional.ofNullable(player));
+    }
+
     public boolean isInScene() {
         return this.currentScene() != null;
     }
@@ -1470,8 +1480,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             serverLevel.addFreshEntity(pearl);
         } else if (this.goHomeTicks >= (bee ? 34 : 58)) {
             for (int burst = 0; burst < 32; burst++) {
-                serverLevel.sendParticles(ParticleTypes.PORTAL, this.getX(), this.getY() + 1.0D, this.getZ(),
-                        1, 0.2D, 0.2D, 0.2D, 0.5D);
+                // original gg: 32 calls of 32 portal particles, random height 0..2, speed = gaussian
+                serverLevel.sendParticles(ParticleTypes.PORTAL, this.getX(), this.getY() + this.random.nextDouble() * 2.0D,
+                        this.getZ(), 32, 0.2D, 0.2D, 0.2D, this.random.nextGaussian());
             }
             this.pinned = false;
             this.goHomeTicks = -1;
@@ -1827,7 +1838,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     this.drainPlayer(player, true);
                 }
                 if (ticks >= phase.durationTicks()) {
-                    this.enterScenePhase(player.getHealth() - 1.0F <= 0.0F ? 4 : 1 + this.random.nextInt(3));
+                    int previous = this.currentScenePhase();
+                    int next;
+                    do {
+                        next = 1 + this.random.nextInt(3);
+                    } while (next == previous);
+                    this.enterScenePhase(player.getHealth() - 1.0F <= 0.0F ? 4 : next);
                 }
             }
             case 4 -> {
@@ -2028,6 +2044,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.scenePreviousNoAi = this.isNoAi();
         this.scenePreviousNoGravity = this.isNoGravity();
         this.sceneAnchorPosition = anchor.position();
+        this.partnerView = null;
         this.sceneAnchorYaw = anchor.yaw();
         this.setNoAi(true);
         this.setNoGravity(true);
@@ -2188,12 +2205,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             return;
         }
 
-        if (partner.position().distanceToSqr(this.sceneAnchorPosition) > 1.0E-4D) {
-            partner.teleportTo(
-                    this.sceneAnchorPosition.x,
-                    this.sceneAnchorPosition.y,
-                    this.sceneAnchorPosition.z
-            );
+        Vec3 target = this.partnerTarget(partner);
+        if (partner.position().distanceToSqr(target) > 1.0E-4D) {
+            partner.teleportTo(target.x, target.y, target.z);
         }
         partner.setDeltaMovement(Vec3.ZERO);
         partner.fallDistance = 0.0F;
@@ -2202,6 +2216,33 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             // Start the orbit camera in front of the scene instead of behind it.
             partner.setYRot(Mth.wrapDegrees(this.sceneAnchorYaw + 180.0F));
             partner.setXRot(8.0F);
+        }
+    }
+
+    private CompanionScene.PartnerView partnerView;
+
+    /** Where the partner is held: the anchor, or the last scripted camera offset rotated by the scene yaw + 180. */
+    private Vec3 partnerTarget(Player partner) {
+        CompanionScene.PartnerView view = this.partnerView;
+        if (view == null) {
+            return this.sceneAnchorPosition;
+        }
+        double theta = Math.toRadians(this.sceneAnchorYaw + 180.0F);
+        double cos = Math.cos(theta);
+        double sin = Math.sin(theta);
+        // original ck.a / e3.b: the offset is rotated with its x mirrored
+        double dx = -view.x() * cos - view.z() * sin;
+        double dz = -view.x() * sin + view.z() * cos;
+        double eye = partner.getEyeHeight(net.minecraft.world.entity.Pose.STANDING);
+        return this.sceneAnchorPosition.add(dx, view.eyeY() - eye, dz);
+    }
+
+    private void applyPartnerView(CompanionScene.PartnerView view, Player partner) {
+        this.partnerView = view;
+        Vec3 target = this.partnerTarget(partner);
+        if (partner instanceof ServerPlayer serverPlayer && serverPlayer.level() instanceof ServerLevel level) {
+            serverPlayer.teleportTo(level, target.x, target.y, target.z, java.util.Set.of(),
+                    Mth.wrapDegrees(this.sceneAnchorYaw + view.yawAdd()), view.pitch());
         }
     }
 
@@ -2233,15 +2274,26 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         int current = this.currentScenePhase();
         int faster = scene.nextLoopPhase(current);
         int slower = scene.previousLoopPhase(current);
-        if (faster >= 0 && this.sceneFastHeld) {
+        int mid = scene.loopMidVariant(current, this.scenePhaseTicks, this.sceneFastHeld);
+        if (mid >= 0) {
+            this.enterScenePhase(mid);
+            return;
+        }
+        boolean atEnd = this.scenePhaseTicks >= phase.durationTicks();
+        if (faster >= 0 && this.sceneFastHeld && (atEnd || !scene.switchesAtLoopEnd())) {
             int via = scene.transitionVia(current, faster);
             this.enterScenePhase(via >= 0 ? via : faster);
             return;
         }
         if (this.scenePhaseTicks >= phase.durationTicks()) {
-            if (slower >= 0 && !this.sceneFastHeld) {
+            if (slower >= 0 && (!this.sceneFastHeld || scene.fastAlwaysEndsSlow())) {
                 int via = scene.transitionVia(current, slower);
                 this.enterScenePhase(via >= 0 ? via : slower);
+                return;
+            }
+            int variant = scene.loopEndVariant(current, this.sceneFastHeld, this.random);
+            if (variant >= 0) {
+                this.enterScenePhase(variant);
                 return;
             }
             if (scene == CompanionScene.KOBOLD_BLOWJOB && !this.sceneFastHeld && this.random.nextBoolean()) {
@@ -2416,6 +2468,16 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     public void tick() {
         super.tick();
 
+        if (this.tickCount == 1 && this.level() instanceof ServerLevel duplicateCheck && !this.technicalProxy) {
+            // original em.readEntityFromNBT: a girl whose ID is already loaded elsewhere is deleted ("got a duped ...")
+            for (net.minecraft.world.entity.Entity other : duplicateCheck.getAllEntities()) {
+                if (other != this && other instanceof CompanionEntity girl && !girl.technicalProxy
+                        && !girl.isRemoved() && girl.girlId.equals(this.girlId)) {
+                    this.discard();
+                    return;
+                }
+            }
+        }
         if (this.kind == CompanionKind.KOBOLD && this.level().isClientSide) {
             com.trolmastercard.sexmod.client.ClientHooks.koboldGreeting(this);
         }
@@ -2597,6 +2659,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
 
         this.scenePhaseTicks++;
+        CompanionScene.PartnerView view = scene.partnerView(this.currentScenePhase(), this.scenePhaseTicks);
+        if (view != null && controller != null) {
+            this.applyPartnerView(view, controller);
+        }
         if (scene.isWild()) {
             this.tickWildScene(serverLevel, scene, controller, phase);
             return;
@@ -2631,7 +2697,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (scene == CompanionScene.JENNY_PAYMENT && this.scenePhaseTicks == 43) {
             this.sayPaymentLine(controller);
         }
-        if (scene == CompanionScene.GOBLIN_NELSON && this.currentScenePhase() == scene.phases().size() - 1
+        if (scene == CompanionScene.GOBLIN_NELSON && this.currentScenePhase() == 3
                 && this.scenePhaseTicks == 1) {
             this.setGoblinPreggo(true); // original e3.b(fp): the belly shows while NELSON_CUM plays
         }
@@ -2694,7 +2760,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (transitionTarget >= 0) {
             nextPhase = transitionTarget;
         }
-        if (nextPhase >= scene.phases().size()) {
+        if (nextPhase >= scene.phases().size() || scene.isVariantPhase(nextPhase)) {
             this.finishScene(true);
         } else {
             this.enterScenePhase(nextPhase);
@@ -2965,6 +3031,36 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
     }
 
+    /** Original e3.func_70664_aZ / j(): a fleeing goblin only jumps with no path, at the path's end, or for a one block step. */
+    @Override
+    public void jumpFromGround() {
+        if (this.goblinBehavior != null && this.goblinState() == GoblinBehavior.RUN) {
+            net.minecraft.world.level.pathfinder.Path path = this.getNavigation().getPath();
+            if (path != null) {
+                int index = path.getNextNodeIndex();
+                int count = path.getNodeCount();
+                if (count != index && count - 1 != index
+                        && path.getNode(index + 1).y - path.getNode(index).y != 1) {
+                    return;
+                }
+            }
+        }
+        super.jumpFromGround();
+    }
+
+    /** Original em.func_184639_G: a 1 in 10000 fart per ambient roll; the client adds the "whopa" chat within 10 blocks. */
+    @Override
+    protected net.minecraft.sounds.SoundEvent getAmbientSound() {
+        if (this.random.nextInt(10000) != 0) {
+            return null;
+        }
+        if (this.level().isClientSide) {
+            com.trolmastercard.sexmod.client.ClientHooks.whopa(this);
+        }
+        String path = "misc.fart.fart" + this.random.nextInt(3);
+        return com.trolmastercard.sexmod.registry.ModSounds.find(path).map(h -> h.get()).orElse(null);
+    }
+
     @Override
     protected net.minecraft.sounds.SoundEvent getHurtSound(net.minecraft.world.damagesource.DamageSource source) {
         if (this.kind == CompanionKind.JENNY) {
@@ -3192,6 +3288,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         this.sceneEnvironmentTicks = 0;
         this.scenePartnerReturnPosition = null;
         this.sceneAnchorPosition = null;
+        this.partnerView = null;
         this.setDeltaMovement(Vec3.ZERO);
         this.setNoAi(this.scenePreviousNoAi);
         this.setNoGravity(this.scenePreviousNoGravity);
@@ -3457,15 +3554,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 || player.getMainHandItem().is(com.trolmastercard.sexmod.registry.ModItems.GALATH_COIN.get()))) {
             return InteractionResult.PASS; // original f_.a(player, hand): no menu while the coin is in a hand
         }
-        if (heldItem.isEmpty() && player.isShiftKeyDown()) {
-            if (!this.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                this.openControlMenu(serverPlayer);
-            }
-
-            return InteractionResult.sidedSuccess(this.level().isClientSide);
+        if (heldItem.is(Items.NAME_TAG) && (this.kind == CompanionKind.LUNA || this.kind == CompanionKind.BIA)) {
+            return InteractionResult.PASS; // original eb/e0: a name tag renames them through vanilla
         }
-
-        if (this.beeBehavior != null) {
+                if (this.beeBehavior != null) {
             if (this.isBeeTamed() && !this.hasBeeChest() && heldItem.is(Items.CHEST)) {
                 if (!this.level().isClientSide) {
                     this.entityData.set(DATA_BEE_CHEST, true);
@@ -3993,7 +4085,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     /** Looks at nearby players only while she is idle, like the original watch goal. */
     private final class IdleLookGoal extends LookAtPlayerGoal {
         private IdleLookGoal() {
-            super(CompanionEntity.this, Player.class, 3.0F, 1.0F);
+            super(CompanionEntity.this, Player.class, CompanionEntity.this.kind == CompanionKind.GOBLIN ? 2.0F : 3.0F, 1.0F);
         }
 
         @Override
@@ -4074,6 +4166,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private final class MasterGoal extends Goal {
         private int repathTicks;
         private FollowState previous = FollowState.IDLE;
+        private net.minecraft.world.entity.Entity rideVehicle;
 
         private MasterGoal() {
             this.setFlags(EnumSet.of(Flag.MOVE));
@@ -4140,6 +4233,20 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 case ATTACK -> this.attack(self.getTarget());
                 case FOLLOW -> this.follow(master);
                 case IDLE -> this.idle(master);
+                case RIDE -> {
+                    self.getNavigation().stop();
+                    if (self.isPassenger()) {
+                        self.setAction(CompanionAction.SIT);
+                    } else if (this.rideVehicle != null) {
+                        self.setNoGravity(true);
+                        self.noPhysics = true;
+                        net.minecraft.world.phys.Vec3 look = this.rideVehicle.getLookAngle();
+                        net.minecraft.world.phys.Vec3 at = master.position().subtract(look.x * 0.5D, 0.0D, look.z * 0.5D);
+                        self.moveTo(at.x, at.y, at.z, 0.0F, 0.0F);
+                        self.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+                        self.setAction(CompanionAction.RIDE);
+                    }
+                }
                 default -> self.getNavigation().stop();
             }
             this.previous = next;
@@ -4149,6 +4256,20 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
             CompanionEntity self = CompanionEntity.this;
             if (self.isDowned() || self.isInScene()) {
                 return FollowState.DOWNED;
+            }
+            // Original g.a(): riding along with a master on a vehicle / saddled horse.
+            net.minecraft.world.entity.Entity vehicle = master.getVehicle();
+            if (vehicle != null) {
+                if (self.isPassenger() || self.startRiding(vehicle)
+                        || (vehicle instanceof net.minecraft.world.entity.animal.horse.Horse horse && horse.isSaddled())) {
+                    this.rideVehicle = vehicle;
+                    return FollowState.RIDE;
+                }
+            } else if (this.previous == FollowState.RIDE) {
+                self.setAction(CompanionAction.NONE);
+                self.stopRiding();
+                self.noPhysics = false;
+                self.setNoGravity(false);
             }
             if (this.validTarget(self.getTarget(), master)) {
                 return FollowState.ATTACK;
@@ -4202,8 +4323,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     && target.isAlive()
                     && !target.isRemoved()
                     && target.distanceToSqr(master) <= 225.0D
-                    && self.distanceToSqr(target) <= 400.0D
-                    && !(target instanceof Player player && (player.isCreative() || player.isSpectator()));
+                    && self.distanceToSqr(target) <= 400.0D;
         }
 
         private void attack(LivingEntity target) {
@@ -4297,7 +4417,7 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 speed = entry.modifier().amount();
             }
         }
-        return Math.max(1, (int) Math.round(Math.abs(speed) / 3.373494D * 20.0D));
+        return Math.max(1, (int) Math.round(Math.abs(Math.max(speed, 0.5D)) / 3.373494D * 20.0D));
     }
 
     /** The original's catch-up teleport: a safe spot within ten blocks east/south of the master. */

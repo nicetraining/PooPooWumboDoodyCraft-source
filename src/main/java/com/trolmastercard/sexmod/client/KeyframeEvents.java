@@ -96,6 +96,32 @@ public final class KeyframeEvents {
                 PaymentArm.lower(girl.scenePartnerId().get());
             }
         }
+        if (entry.has("view") && partner && local != null) {
+            // original camera keyframes: yaw = scene yaw + offset, pitch, and the F5 perspective (0 first, 1 back, 2 front)
+            JsonObject view = entry.getAsJsonObject("view");
+            Minecraft minecraft = Minecraft.getInstance();
+            if (viewBefore == null) {
+                viewBefore = minecraft.options.getCameraType();
+            }
+            if (view.has("perspective")) {
+                minecraft.options.setCameraType(switch (view.get("perspective").getAsInt()) {
+                    case 0 -> net.minecraft.client.CameraType.FIRST_PERSON;
+                    case 1 -> net.minecraft.client.CameraType.THIRD_PERSON_BACK;
+                    default -> net.minecraft.client.CameraType.THIRD_PERSON_FRONT;
+                });
+            }
+            if (view.has("yaw")) {
+                float yaw = girl.getYRot() + view.get("yaw").getAsFloat();
+                local.setYRot(yaw);
+                local.yRotO = yaw;
+                local.setYHeadRot(yaw);
+            }
+            if (view.has("pitch")) {
+                float pitch = view.get("pitch").getAsFloat();
+                local.setXRot(pitch);
+                local.xRotO = pitch;
+            }
+        }
         if (entry.has("show_egg")) {
             girl.koboldEggShown = true;
         }
@@ -110,7 +136,7 @@ public final class KeyframeEvents {
             JsonObject byUses = entry.getAsJsonObject("chat_by_uses");
             String uses = Integer.toString(girl.allieUses());
             String key = (byUses.has(uses) ? byUses.get(uses) : byUses.get("default")).getAsString();
-            if (local != null && local.distanceToSqr(girl) < 30.0D * 30.0D) {
+            if (local != null && local.distanceToSqr(girl) < 40.0D * 40.0D) {
                 local.sendSystemMessage(Component.literal("<")
                         .append(girl.getDisplayName())
                         .append("> ")
@@ -119,13 +145,22 @@ public final class KeyframeEvents {
         }
         if (entry.has("chat") || entry.has("text")) {
             Minecraft minecraft = Minecraft.getInstance();
-            if (minecraft.player != null && minecraft.player.distanceToSqr(girl) < 30.0D * 30.0D) {
+            if (minecraft.player != null && minecraft.player.distanceToSqr(girl) < 40.0D * 40.0D) {
                 minecraft.player.sendSystemMessage(Component.literal("<")
                         .append(girl.getDisplayName())
                         .append("> ")
                         .append(entry.has("chat")
                                 ? Component.translatable(entry.get("chat").getAsString())
                                 : Component.literal(entry.get("text").getAsString())));
+            }
+        }
+        if (entry.has("player_chat")) {
+            Minecraft minecraft = Minecraft.getInstance();
+            if (minecraft.player != null && minecraft.player.distanceToSqr(girl) < 40.0D * 40.0D) {
+                minecraft.player.sendSystemMessage(Component.literal("<")
+                        .append(minecraft.player.getDisplayName())
+                        .append("> ")
+                        .append(Component.translatable(entry.get("player_chat").getAsString())));
             }
         }
         if (entry.has("every")) {
@@ -153,6 +188,9 @@ public final class KeyframeEvents {
         }
     }
 
+    /** The camera type before the first scripted view change; restored when the scene ends. */
+    public static net.minecraft.client.CameraType viewBefore;
+    private static final java.util.Map<String, Integer> LAST_PICK = new java.util.concurrent.ConcurrentHashMap<>();
     private static final java.util.Map<String, Integer> COUNTERS = new java.util.concurrent.ConcurrentHashMap<>();
 
     /**
@@ -194,7 +232,15 @@ public final class KeyframeEvents {
         if (sounds.size() == 0) {
             return;
         }
-        String path = sounds.get(girl.getRandom().nextInt(sounds.size())).getAsString();
+        // original c.a(SoundEvent[]): reroll up to 10 times to avoid repeating the previous pick of this array
+        int pick = girl.getRandom().nextInt(sounds.size());
+        String listKey = sounds.toString();
+        Integer last = LAST_PICK.get(listKey);
+        for (int tries = 0; sounds.size() > 1 && last != null && pick == last && tries < 10; tries++) {
+            pick = girl.getRandom().nextInt(sounds.size());
+        }
+        LAST_PICK.put(listKey, pick);
+        String path = sounds.get(pick).getAsString();
         float volume = layer.has("volume") ? layer.get("volume").getAsFloat() : 1.0F;
         float pitch = layer.has("pitch") ? layer.get("pitch").getAsFloat() : 1.0F;
         if (girl.kind() == com.trolmastercard.sexmod.entity.CompanionKind.KOBOLD && path.startsWith("girls.kobold.")

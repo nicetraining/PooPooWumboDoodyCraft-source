@@ -211,7 +211,7 @@ final class SlimeBehavior {
     /** The nearest player within a block, who is not already somebody's partner. */
     private Player touchingPlayer(ServerLevel level) {
         Player player = level.getNearestPlayer(this.slime, 1.0D);
-        return player != null && !this.isPartnerElsewhere(level, player) ? player : null;
+        return player != null && player.onGround() && !this.isPartnerElsewhere(level, player) ? player : null;
     }
 
     private void startUndress() {

@@ -22,6 +22,7 @@ public final class CompanionEvents {
     public static void onDimensionChange(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
             var server = player.getServer();
+            carryGoblinAcross(event, player);
             var bindings = com.trolmastercard.sexmod.data.GalathBindingData.get(server);
             bindings.activeFor(player.getUUID()).ifPresent(id -> {
                 for (var level : server.getAllLevels()) {
@@ -31,6 +32,41 @@ public final class CompanionEvents {
                 }
                 bindings.clear(player.getUUID());
             });
+        }
+    }
+
+    /** Original e3$c: a goblin on the player's shoulder is re-created in the new dimension and the old one removed. */
+    private static void carryGoblinAcross(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerChangedDimensionEvent event,
+                                          net.minecraft.server.level.ServerPlayer player) {
+        var server = player.getServer();
+        var from = server.getLevel(event.getFrom());
+        if (from == null || !(player.level() instanceof net.minecraft.server.level.ServerLevel to)) {
+            return;
+        }
+        java.util.List<CompanionEntity> carried = new java.util.ArrayList<>();
+        for (net.minecraft.world.entity.Entity entity : from.getAllEntities()) {
+            if (entity instanceof CompanionEntity goblin && goblin.goblin() != null
+                    && goblin.goblinCarrier().filter(player.getUUID()::equals).isPresent()
+                    && goblin.goblinState() == GoblinBehavior.SHOULDER) {
+                carried.add(goblin);
+            }
+        }
+        for (CompanionEntity old : carried) {
+            CompanionEntity copy = com.trolmastercard.sexmod.registry.ModEntities.get(CompanionKind.GOBLIN).create(to);
+            if (copy == null) {
+                continue;
+            }
+            copy.setGoblinModel(old.goblinModel());
+            if (old.hasCustomName()) {
+                copy.setCustomName(old.getCustomName());
+            }
+            copy.setGoblinTamed(true);
+            copy.setGoblinCarrier(player.getUUID());
+            copy.moveTo(player.getX(), player.getY(), player.getZ(), player.getYRot(), 0.0F);
+            to.addFreshEntity(copy);
+            copy.setGoblinState(GoblinBehavior.SHOULDER);
+            old.setGoblinCarrier(null);
+            old.discard();
         }
     }
 
@@ -48,14 +84,97 @@ public final class CompanionEvents {
         }
     }
 
-    /** Original co: an animal that gets the horny effect falls in love with the nearest player within 30 blocks at once. */
+    /**
+     * Original co: an animal that gets the horny effect falls in love with the nearest player within 30 blocks at
+     * once (adults only; the effect is dropped from every animal), and a villager gets a one-off breeding goal.
+     */
     @SubscribeEvent
     public static void onAnimalTick(EntityTickEvent.Post event) {
-        if (event.getEntity() instanceof net.minecraft.world.entity.animal.Animal animal && !animal.level().isClientSide
-                && animal.getAge() >= 0 && animal.hasEffect(com.trolmastercard.sexmod.registry.ModPotions.HORNY_EFFECT)) {
-            Player nearest = animal.level().getNearestPlayer(animal, 30.0D);
-            animal.setInLove(nearest);
+        if (event.getEntity().level().isClientSide) {
+            return;
+        }
+        if (event.getEntity() instanceof net.minecraft.world.entity.npc.Villager villager
+                && villager.hasEffect(com.trolmastercard.sexmod.registry.ModPotions.HORNY_EFFECT)) {
+            villager.goalSelector.addGoal(2, new VillagerBreedGoal(villager));
+            villager.removeEffect(com.trolmastercard.sexmod.registry.ModPotions.HORNY_EFFECT);
+        }
+        if (event.getEntity() instanceof net.minecraft.world.entity.animal.Animal animal
+                && animal.hasEffect(com.trolmastercard.sexmod.registry.ModPotions.HORNY_EFFECT)) {
+            if (animal.getAge() >= 0) {
+                animal.setAge(0);
+                animal.resetLove();
+                animal.setInLove(animal.level().getNearestPlayer(animal, 30.0D));
+            }
             animal.removeEffect(com.trolmastercard.sexmod.registry.ModPotions.HORNY_EFFECT);
+        }
+    }
+
+    /** Original cw: walks to the nearest villager within 8x3x8 and, after 300 ticks, a baby is born. */
+    private static final class VillagerBreedGoal extends net.minecraft.world.entity.ai.goal.Goal {
+        private final net.minecraft.world.entity.npc.Villager self;
+        private net.minecraft.world.entity.npc.Villager partner;
+        private int timer;
+
+        private VillagerBreedGoal(net.minecraft.world.entity.npc.Villager self) {
+            this.self = self;
+            this.setFlags(java.util.EnumSet.of(Flag.MOVE, Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (this.timer != 0) {
+                return false;
+            }
+            this.partner = this.self.level().getEntitiesOfClass(net.minecraft.world.entity.npc.Villager.class,
+                            this.self.getBoundingBox().inflate(8.0D, 3.0D, 8.0D), other -> other != this.self)
+                    .stream().findFirst().orElse(null);
+            return this.partner != null;
+        }
+
+        @Override
+        public void start() {
+            this.timer = 300;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return true;
+        }
+
+        @Override
+        public void tick() {
+            this.timer--;
+            this.self.getLookControl().setLookAt(this.partner, 10.0F, 30.0F);
+            if (this.self.distanceToSqr(this.partner) > 2.25D) {
+                this.self.getNavigation().moveTo(this.partner, 0.25D);
+            }
+            if (this.timer <= 0) {
+                this.breed();
+                this.self.goalSelector.removeGoal(this);
+            }
+            if (this.self.getRandom().nextInt(35) == 0) {
+                this.self.level().broadcastEntityEvent(this.self, (byte) 12);
+            }
+        }
+
+        private void breed() {
+            if (!(this.self.level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) {
+                return;
+            }
+            net.minecraft.world.entity.AgeableMob child = this.self.getBreedOffspring(serverLevel, this.partner);
+            this.partner.setAge(6000);
+            this.self.setAge(6000);
+            net.neoforged.neoforge.event.entity.living.BabyEntitySpawnEvent event =
+                    new net.neoforged.neoforge.event.entity.living.BabyEntitySpawnEvent(this.self, this.partner, child);
+            if (net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(event).isCanceled()
+                    || event.getChild() == null) {
+                return;
+            }
+            net.minecraft.world.entity.AgeableMob baby = event.getChild();
+            baby.setAge(-24000);
+            baby.moveTo(this.self.getX(), this.self.getY(), this.self.getZ(), 0.0F, 0.0F);
+            serverLevel.addFreshEntity(baby);
+            serverLevel.broadcastEntityEvent(baby, (byte) 12);
         }
     }
 

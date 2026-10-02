@@ -71,6 +71,12 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
             baseScale = (entity.goblinState() == com.trolmastercard.sexmod.entity.GoblinBehavior.CATCH ? 0.5F : 1.0F) * entity.goblinFade();
         }
         float scale = baseScale * entity.appearanceScale();
+        if (entity.allieFadeStart >= 0L && entity.level() != null) {
+            // original d8: while she fades out she shrinks to U and rises by 3 - 3U
+            float u = Math.max(0.0F, 1.0F - (entity.level().getGameTime() + partialTick - entity.allieFadeStart) / 33.0F);
+            poseStack.translate(0.0F, 3.0F - 3.0F * u, 0.0F);
+            scale *= u;
+        }
         poseStack.scale(scale, scale, scale);
     }
 
@@ -116,6 +122,13 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
             renderType = RenderType.entityCutoutNoCull(propTexture());
             buffer = bufferSource.getBuffer(renderType);
         }
+        if (bone.getName().equals("body2") && entity.currentScene() != null
+                && entity.currentScene().modelOverride() != null) {
+            // original da: in the combined model the daughter's half (body2) is drawn with her own texture
+            renderType = RenderType.entityCutoutNoCull(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                    "sexmod", "textures/entity/manglelie/manglelie.png"));
+            buffer = bufferSource.getBuffer(renderType);
+        }
         if (entity.allieFadeStart >= 0L && entity.level() != null) {
             float fade = 1.0F - (entity.level().getGameTime() + partialTick - entity.allieFadeStart) / 33.0F;
             if (fade <= 0.0F) {
@@ -128,6 +141,26 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
 
         if (entity.kind() == CompanionKind.KOBOLD) {
             renderColor = koboldTint(entity, bone.getName(), renderColor);
+        }
+        net.minecraft.world.entity.EquipmentSlot armourSlot = CompanionModel.armourSlot(bone.getName().toLowerCase(java.util.Locale.ROOT));
+        if (armourSlot != null && (entity.kind() == CompanionKind.JENNY || entity.kind() == CompanionKind.ELLIE
+                || entity.kind() == CompanionKind.BIA || entity.kind() == CompanionKind.LUNA)
+                && entity.getItemBySlot(armourSlot).getItem() instanceof net.minecraft.world.item.ArmorItem armour) {
+            // original d_.a(String, r, g, b): the material picks a 72 pixel wide strip of the texture, leather is dyed
+            var material = armour.getMaterial();
+            int strip = 0;
+            if (material.is(net.minecraft.world.item.ArmorMaterials.LEATHER)) {
+                strip = 4;
+                int dye = net.minecraft.world.item.component.DyedItemColor.getOrDefault(entity.getItemBySlot(armourSlot), -6265536);
+                renderColor = (renderColor & 0xFF000000) | (dye & 0xFFFFFF);
+            } else if (material.is(net.minecraft.world.item.ArmorMaterials.CHAIN) || material.is(net.minecraft.world.item.ArmorMaterials.IRON)) {
+                strip = 2;
+            } else if (material.is(net.minecraft.world.item.ArmorMaterials.GOLD)) {
+                strip = 1;
+            }
+            if (strip != 0) {
+                buffer = new UvShift(buffer, 72.0F * strip / 4096.0F);
+            }
         }
         if (entity.goblin() != null) {
             renderColor = goblinLook(entity, bone, renderColor);
@@ -315,14 +348,15 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
                         && entity.kind() != CompanionKind.BIA) {
                     return net.minecraft.world.item.ItemStack.EMPTY;
                 }
+                // original d_ item hook: the girl's real weapon (slot 0) or bow (slot 1), whatever the player equipped
                 return switch (entity.action()) {
-                    case ATTACK -> new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_SWORD);
-                    case BOW -> new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.BOW);
+                    case ATTACK -> entity.getMainHandItem();
+                    case BOW -> entity.getOffhandItem();
                     default -> net.minecraft.world.item.ItemStack.EMPTY;
                 };
             }
             if (entity.action() == com.trolmastercard.sexmod.entity.CompanionAction.ATTACK) {
-                return new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.IRON_AXE);
+                return entity.getMainHandItem();
             }
             return switch (entity.fishState()) {
                 case com.trolmastercard.sexmod.entity.LunaFishing.START, com.trolmastercard.sexmod.entity.LunaFishing.IDLE ->
@@ -337,6 +371,53 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
         protected net.minecraft.world.item.ItemDisplayContext getTransformTypeForStack(
                 GeoBone bone, net.minecraft.world.item.ItemStack stack, CompanionEntity entity) {
             return net.minecraft.world.item.ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
+        }
+    }
+
+    /** Adds a fixed offset to the U coordinate of every vertex (the armour material strips of the girls' textures). */
+    private static final class UvShift implements VertexConsumer {
+        private final VertexConsumer delegate;
+        private final float offset;
+
+        private UvShift(VertexConsumer delegate, float offset) {
+            this.delegate = delegate;
+            this.offset = offset;
+        }
+
+        @Override
+        public VertexConsumer addVertex(float x, float y, float z) {
+            this.delegate.addVertex(x, y, z);
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setColor(int r, int g, int b, int a) {
+            this.delegate.setColor(r, g, b, a);
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setUv(float u, float v) {
+            this.delegate.setUv(u + this.offset, v);
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setUv1(int u, int v) {
+            this.delegate.setUv1(u, v);
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setUv2(int u, int v) {
+            this.delegate.setUv2(u, v);
+            return this;
+        }
+
+        @Override
+        public VertexConsumer setNormal(float x, float y, float z) {
+            this.delegate.setNormal(x, y, z);
+            return this;
         }
     }
 }

@@ -40,10 +40,11 @@ public final class LunaHookRenderer extends EntityRenderer<LunaHookEntity> {
         poseStack.popPose();
 
         float bodyYaw = Mth.lerp(partialTick, luna.yBodyRotO, luna.yBodyRot) * ((float) Math.PI / 180.0F);
+        // original fi: the line leaves the rod hand 0.8 forward and 0.35 to the side, at eye height - 0.45
         Vec3 hand = new Vec3(
-                Mth.lerp(partialTick, luna.xo, luna.getX()) - Mth.sin(bodyYaw) * 0.55D,
-                Mth.lerp(partialTick, luna.yo, luna.getY()) + luna.getBbHeight() * 0.62D,
-                Mth.lerp(partialTick, luna.zo, luna.getZ()) + Mth.cos(bodyYaw) * 0.55D);
+                Mth.lerp(partialTick, luna.xo, luna.getX()) - Mth.cos(bodyYaw) * 0.35D - Mth.sin(bodyYaw) * 0.8D,
+                Mth.lerp(partialTick, luna.yo, luna.getY()) + luna.getEyeHeight() - (luna.isCrouching() ? 0.1875D : 0.45D),
+                Mth.lerp(partialTick, luna.zo, luna.getZ()) - Mth.sin(bodyYaw) * 0.35D + Mth.cos(bodyYaw) * 0.8D);
         double hx = Mth.lerp(partialTick, hook.xo, hook.getX());
         double hy = Mth.lerp(partialTick, hook.yo, hook.getY()) + 0.25D;
         double hz = Mth.lerp(partialTick, hook.zo, hook.getZ());

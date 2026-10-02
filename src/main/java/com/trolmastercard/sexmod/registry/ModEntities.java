@@ -53,8 +53,16 @@ public final class ModEntities {
                             .updateInterval(3)
                             .build(FapCraft.MOD_ID + ":kobold_egg")
             );
-    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> CUSTOM_MODEL =
-            registerCompatibility("custom_model", CompanionKind.JENNY, false);
+    public static final DeferredHolder<EntityType<?>, EntityType<com.trolmastercard.sexmod.entity.CustomModelStubEntity>> CUSTOM_MODEL =
+            ENTITY_TYPES.register(
+                    "custom_model",
+                    () -> EntityType.Builder.<com.trolmastercard.sexmod.entity.CustomModelStubEntity>of(
+                                    com.trolmastercard.sexmod.entity.CustomModelStubEntity::new, MobCategory.MISC)
+                            .sized(0.1F, 0.1F)
+                            .clientTrackingRange(10)
+                            .updateInterval(3)
+                            .build(FapCraft.MOD_ID + ":custom_model")
+            );
     public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_JENNY =
             registerCompatibility("player_jenny", CompanionKind.JENNY, true);
     public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PLAYER_ELLIE =
@@ -85,8 +93,16 @@ public final class ModEntities {
                             .clientTrackingRange(10)
                             .build(FapCraft.MOD_ID + ":friendly_slime")
             );
-    public static final DeferredHolder<EntityType<?>, EntityType<CompanionEntity>> PYROCINICAL =
-            registerCompatibility("pyrocinical", CompanionKind.MANGLELIE, false);
+    public static final DeferredHolder<EntityType<?>, EntityType<com.trolmastercard.sexmod.entity.PyrocinicalEntity>> PYROCINICAL =
+            ENTITY_TYPES.register(
+                    "pyrocinical",
+                    () -> EntityType.Builder.<com.trolmastercard.sexmod.entity.PyrocinicalEntity>of(
+                                    com.trolmastercard.sexmod.entity.PyrocinicalEntity::new, MobCategory.AMBIENT)
+                            .sized(0.6F, 1.8F)
+                            .clientTrackingRange(4)
+                            .updateInterval(1)
+                            .build(FapCraft.MOD_ID + ":pyrocinical")
+            );
 
     public static final DeferredHolder<EntityType<?>, EntityType<com.trolmastercard.sexmod.entity.LunaHookEntity>> LUNA_HOOK =
             ENTITY_TYPES.register(
@@ -167,6 +183,13 @@ public final class ModEntities {
     }
 
     public static void registerSpawnPlacements(RegisterSpawnPlacementsEvent event) {
+        event.register(
+                PYROCINICAL.get(),
+                SpawnPlacementTypes.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                com.trolmastercard.sexmod.entity.PyrocinicalEntity::checkSpawn,
+                RegisterSpawnPlacementsEvent.Operation.REPLACE
+        );
         COMPANIONS.values().forEach(holder -> event.register(
                 holder.get(),
                 SpawnPlacementTypes.ON_GROUND,
@@ -183,6 +206,8 @@ public final class ModEntities {
                 entry.holder().get(),
                 CompanionEntity.createAttributes(entry.kind()).build()
         ));
+        event.put(PYROCINICAL.get(), com.trolmastercard.sexmod.entity.PyrocinicalEntity.createAttributes().build());
+        event.put(CUSTOM_MODEL.get(), com.trolmastercard.sexmod.entity.CustomModelStubEntity.createAttributes().build());
         event.put(KOBOLD_EGG.get(), KoboldEggEntity.createAttributes().build());
         event.put(FRIENDLY_SLIME.get(), net.minecraft.world.entity.monster.Monster.createMonsterAttributes().build());
     }

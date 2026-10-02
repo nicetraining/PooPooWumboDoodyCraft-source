@@ -27,6 +27,8 @@ public final class ClientModEvents {
         }
         event.registerEntityRenderer(ModEntities.KOBOLD_EGG.get(), KoboldEggRenderer::new);
         event.registerEntityRenderer(ModEntities.FRIENDLY_SLIME.get(), net.minecraft.client.renderer.entity.SlimeRenderer::new);
+        event.registerEntityRenderer(ModEntities.CUSTOM_MODEL.get(), net.minecraft.client.renderer.entity.NoopRenderer::new);
+        event.registerEntityRenderer(ModEntities.PYROCINICAL.get(), PyrocinicalRenderer::new);
         event.registerEntityRenderer(ModEntities.LUNA_HOOK.get(), LunaHookRenderer::new);
         event.registerEntityRenderer(ModEntities.ENERGY_BALL.get(), EnergyBallRenderer::new);
     }
@@ -38,6 +40,16 @@ public final class ClientModEvents {
                 net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(FapCraft.MOD_ID, "cast"),
                 (stack, level, entity, seed) -> entity instanceof com.trolmastercard.sexmod.entity.CompanionEntity companion
                         && companion.fishCast() ? 1.0F : 0.0F));
+    }
+
+    /** Original hn: the spots of the Kobold egg item take the tribe colour stored on the stack. */
+    @SubscribeEvent
+    public static void registerItemColors(net.neoforged.neoforge.client.event.RegisterColorHandlersEvent.Item event) {
+        event.register((stack, tintIndex) -> {
+            var data = stack.get(net.minecraft.core.component.DataComponents.CUSTOM_DATA);
+            String color = data == null ? "" : data.copyTag().getString("tribeColor");
+            return 0xFF000000 | com.trolmastercard.sexmod.tribe.KoboldColor.byName(color).mainRgb();
+        }, com.trolmastercard.sexmod.registry.ModItems.KOBOLD_EGG_ITEM.get());
     }
 
     @SubscribeEvent

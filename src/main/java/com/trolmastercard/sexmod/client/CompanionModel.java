@@ -82,6 +82,7 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
 
         if (entity.kind() == CompanionKind.KOBOLD) {
             this.koboldScales(entity);
+            this.koboldTransitionOffset(entity);
         }
         if (entity.goblin() != null) {
             goblinPose(entity);
@@ -135,6 +136,45 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
         GeoBone body = this.bone("body") != null ? this.bone("body") : this.bone("dd");
         if (body != null) {
             body.setRotY(0.0F);
+        }
+    }
+
+    /**
+     * Original c9.b: while the main controller blends into a Kobold scene animation the body is moved by an offset that
+     * depends on her size (d = 0.25 - size) so that she lines up with the player.
+     */
+    private void koboldTransitionOffset(CompanionEntity kobold) {
+        var scene = kobold.currentScene();
+        if (scene == null) {
+            return;
+        }
+        var controller = kobold.getAnimatableInstanceCache().getManagerForId(kobold.getId()).getAnimationControllers().get("main");
+        if (controller == null || controller.getAnimationState() != software.bernie.geckolib.animation.AnimationController.State.TRANSITIONING) {
+            return;
+        }
+        GeoBone body = this.bone("body");
+        if (body == null) {
+            return;
+        }
+        float d = 0.25F - kobold.koboldSize();
+        switch (scene) {
+            case KOBOLD_BLOWJOB -> {
+                if (kobold.currentScenePhase() != 0) {
+                    body.setPosZ(11.43F + d * -7.0F);
+                }
+            }
+            case KOBOLD_ANAL -> {
+                body.setPosX(1.78F + d * -1.5F);
+                body.setPosY(13.07F + d * -11.0F);
+                body.setPosZ(2.05F + d * -8.0F);
+            }
+            case KOBOLD_MATING_PRESS -> {
+                body.setPosX(0.0F);
+                body.setPosY(2.85F);
+                body.setPosZ(-7.0F + d * 4.7F);
+            }
+            default -> {
+            }
         }
     }
 
@@ -334,10 +374,94 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
         head.setRotX(pitch);
     }
 
+    private static boolean isWornArmourKind(CompanionKind kind) {
+        return kind == CompanionKind.JENNY || kind == CompanionKind.ELLIE || kind == CompanionKind.BIA
+                || kind == CompanionKind.LUNA;
+    }
+
+    private static final java.util.Set<String> ARMOUR_HEAD = java.util.Set.of("armorhelmet");
+    private static final java.util.Set<String> ARMOUR_CHEST = java.util.Set.of("armorshoulderr", "armorshoulderl",
+            "armorchest", "armorboobs");
+    private static final java.util.Set<String> ARMOUR_LEGS = java.util.Set.of("armorbootyr", "armorbootyl",
+            "armorpantslowl", "armorpantslowr", "armorpantsupr", "armorpantsupl", "armorhip");
+    private static final java.util.Set<String> ARMOUR_FEET = java.util.Set.of("armorshoesl", "armorshoesr");
+    private static final java.util.Set<String> LEGS_SKIN = java.util.Set.of("fleshl", "fleshr", "vagina", "curvesl",
+            "curvesr", "kneel", "kneer");
+
+    /** The armour piece a bone belongs to, or null (original cv.c/f/h/b lists of the girls that wear armour). */
+    public static net.minecraft.world.entity.EquipmentSlot armourSlot(String lowerBone) {
+        if (ARMOUR_HEAD.contains(lowerBone)) {
+            return net.minecraft.world.entity.EquipmentSlot.HEAD;
+        }
+        if (ARMOUR_CHEST.contains(lowerBone)) {
+            return net.minecraft.world.entity.EquipmentSlot.CHEST;
+        }
+        if (ARMOUR_LEGS.contains(lowerBone)) {
+            return net.minecraft.world.entity.EquipmentSlot.LEGS;
+        }
+        if (ARMOUR_FEET.contains(lowerBone)) {
+            return net.minecraft.world.entity.EquipmentSlot.FEET;
+        }
+        return null;
+    }
+
+    private static boolean wearing(CompanionEntity entity, net.minecraft.world.entity.EquipmentSlot slot) {
+        net.minecraft.world.item.ItemStack stack = entity.getItemBySlot(slot);
+        return slot == net.minecraft.world.entity.EquipmentSlot.CHEST
+                ? stack.getItem() instanceof net.minecraft.world.item.ArmorItem
+                : !stack.isEmpty();
+    }
+
+    /**
+     * Original cv.a(processor, helmet, chest, legs, boots): an armour bone shows when its slot is filled, and the
+     * clothing bones it replaces are hidden then. Null means "not a worn-armour bone".
+     */
+    private static Boolean wornArmourDecision(CompanionEntity entity, String bone) {
+        net.minecraft.world.entity.EquipmentSlot slot = armourSlot(bone);
+        if (slot != null) {
+            return !wearing(entity, slot);
+        }
+        CompanionKind kind = entity.kind();
+        if (entity.outfit() == com.trolmastercard.sexmod.entity.OutfitMode.ALTERNATE) {
+            return null; // the nude model (index 0) never swaps clothing for armour
+        }
+        if (wearing(entity, net.minecraft.world.entity.EquipmentSlot.HEAD)
+                && (kind == CompanionKind.ELLIE && bone.equals("headband")
+                || kind == CompanionKind.BIA && (bone.equals("leaf7") || bone.equals("leaf8")))) {
+            return true;
+        }
+        if (wearing(entity, net.minecraft.world.entity.EquipmentSlot.CHEST)) {
+            boolean hide = switch (kind) {
+                case JENNY, ELLIE -> bone.equals("boobsflesh") || bone.equals("upperbodyl") || bone.equals("upperbodyr");
+                case BIA -> bone.equals("bra") || bone.equals("upperbodyl") || bone.equals("upperbodyr");
+                case LUNA -> bone.equals("boobsflesh") || bone.equals("cloth");
+                default -> false;
+            };
+            if (hide) {
+                return true;
+            }
+        }
+        if (wearing(entity, net.minecraft.world.entity.EquipmentSlot.LEGS)) {
+            boolean hide = LEGS_SKIN.contains(bone)
+                    || (kind == CompanionKind.ELLIE && (bone.equals("hotpants") || bone.equals("slip")))
+                    || (kind == CompanionKind.BIA && bone.equals("slip"))
+                    || (kind == CompanionKind.LUNA && bone.equals("cloth"));
+            if (hide) {
+                return true;
+            }
+        }
+        return null;
+    }
+
     private static boolean shouldHide(CompanionEntity entity, String boneName) {
         String normalized = boneName.toLowerCase(Locale.ROOT);
 
-        if (normalized.startsWith("armor")) {
+        if (isWornArmourKind(entity.kind())) {
+            Boolean wornDecision = wornArmourDecision(entity, normalized);
+            if (wornDecision != null) {
+                return wornDecision;
+            }
+        } else if (normalized.startsWith("armor")) {
             return entity.outfit()
                     != com.trolmastercard.sexmod.entity.OutfitMode.ARMORED;
         }
@@ -376,7 +500,9 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
         }
 
         if (kind == CompanionKind.BEE) {
-            return normalized.equals("chest");
+            // original c0: the chest bone shows while the current animation name contains "chest" (idle_has_chest)
+            return normalized.equals("chest") && !(entity.hasBeeChest() && entity.currentSceneAnimation() == null
+                    && entity.action() != com.trolmastercard.sexmod.entity.CompanionAction.THROW_PEARL);
         }
 
         if (kind == CompanionKind.GOBLIN) {

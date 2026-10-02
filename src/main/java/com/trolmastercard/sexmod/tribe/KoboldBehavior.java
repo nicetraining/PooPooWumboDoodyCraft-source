@@ -57,6 +57,7 @@ public final class KoboldBehavior {
     private int attackCooldown;
     private int attackAnim;
     private int interactTicks;
+    private UUID interactor;
     private int syncTicks;
     private int scanTicks;
     private int eggCounter = -1;
@@ -93,9 +94,18 @@ public final class KoboldBehavior {
 
     /** A player opened the action menu: stand still and face them for a while (the original's interacting-player flag). */
     public void interact(Player player) {
-        this.interactTicks = 60;
+        this.interactTicks = 1200; // original: frozen until the menu closes; the long timer is only a safety net
+        this.interactor = player.getUUID();
         this.k.getNavigation().stop();
         this.k.getLookControl().setLookAt(player, 30.0F, 30.0F);
+    }
+
+    /** The action menu was closed (or a choice made): the Kobold may move again (original ac()). */
+    public void endInteract(UUID player) {
+        if (player.equals(this.interactor)) {
+            this.interactTicks = 0;
+            this.interactor = null;
+        }
     }
 
     public boolean isBusy() {
@@ -131,8 +141,15 @@ public final class KoboldBehavior {
         }
         if (this.interactTicks > 0) {
             this.interactTicks--;
-            this.k.getNavigation().stop();
-            return;
+            Player talking = this.interactor == null ? null : level.getPlayerByUUID(this.interactor);
+            if (talking == null || talking.distanceToSqr(this.k) > 256.0D) {
+                this.interactTicks = 0; // the player left without the menu telling us
+                this.interactor = null;
+            } else {
+                this.k.getNavigation().stop();
+                this.k.getLookControl().setLookAt(talking, 30.0F, 30.0F);
+                return;
+            }
         }
         this.heal(level);
         if (tribe == null) {
@@ -234,6 +251,10 @@ public final class KoboldBehavior {
     }
 
     private void decide(ServerLevel level, Tribe tribe) {
+        if (this.tribeBusy(level, tribe)) {
+            this.k.getNavigation().stop(); // original b()/h(): the whole tribe waits while any member is in a scene
+            return;
+        }
         boolean underAttack = this.k.koboldUnderAttack();
         if (this.k.isOwnedKobold() && tribe.follow && !underAttack) {
             this.work.release(tribe);
@@ -273,6 +294,15 @@ public final class KoboldBehavior {
         } else {
             this.wildDay(level, tribe, leader);
         }
+    }
+
+    private boolean tribeBusy(ServerLevel level, Tribe tribe) {
+        for (CompanionEntity member : TribeManager.loadedMembers(level.getServer(), tribe)) {
+            if (member != this.k && member.isInScene()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void followOwner(ServerLevel level) {
@@ -435,7 +465,7 @@ public final class KoboldBehavior {
             this.removeCamp(level, tribe);
             tribe.home = null;
         }
-        if (this.work.work(level, tribe)) {
+        if (!leader && this.work.work(level, tribe)) { // original: only followers take tasks, the leader explores and assigns
             return;
         }
         if (leader) {
@@ -453,7 +483,17 @@ public final class KoboldBehavior {
                 }
             }
             if (this.exploreTarget != null && !this.exploring) {
-                this.k.getNavigation().moveTo(this.exploreTarget.getX() + 0.5D, this.exploreTarget.getY(), this.exploreTarget.getZ() + 0.5D, WALK);
+                if (this.k.getNavigation().isDone() || this.k.tickCount % 40 == 0) {
+                    // original c(BlockPos): the walk goes in steps of at most 20 blocks towards the waypoint
+                    Vec3 toTarget = new Vec3(this.exploreTarget.getX() + 0.5D - this.k.getX(), 0.0D,
+                            this.exploreTarget.getZ() + 0.5D - this.k.getZ());
+                    double length = toTarget.length();
+                    Vec3 step = length > 20.0D ? toTarget.scale(20.0D / length) : toTarget;
+                    int sx = (int) (this.k.getX() + step.x);
+                    int sz = (int) (this.k.getZ() + step.z);
+                    int sy = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, sx, sz);
+                    this.k.getNavigation().moveTo(sx + 0.5D, sy, sz + 0.5D, WALK);
+                }
             } else {
                 this.work.wander(level);
             }
@@ -474,14 +514,19 @@ public final class KoboldBehavior {
         }
     }
 
+    /** Original r(UUID): a waypoint 50 to 99 blocks away on both axes, retried up to 100 times until it is reachable. */
     private void pickExploreTarget(ServerLevel level) {
         RandomSource random = this.k.getRandom();
-        double angle = random.nextDouble() * Math.PI * 2.0D;
-        double distance = 25.0D + random.nextDouble() * 20.0D;
-        int x = (int) (this.k.getX() + Math.cos(angle) * distance);
-        int z = (int) (this.k.getZ() + Math.sin(angle) * distance);
-        int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-        this.exploreTarget = new BlockPos(x, y, z);
+        for (int attempt = 0; attempt < 100; attempt++) {
+            int x = (int) this.k.getX() + (50 + random.nextInt(50)) * (random.nextBoolean() ? 1 : -1);
+            int z = (int) this.k.getZ() + (50 + random.nextInt(50)) * (random.nextBoolean() ? 1 : -1);
+            int y = level.getHeight(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            if (y > 0 && level.hasChunkAt(new BlockPos(x, y, z))) {
+                this.exploreTarget = new BlockPos(x, y, z);
+                return;
+            }
+        }
+        this.exploreTarget = null;
     }
 
     /** Original c(tribe, tasks): one fell-tree task per follower, trees within about 15 blocks (4 vertically). */
