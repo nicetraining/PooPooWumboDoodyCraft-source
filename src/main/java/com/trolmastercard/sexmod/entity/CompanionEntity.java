@@ -817,6 +817,12 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     /** Client only: game time at which Allie's fade-out started, or -1 (original ev.U). */
     public long allieFadeStart = -1L;
+    /** Client only (original f_.ap / bu): Galath's drawn sword and the dragon-breath trail along its blade. */
+    public boolean galathSword;
+    public boolean galathBlade;
+    /** Client only: the "setNude" keyframe's burst, spawned by the renderer where the clothing bones are. */
+    public boolean galathNudeBurst;
+    public long galathBladeTick = -1L;
     /** Client only: original ff.Q, the Kobold's egg bone is shown from the renderEgg keyframe until the scene ends. */
     public boolean koboldEggShown;
 
@@ -1384,6 +1390,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
 
     public CompanionScene currentScene() {
         return CompanionScene.byName(this.entityData.get(DATA_SCENE));
+    }
+
+    public int scenePhaseTicks() {
+        return this.scenePhaseTicks;
     }
 
     public int currentScenePhase() {

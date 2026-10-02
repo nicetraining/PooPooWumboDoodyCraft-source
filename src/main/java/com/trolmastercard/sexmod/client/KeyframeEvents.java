@@ -50,6 +50,22 @@ public final class KeyframeEvents {
         if (eventId == null || eventId.isEmpty() || girl.level() == null || !girl.level().isClientSide) {
             return;
         }
+        if (girl.kind() == com.trolmastercard.sexmod.entity.CompanionKind.GALATH) {
+            switch (eventId) {
+                case "startRenderSword" -> {
+                    girl.galathSword = true;
+                    girl.galathBlade = true;
+                }
+                case "stopFadeInParticles" -> girl.galathBlade = false;
+                case "stopRenderSword" -> {
+                    girl.galathSword = false;
+                    girl.galathBlade = false;
+                }
+                case "setNude" -> girl.galathNudeBurst = true;
+                default -> {
+                }
+            }
+        }
         JsonObject kind = tableFor(girl.kind().registryPath());
         JsonObject entry = kind.has(eventId) ? kind.getAsJsonObject(eventId) : null;
         if (entry == null) {

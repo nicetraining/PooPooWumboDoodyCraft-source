@@ -27,6 +27,9 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
         super(context, new CompanionModel());
         this.shadowRadius = 0.2F;
         this.addRenderLayer(new FishingItemLayer(this));
+        this.addRenderLayer(new SkirtLayer(this));
+        this.addRenderLayer(new ClothLayer(this));
+        this.addRenderLayer(new GalathMeshLayer(this));
     }
 
     @Override
@@ -105,6 +108,12 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
             bone.setHidden(localPartner && minecraft.options.getCameraType().isFirstPerson());
             bone.setChildrenHidden(false); // setHidden also hides children, which would freeze the camera bone
         }
+        if (GalathMeshLayer.tracks(bone.getName())) {
+            bone.setTrackingMatrices(true);
+        }
+        if (bone.getName().startsWith("skirt_") || bone.getName().startsWith("clothBoob")) {
+            bone.setTrackingMatrices(true); // SkirtLayer joins these bones with quads
+        }
         if (bone.getName().equals("boyCam")) {
             bone.setTrackingMatrices(true);
             BOY_CAMS.put(entity.getId(), bone);
@@ -139,8 +148,30 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
             renderColor = (Math.min(255, (int) (fade * 255.0F)) << 24) | (renderColor & 0xFFFFFF);
         }
 
+        if (entity.kind() == CompanionKind.GALATH && Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
+            // original f_.v(): in first person she is half transparent while she fights with the sword or is knocked out
+            String animation = GalathMeshLayer.playing(entity);
+            if (animation.equals("animation.galath.attack") || animation.equals("animation.galath.knockout_air")
+                    || animation.equals("animation.galath.knocked_out")) {
+                renderType = RenderType.entityTranslucent(this.getTextureLocation(entity));
+                buffer = bufferSource.getBuffer(renderType);
+                renderColor = 0x80000000 | (renderColor & 0xFFFFFF);
+            }
+        }
         if (entity.kind() == CompanionKind.KOBOLD) {
             renderColor = koboldTint(entity, bone.getName(), renderColor);
+        }
+        if (entity.kind() == CompanionKind.GALATH && bone.getName().equals("pentagram")
+                && "animation.galath.give_coin".equals(GalathMeshLayer.playing(entity))) {
+            // original da: the pentagram turns from grey to pink and glows brighter between ticks 105 and 125 of the coin scene
+            float glow = (net.minecraft.util.Mth.clamp(GalathMeshLayer.elapsed(entity, "animation.galath.give_coin", partialTick),
+                    105.0F, 125.0F) - 105.0F) / 20.0F;
+            int r = (int) (255.0F * net.minecraft.util.Mth.lerp(glow, 0.44705883F, 0.84705883F));
+            int g = (int) (255.0F * net.minecraft.util.Mth.lerp(glow, 0.44705883F, 0.11764706F));
+            int b = (int) (255.0F * net.minecraft.util.Mth.lerp(glow, 0.44705883F, 0.35686275F));
+            renderColor = 0xFF000000 | (r << 16) | (g << 8) | b;
+            int level = (int) (net.minecraft.util.Mth.lerp(glow, 120.0F, 240.0F) / 16.0F);
+            packedLight = net.minecraft.client.renderer.LightTexture.pack(level, level);
         }
         net.minecraft.world.entity.EquipmentSlot armourSlot = CompanionModel.armourSlot(bone.getName().toLowerCase(java.util.Locale.ROOT));
         if (armourSlot != null && (entity.kind() == CompanionKind.JENNY || entity.kind() == CompanionKind.ELLIE

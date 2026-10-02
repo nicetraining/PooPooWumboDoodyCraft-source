@@ -80,6 +80,9 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
             }
         }
 
+        if (entity.kind() == CompanionKind.MANGLELIE) {
+            this.skirtPhysics();
+        }
         if (entity.kind() == CompanionKind.KOBOLD) {
             this.koboldScales(entity);
             this.koboldTransitionOffset(entity);
@@ -98,6 +101,128 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
             if (head != null) {
                 head.setRotY(head.getRotY() + (float) Math.toRadians(entity.mangLookYaw));
                 head.setRotX(head.getRotX() + entity.mangLookPitch);
+            }
+        }
+        if (entity.kind() == CompanionKind.LUNA) {
+            this.lunaHair(entity);
+        }
+        if (entity.kind() == CompanionKind.GALATH) {
+            this.galathPose(entity, animationState.getPartialTick());
+        }
+    }
+
+    /**
+     * Original da.a (per bone): the hair counter-rotates the head pitch, the head and iris bones sway in the slow bed scene
+     * (and fade in during its transition), the arms lean toward the target while she charges.
+     */
+    private void galathPose(CompanionEntity entity, float partialTick) {
+        GeoBone head = this.bone("head");
+        if (head != null) {
+            float pitch = (float) Math.toDegrees(head.getRotX());
+            GeoBone back = this.bone("hairBack");
+            if (back != null) {
+                back.setRotX((float) Math.toRadians(-pitch));
+                if (pitch >= 0.0F) {
+                    back.setPosY(back.getPosY() + Math.min(1.0F, pitch / 45.0F) * 1.5F);
+                }
+            }
+            for (String side : new String[] {"hairDownSideL", "hairDownSideR"}) {
+                GeoBone bone = this.bone(side);
+                if (bone != null) {
+                    bone.setRotX((float) Math.toRadians(pitch < 0.0F ? -pitch / 2.0F : -pitch));
+                    if (pitch >= 0.0F) {
+                        bone.setPosY(bone.getPosY() + Math.min(1.0F, pitch / 45.0F));
+                    }
+                }
+            }
+        }
+        String animation = GalathMeshLayer.playing(entity);
+        boolean slow = animation.equals("animation.shared.bed_slow") || animation.equals("animation.shared.bed_back");
+        boolean soft = animation.equals("animation.shared.bed_soft"); // FAST with the transition flag set
+        if (slow || soft) {
+            Minecraft minecraft = Minecraft.getInstance();
+            float t = (minecraft.player == null ? 0 : minecraft.player.tickCount) + partialTick;
+            float seconds = GalathMeshLayer.elapsed(entity, animation, partialTick) / 20.0F;
+            float sway = (float) Math.sin(t * -0.1F) * 0.1F;
+            float sway2 = (float) Math.sin(t * 0.1F) * 0.1F;
+            float ramp = Math.min(0.5F, seconds) / 0.5F;
+            if (head != null) {
+                float k = slow ? 1.0F : ramp;
+                head.setRotY(head.getRotY() + sway * k);
+                head.setRotZ(head.getRotZ() + sway2 * k);
+            }
+            GeoBone head3 = this.bone("head3");
+            if (head3 != null) {
+                float k = slow ? 1.0F : 1.0F - ramp;
+                head3.setRotY(head3.getRotY() + ((float) (Math.sin(t * 0.1F) * 0.1D) + 0.2F) * k);
+                head3.setRotZ(head3.getRotZ() + sway2 * k);
+            }
+            if (slow) {
+                for (String iris : new String[] {"irisL", "irisR"}) {
+                    GeoBone bone = this.bone(iris);
+                    if (bone != null) {
+                        bone.setPosX((float) (bone.getPosX() + Math.sin(t * 0.1F) * -0.1D));
+                    }
+                }
+                for (String face : new String[] {"irsisFaceR2", "irsisFaceR3"}) {
+                    GeoBone bone = this.bone(face);
+                    if (bone != null) {
+                        bone.setPosX((float) (bone.getPosX() + Math.sin(t * 0.1F) * -0.15D));
+                    }
+                }
+            }
+        }
+        if (animation.equals("animation.galath.rape_charge") && entity.level().getEntity(entity.bossTargetId()) != null) {
+            var target = entity.level().getEntity(entity.bossTargetId());
+            float yaw = net.minecraft.util.Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot);
+            double rad = Math.toRadians(yaw);
+            double dx = target.getX() - entity.getX();
+            double dz = target.getZ() - entity.getZ();
+            // original ck.a(v, yaw) reflection: x' = -cos(yaw) x - sin(yaw) z
+            double local = -Math.cos(rad) * dx - Math.sin(rad) * dz;
+            float lean = (float) Math.toRadians(45.0D * -net.minecraft.util.Mth.clamp(local, -1.0D, 1.0D));
+            for (String arm : new String[] {"armL", "armR"}) {
+                GeoBone bone = this.bone(arm);
+                if (bone != null) {
+                    bone.setRotZ(bone.getRotZ() + lean);
+                }
+            }
+        }
+    }
+
+    /**
+     * Original dp.a (Luna renderer): the hair counter-rotates the head pitch. The back hair and the side hair are also pushed
+     * out along Y/Z by the pitch (back 0.75, sides 1.3 at 45 degrees), unless she is moved to a target position (scene).
+     */
+    private void lunaHair(CompanionEntity entity) {
+        GeoBone head = this.bone("head");
+        if (head == null) {
+            return;
+        }
+        float pitch = head.getRotX();
+        float t = pitch / (float) Math.toRadians(45.0D);
+        boolean placed = entity.isInScene();
+        GeoBone back = this.bone("backHair");
+        if (back != null && !placed) {
+            back.setPosZ(0.75F * t);
+            back.setPosY(0.75F * t);
+            back.setRotX(-pitch);
+        }
+        for (String side : new String[] {"sideHairR", "sideHairL"}) {
+            GeoBone bone = this.bone(side);
+            if (bone != null) {
+                float out = 1.3F * t;
+                bone.setPosZ(-out);
+                bone.setPosY(out);
+                if (!placed) {
+                    bone.setRotX(-pitch);
+                }
+            }
+        }
+        for (String front : new String[] {"frontHairL", "frontHairR"}) {
+            GeoBone bone = this.bone(front);
+            if (bone != null) {
+                bone.setRotX(-pitch);
             }
         }
     }
@@ -255,6 +380,43 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
                 : net.minecraft.util.Mth.clamp((float) ((player.getY() - ellie.getY()) * 0.5D), -0.75F, 0.75F);
         head.setRotY(yaw);
         head.setRotX(pitch);
+    }
+
+    /**
+     * Original dh.a(em, String, GeoBone, boolean): the skirt rings follow the cheeks (rings 17-35: lifted by the cheek
+     * rotation) and the legs (rings 1-11, middle bone: tilted by the leg rotation) when those swing forward.
+     */
+    private void skirtPhysics() {
+        for (int ring = 1; ring <= 35; ring++) {
+            if (ring >= 17) {
+                GeoBone cheek = this.bone(ring < 26 ? "cheekL" : "cheekR");
+                if (cheek == null) {
+                    continue;
+                }
+                float degrees = (float) Math.toDegrees(cheek.getRotX());
+                if (degrees < 0.0F) {
+                    continue;
+                }
+                for (int part = 0; part < 3; part++) {
+                    GeoBone skirt = this.bone("skirt_" + ring + "_" + part);
+                    if (skirt != null) {
+                        skirt.setPosY(skirt.getPosY() + degrees * 0.01F);
+                    }
+                }
+            } else if (ring <= 11) {
+                GeoBone leg = this.bone(ring < 6 ? "legR" : "legL");
+                GeoBone skirt = this.bone("skirt_" + ring + "_1");
+                if (leg == null || skirt == null) {
+                    continue;
+                }
+                float degrees = (float) Math.toDegrees(leg.getRotX());
+                if (degrees < 0.0F) {
+                    continue;
+                }
+                skirt.setRotX((float) Math.toRadians(degrees));
+                skirt.setPosY((float) Math.toRadians(degrees * 0.03F));
+            }
+        }
     }
 
     private GeoBone bone(String name) {
@@ -528,7 +690,8 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
                 return Math.floorMod(variant, 2) == 0;
             }
 
-            return normalized.equals("coin")
+            // original da: the coin and its pentagram are drawn only while the coin scene plays
+            return (normalized.equals("coin") && !"animation.galath.give_coin".equals(GalathMeshLayer.playing(entity)))
                     || normalized.equals("nipplel")
                     || normalized.equals("nippler");
         }
