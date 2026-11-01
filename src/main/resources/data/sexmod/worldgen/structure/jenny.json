@@ -1,0 +1,11 @@
+{
+  "type": "sexmod:girl_house",
+  "biomes": "#sexmod:has_structure/jenny",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin",
+  "template": "jenny",
+  "size_x": 9,
+  "size_z": 9,
+  "max_height_diff": 2
+}

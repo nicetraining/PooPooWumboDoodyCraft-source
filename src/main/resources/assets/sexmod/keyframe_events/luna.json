@@ -144,6 +144,7 @@
     ]
   },
   "touch_boobsMSG1": {
+    "text": "comon~ touch me hihi~",
     "sounds": [
       "girls.luna.giggle.giggle0",
       "girls.luna.giggle.giggle1",
@@ -518,7 +519,11 @@
     "sounds": [
       "minecraft:entity.player.burp"
     ],
-    "volume": 0.5
+    "volume": 0.5,
+    "pitch_range": [
+      0.9,
+      1.0
+    ]
   },
   "eat": {
     "layers": [
@@ -530,7 +535,8 @@
               "misc.eat.eat1",
               "misc.eat.eat2"
             ],
-            "volume": 0.5
+            "volume": 0.5,
+            "pitch_spread": 0.2
           },
           {
             "sounds": [
@@ -538,7 +544,8 @@
               "misc.eat.eat1",
               "misc.eat.eat2"
             ],
-            "volume": 1.0
+            "volume": 1.0,
+            "pitch_spread": 0.2
           }
         ],
         "weights": [
@@ -558,7 +565,8 @@
               "misc.eat.eat1",
               "misc.eat.eat2"
             ],
-            "volume": 0.5
+            "volume": 0.5,
+            "pitch_spread": 0.2
           },
           {
             "sounds": [
@@ -566,7 +574,8 @@
               "misc.eat.eat1",
               "misc.eat.eat2"
             ],
-            "volume": 1.0
+            "volume": 1.0,
+            "pitch_spread": 0.2
           }
         ],
         "weights": [
@@ -592,9 +601,39 @@
     "hud": "show"
   },
   "attackSound": {
-    "vanilla_sound": "minecraft:entity.player.attack.sweep"
+    "vanilla_sound": "minecraft:entity.player.attack.strong"
   },
   "blackScreen": {
     "wipe": true
+  },
+  "sitting_introMSG1": {
+    "text": "hehe~",
+    "sounds": [
+      "girls.luna.giggle.giggle0",
+      "girls.luna.giggle.giggle1",
+      "girls.luna.giggle.giggle2",
+      "girls.luna.giggle.giggle3",
+      "girls.luna.giggle.giggle4",
+      "girls.luna.giggle.giggle5",
+      "girls.luna.giggle.giggle6",
+      "girls.luna.giggle.giggle7",
+      "girls.luna.giggle.giggle8",
+      "girls.luna.giggle.giggle9",
+      "girls.luna.giggle.giggle10",
+      "girls.luna.giggle.giggle11",
+      "girls.luna.giggle.giggle12",
+      "girls.luna.giggle.giggle13",
+      "girls.luna.giggle.giggle14"
+    ]
+  },
+  "touch_boobs_cumMSG2": {
+    "sounds": [
+      "girls.luna.horninya.horninya9"
+    ]
+  },
+  "cutenya2": {
+    "sounds": [
+      "girls.luna.cutenya.cutenya2"
+    ]
   }
 }

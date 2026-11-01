@@ -359,5 +359,15 @@
   },
   "setCoinLook": {
     "face_girl": true
+  },
+  "creampie": {
+    "sounds": [
+      "misc.smallinserts.smallinserts0",
+      "misc.smallinserts.smallinserts1",
+      "misc.smallinserts.smallinserts2",
+      "misc.smallinserts.smallinserts3",
+      "misc.smallinserts.smallinserts4"
+    ],
+    "volume": 3.0
   }
 }

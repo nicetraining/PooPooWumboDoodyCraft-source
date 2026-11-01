@@ -1,0 +1,11 @@
+{
+  "type": "sexmod:girl_house",
+  "biomes": "#sexmod:has_structure/bia",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin",
+  "template": "bia",
+  "size_x": 11,
+  "size_z": 15,
+  "max_height_diff": 3
+}

@@ -1,268 +1,105 @@
 {
-  "credit": "Converted from the original GeckoLib Galath coin geometry",
-  "ambientocclusion": false,
+  "parent": "builtin/entity",
   "gui_light": "front",
   "textures": {
-    "base": "sexmod:item/model_palette/galath_coin_base",
-    "rim": "sexmod:item/model_palette/galath_coin_rim",
-    "rune": "sexmod:item/model_palette/galath_coin_rune",
     "particle": "sexmod:item/model_palette/galath_coin_base"
   },
-  "elements": [
-    {
-      "from": [3, 3, 7.25],
-      "to": [13, 13, 8.75],
-      "faces": {
-        "north": {"texture": "#base"},
-        "east": {"texture": "#base"},
-        "south": {"texture": "#base"},
-        "west": {"texture": "#base"},
-        "up": {"texture": "#base"},
-        "down": {"texture": "#base"}
-      }
-    },
-    {
-      "from": [2, 5, 7.25],
-      "to": [3, 11, 8.75],
-      "faces": {
-        "north": {"texture": "#base"},
-        "east": {"texture": "#base"},
-        "south": {"texture": "#base"},
-        "west": {"texture": "#base"},
-        "up": {"texture": "#base"},
-        "down": {"texture": "#base"}
-      }
-    },
-    {
-      "from": [13, 5, 7.25],
-      "to": [14, 11, 8.75],
-      "faces": {
-        "north": {"texture": "#base"},
-        "east": {"texture": "#base"},
-        "south": {"texture": "#base"},
-        "west": {"texture": "#base"},
-        "up": {"texture": "#base"},
-        "down": {"texture": "#base"}
-      }
-    },
-    {
-      "from": [5, 2, 7.25],
-      "to": [11, 3, 8.75],
-      "faces": {
-        "north": {"texture": "#base"},
-        "east": {"texture": "#base"},
-        "south": {"texture": "#base"},
-        "west": {"texture": "#base"},
-        "up": {"texture": "#base"},
-        "down": {"texture": "#base"}
-      }
-    },
-    {
-      "from": [5, 13, 7.25],
-      "to": [11, 14, 8.75],
-      "faces": {
-        "north": {"texture": "#base"},
-        "east": {"texture": "#base"},
-        "south": {"texture": "#base"},
-        "west": {"texture": "#base"},
-        "up": {"texture": "#base"},
-        "down": {"texture": "#base"}
-      }
-    },
-    {
-      "from": [5, 1.75, 7],
-      "to": [11, 2.75, 9],
-      "faces": {
-        "north": {"texture": "#rim"},
-        "east": {"texture": "#rim"},
-        "south": {"texture": "#rim"},
-        "west": {"texture": "#rim"},
-        "up": {"texture": "#rim"},
-        "down": {"texture": "#rim"}
-      }
-    },
-    {
-      "from": [5, 13.25, 7],
-      "to": [11, 14.25, 9],
-      "faces": {
-        "north": {"texture": "#rim"},
-        "east": {"texture": "#rim"},
-        "south": {"texture": "#rim"},
-        "west": {"texture": "#rim"},
-        "up": {"texture": "#rim"},
-        "down": {"texture": "#rim"}
-      }
-    },
-    {
-      "from": [1.75, 5, 7],
-      "to": [2.75, 11, 9],
-      "faces": {
-        "north": {"texture": "#rim"},
-        "east": {"texture": "#rim"},
-        "south": {"texture": "#rim"},
-        "west": {"texture": "#rim"},
-        "up": {"texture": "#rim"},
-        "down": {"texture": "#rim"}
-      }
-    },
-    {
-      "from": [13.25, 5, 7],
-      "to": [14.25, 11, 9],
-      "faces": {
-        "north": {"texture": "#rim"},
-        "east": {"texture": "#rim"},
-        "south": {"texture": "#rim"},
-        "west": {"texture": "#rim"},
-        "up": {"texture": "#rim"},
-        "down": {"texture": "#rim"}
-      }
-    },
-    {
-      "from": [3, 2.75, 7],
-      "to": [5, 3.75, 9],
-      "faces": {
-        "north": {"texture": "#rim"},
-        "east": {"texture": "#rim"},
-        "south": {"texture": "#rim"},
-        "west": {"texture": "#rim"},
-        "up": {"texture": "#rim"},
-        "down": {"texture": "#rim"}
-      }
-    },
-    {
-      "from": [11, 2.75, 7],
-      "to": [13, 3.75, 9],
-      "faces": {
-        "north": {"texture": "#rim"},
-        "east": {"texture": "#rim"},
-        "south": {"texture": "#rim"},
-        "west": {"texture": "#rim"},
-        "up": {"texture": "#rim"},
-        "down": {"texture": "#rim"}
-      }
-    },
-    {
-      "from": [3, 12.25, 7],
-      "to": [5, 13.25, 9],
-      "faces": {
-        "north": {"texture": "#rim"},
-        "east": {"texture": "#rim"},
-        "south": {"texture": "#rim"},
-        "west": {"texture": "#rim"},
-        "up": {"texture": "#rim"},
-        "down": {"texture": "#rim"}
-      }
-    },
-    {
-      "from": [11, 12.25, 7],
-      "to": [13, 13.25, 9],
-      "faces": {
-        "north": {"texture": "#rim"},
-        "east": {"texture": "#rim"},
-        "south": {"texture": "#rim"},
-        "west": {"texture": "#rim"},
-        "up": {"texture": "#rim"},
-        "down": {"texture": "#rim"}
-      }
-    },
-    {
-      "from": [7.4, 4, 6.75],
-      "to": [8.6, 12.5, 9.25],
-      "faces": {
-        "north": {"texture": "#rune"},
-        "south": {"texture": "#rune"}
-      }
-    },
-    {
-      "from": [5, 11.5, 6.75],
-      "to": [11, 12.7, 9.25],
-      "faces": {
-        "north": {"texture": "#rune"},
-        "south": {"texture": "#rune"}
-      }
-    },
-    {
-      "from": [4.8, 10.5, 6.75],
-      "to": [6, 13.5, 9.25],
-      "faces": {
-        "north": {"texture": "#rune"},
-        "south": {"texture": "#rune"}
-      }
-    },
-    {
-      "from": [10, 10.5, 6.75],
-      "to": [11.2, 13.5, 9.25],
-      "faces": {
-        "north": {"texture": "#rune"},
-        "south": {"texture": "#rune"}
-      }
-    },
-    {
-      "from": [4.25, 8, 6.75],
-      "to": [7.5, 9.2, 9.25],
-      "faces": {
-        "north": {"texture": "#rune"},
-        "south": {"texture": "#rune"}
-      }
-    },
-    {
-      "from": [8.5, 8, 6.75],
-      "to": [11.75, 9.2, 9.25],
-      "faces": {
-        "north": {"texture": "#rune"},
-        "south": {"texture": "#rune"}
-      }
-    },
-    {
-      "from": [6.2, 3.25, 6.75],
-      "to": [7.4, 5.5, 9.25],
-      "faces": {
-        "north": {"texture": "#rune"},
-        "south": {"texture": "#rune"}
-      }
-    },
-    {
-      "from": [8.6, 3.25, 6.75],
-      "to": [9.8, 5.5, 9.25],
-      "faces": {
-        "north": {"texture": "#rune"},
-        "south": {"texture": "#rune"}
-      }
-    }
-  ],
   "display": {
     "thirdperson_righthand": {
-      "rotation": [11, -5, 0],
-      "translation": [0, 1, 0],
-      "scale": [0.6, 0.6, 0.6]
+      "rotation": [
+        11,
+        -5,
+        0
+      ],
+      "scale": [
+        0.2,
+        0.2,
+        0.2
+      ]
     },
     "thirdperson_lefthand": {
-      "rotation": [11, -5, 0],
-      "translation": [0, 1, 0],
-      "scale": [0.6, 0.6, 0.6]
+      "rotation": [
+        11,
+        -5,
+        0
+      ],
+      "scale": [
+        0.2,
+        0.2,
+        0.2
+      ]
     },
     "firstperson_righthand": {
-      "rotation": [-11, -28, 0],
-      "translation": [2.25, 0, 0],
-      "scale": [0.7, 0.7, 0.7]
+      "rotation": [
+        -11,
+        -28,
+        0
+      ],
+      "translation": [
+        2.25,
+        0,
+        0
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ]
     },
     "firstperson_lefthand": {
-      "rotation": [-11, -28, 0],
-      "scale": [0.7, 0.7, 0.7]
+      "rotation": [
+        -11,
+        -28,
+        0
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ]
     },
     "ground": {
-      "scale": [0.55, 0.55, 0.55]
+      "scale": [
+        0.2,
+        0.2,
+        0.2
+      ]
     },
     "gui": {
-      "rotation": [20, 25, 0],
-      "scale": [0.95, 0.95, 0.95]
+      "translation": [
+        0,
+        -7,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
     },
     "head": {
-      "translation": [0, 0, -6.5],
-      "scale": [0.6, 0.6, 0.6]
+      "translation": [
+        0,
+        0,
+        -6.5
+      ],
+      "scale": [
+        0.3,
+        0.3,
+        0.3
+      ]
     },
     "fixed": {
-      "scale": [0.75, 0.75, 0.75]
+      "translation": [
+        0,
+        -7,
+        -1
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
     }
   }
 }

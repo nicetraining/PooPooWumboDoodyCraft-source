@@ -775,12 +775,12 @@
     "hud": "show"
   },
   "attackSound": {
-    "vanilla_sound": "minecraft:entity.player.attack.sweep"
-  },
-  "sexUI": {
-    "hud": "show"
+    "vanilla_sound": "minecraft:entity.player.attack.strong"
   },
   "blackScreen": {
+    "wipe": true
+  },
+  "cowgirlcumMSG6": {
     "wipe": true
   }
 }

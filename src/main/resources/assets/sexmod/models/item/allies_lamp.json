@@ -1,130 +1,108 @@
 {
-  "credit": "Converted from the original GeckoLib lamp geometry",
-  "ambientocclusion": false,
+  "parent": "builtin/entity",
   "gui_light": "front",
   "textures": {
-    "cyan": "sexmod:item/model_palette/allies_lamp_cyan",
-    "white": "sexmod:item/model_palette/allies_lamp_white",
-    "black": "sexmod:item/model_palette/allies_lamp_black",
     "particle": "sexmod:item/model_palette/allies_lamp_cyan"
   },
-  "elements": [
-    {
-      "from": [4, 1, 4],
-      "to": [12, 2, 12],
-      "faces": {
-        "north": {"texture": "#cyan"},
-        "east": {"texture": "#cyan"},
-        "south": {"texture": "#cyan"},
-        "west": {"texture": "#cyan"},
-        "up": {"texture": "#cyan"},
-        "down": {"texture": "#cyan"}
-      }
-    },
-    {
-      "from": [6, 2, 6],
-      "to": [10, 4, 10],
-      "faces": {
-        "north": {"texture": "#cyan"},
-        "east": {"texture": "#cyan"},
-        "south": {"texture": "#cyan"},
-        "west": {"texture": "#cyan"},
-        "up": {"texture": "#white"},
-        "down": {"texture": "#cyan"}
-      }
-    },
-    {
-      "from": [6.75, 4, 6.75],
-      "to": [9.25, 10, 9.25],
-      "faces": {
-        "north": {"texture": "#cyan"},
-        "east": {"texture": "#cyan"},
-        "south": {"texture": "#cyan"},
-        "west": {"texture": "#cyan"},
-        "up": {"texture": "#white"},
-        "down": {"texture": "#cyan"}
-      }
-    },
-    {
-      "from": [6.5, 10, 6.5],
-      "to": [9.5, 10.75, 9.5],
-      "faces": {
-        "north": {"texture": "#black"},
-        "east": {"texture": "#black"},
-        "south": {"texture": "#black"},
-        "west": {"texture": "#black"},
-        "up": {"texture": "#black"},
-        "down": {"texture": "#black"}
-      }
-    },
-    {
-      "from": [7.5, 10.75, 7.5],
-      "to": [8.5, 14.25, 8.5],
-      "faces": {
-        "north": {"texture": "#white"},
-        "east": {"texture": "#white"},
-        "south": {"texture": "#white"},
-        "west": {"texture": "#white"},
-        "up": {"texture": "#white"},
-        "down": {"texture": "#white"}
-      }
-    },
-    {
-      "from": [9.25, 6, 7.5],
-      "to": [14, 7.25, 8.5],
-      "faces": {
-        "north": {"texture": "#cyan"},
-        "east": {"texture": "#black"},
-        "south": {"texture": "#cyan"},
-        "west": {"texture": "#cyan"},
-        "up": {"texture": "#white"},
-        "down": {"texture": "#black"}
-      }
-    },
-    {
-      "from": [7.65, 14.25, 7.65],
-      "to": [8.35, 16, 8.35],
-      "faces": {
-        "north": {"texture": "#cyan"},
-        "east": {"texture": "#cyan"},
-        "south": {"texture": "#cyan"},
-        "west": {"texture": "#cyan"},
-        "up": {"texture": "#white"},
-        "down": {"texture": "#black"}
-      }
-    }
-  ],
   "display": {
     "thirdperson_righthand": {
-      "rotation": [75, 45, 0],
-      "translation": [0, 2.5, 0],
-      "scale": [0.5, 0.5, 0.5]
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ]
     },
     "thirdperson_lefthand": {
-      "rotation": [75, 45, 0],
-      "translation": [0, 2.5, 0],
-      "scale": [0.5, 0.5, 0.5]
+      "rotation": [
+        75,
+        45,
+        0
+      ],
+      "translation": [
+        0,
+        2.5,
+        0
+      ],
+      "scale": [
+        0.375,
+        0.375,
+        0.375
+      ]
     },
     "firstperson_righthand": {
-      "rotation": [0, 115, 0],
-      "scale": [0.55, 0.55, 0.55]
+      "rotation": [
+        0,
+        115,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
     },
     "firstperson_lefthand": {
-      "rotation": [0, 225, 0],
-      "scale": [0.55, 0.55, 0.55]
+      "rotation": [
+        0,
+        225,
+        0
+      ],
+      "scale": [
+        0.4,
+        0.4,
+        0.4
+      ]
     },
     "ground": {
-      "translation": [0, 3, 0],
-      "scale": [0.4, 0.4, 0.4]
+      "translation": [
+        0,
+        3,
+        0
+      ],
+      "scale": [
+        0.25,
+        0.25,
+        0.25
+      ]
     },
     "gui": {
-      "rotation": [30, 137, 0],
-      "translation": [0, -1, 0],
-      "scale": [0.8, 0.8, 0.8]
+      "rotation": [
+        30,
+        137,
+        0
+      ],
+      "translation": [
+        0,
+        -3.75,
+        0
+      ],
+      "scale": [
+        0.625,
+        0.625,
+        0.625
+      ]
     },
     "fixed": {
-      "translation": [0, 0, 0],
-      "scale": [0.65, 0.65, 0.65]
+      "translation": [
+        0,
+        -1.5,
+        0
+      ],
+      "scale": [
+        0.5,
+        0.5,
+        0.5
+      ]
     }
   }
 }

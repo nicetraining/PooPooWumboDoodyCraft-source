@@ -1,0 +1,11 @@
+{
+  "type": "sexmod:girl_house",
+  "biomes": "#sexmod:has_structure/ellie",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "beard_thin",
+  "template": "ellie",
+  "size_x": 30,
+  "size_z": 26,
+  "max_height_diff": 9
+}

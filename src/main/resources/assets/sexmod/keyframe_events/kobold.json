@@ -300,5 +300,8 @@
   },
   "blackScreen": {
     "wipe": true
+  },
+  "attackSound": {
+    "vanilla_sound": "minecraft:entity.player.attack.strong"
   }
 }

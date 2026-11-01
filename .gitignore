@@ -63,3 +63,7 @@ ops.json
 whitelist.json
 banned-*.json
 server.properties
+__pycache__/
+
+### Local helper output ###
+check-log.txt

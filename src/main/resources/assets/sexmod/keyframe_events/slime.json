@@ -364,5 +364,10 @@
   },
   "bjcBlackScreen": {
     "wipe": true
+  },
+  "doggyslowMSG2": {
+    "sounds": [
+      "minecraft:entity.slime.attack"
+    ]
   }
 }

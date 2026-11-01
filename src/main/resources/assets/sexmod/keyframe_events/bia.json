@@ -395,7 +395,10 @@
   "sitdownMSG1": {
     "chat": "bia.dialogue.sitdown",
     "sounds": [
-      "girls.bia.breath.breath0"
+      "girls.bia.breath.breath0",
+      "girls.bia.breath.breath1",
+      "girls.bia.breath.breath2",
+      "girls.bia.breath.breath3"
     ]
   }
 }

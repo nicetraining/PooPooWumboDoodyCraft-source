@@ -110,6 +110,15 @@ dependencies {
     // For all intends and purposes: You can treat this dependency as if it is a normal library you would use.
     implementation "net.neoforged:neoforge:${neo_version}"
     implementation "software.bernie.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
+    // GeckoLib ships inside the mod jar (NeoForge jar-in-jar), pinned to the tested version: a newer GeckoLib once
+    // refused 132 of the original's animations (4.9.3, easing names in keyframe vectors). Players need no separate
+    // GeckoLib jar; another one in the mods folder must be this exact version, or NeoForge reports the conflict.
+    jarJar("software.bernie.geckolib:geckolib-neoforge-${minecraft_version}") {
+        version {
+            strictly "[${geckolib_version}]"
+            prefer geckolib_version
+        }
+    }
 
     // Example optional mod dependency with JEI
     // The JEI API is declared for compile time use, while the full JEI artifact is used at runtime
@@ -174,8 +183,18 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
 
+jarJar.enable()
+
+// the bundled jar (with GeckoLib inside) is the release jar: no classifier; the plain one becomes "-slim"
+tasks.named('jarJar') {
+    archiveClassifier = ''
+}
 tasks.named('jar') {
-    from('PORTING_STATUS.md')
+    archiveClassifier = 'slim'
+}
+
+tasks.named('jar') {
+    from('README.md')
 }
 
 // IDEA no longer automatically downloads sources/javadoc jars for dependencies, so we need to explicitly enable the behavior.

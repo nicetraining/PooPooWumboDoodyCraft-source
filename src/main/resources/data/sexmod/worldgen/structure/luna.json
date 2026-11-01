@@ -1,0 +1,12 @@
+{
+  "type": "sexmod:girl_house",
+  "biomes": "#sexmod:has_structure/luna",
+  "step": "surface_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none",
+  "template": "luna",
+  "size_x": 3,
+  "size_z": 10,
+  "max_height_diff": 0,
+  "on_water": true
+}

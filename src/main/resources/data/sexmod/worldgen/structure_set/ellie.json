@@ -1,0 +1,15 @@
+{
+  "_comment": "Spacing 32 chunks, separation 24: the original found about one house of any kind per square kilometre (flat ground only, 156 blocks between houses of one kind).",
+  "structures": [
+    {
+      "structure": "sexmod:ellie",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 32,
+    "separation": 24,
+    "salt": 1694202
+  }
+}

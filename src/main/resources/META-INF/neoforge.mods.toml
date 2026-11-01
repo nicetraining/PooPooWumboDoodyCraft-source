@@ -33,24 +33,22 @@ displayName="${mod_name}" #mandatory
 #updateJSONURL="https://change.me.example.invalid/updates.json" #optional
 
 # A URL for the "homepage" for this mod, displayed in the mod UI
-displayURL="https://x.com/trolmastercard"
+displayURL="https://nicetraining.github.io/"
 
 # A file name (in the root of the mod JAR) containing a logo for display
 logoFile="logo.png"
 
 # A text field displayed in the mod UI
-credits="Original mod by Trolmastercard and the anonymous development team. NeoForge port reconstructed from the user-supplied 1.12.2 JAR."
+credits="Based on the original FapCraft by ShnurriTV and Trolmastercard."
 
 # The authors of the mod, displayed in the mod UI (optional)
-authors="Trolmastercard, Anonymous dev team"
+authors="fartypoopy"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-FapCraft for Minecraft 1.21.1 on NeoForge.
+PooPooWumboDoodyCraft is a full rewrite of 1.12.2's fapcraft for modern versions of the game. It aims to be a faithful reconstruction of the original wherever possible. Minor tweaks have been made in order to bring it into the modern era. More info in the github readme
 
-This compatibility baseline preserves the eleven principal companion registry
-identifiers and their original assets while rebuilding the runtime on Java 21,
-NeoForge, and GeckoLib 4. See PORTING_STATUS.md for the exact implemented scope.
+Homage to the original FapCraft developers: ShnurriTV, who created it, and Trolmastercard, who carried it on.
 '''
 
 # The [[mixins]] block allows you to declare your mixin config to FML so that it gets loaded.
@@ -96,7 +94,7 @@ NeoForge, and GeckoLib 4. See PORTING_STATUS.md for the exact implemented scope.
     modId="geckolib"
     type="required"
     reason="FapCraft character models and animations use GeckoLib."
-    versionRange="[4.9.2,)"
+    versionRange="[4.9.3]" # bundled (jar-in-jar), pinned: see build.gradle
     ordering="AFTER"
     side="BOTH"
 

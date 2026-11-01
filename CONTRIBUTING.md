@@ -1,6 +1,6 @@
 # Contributing
 
-Contributions should target Minecraft 1.21.1, NeoForge 21.1.242, Java 21, and GeckoLib 4.9.2.
+Contributions should target Minecraft 1.21.1, NeoForge 21.1.242, Java 21, and GeckoLib 4.9.3 (bundled through jarJar).
 
 Before opening a pull request:
 

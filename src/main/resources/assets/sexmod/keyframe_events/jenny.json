@@ -816,7 +816,7 @@
     "hud": "reset"
   },
   "attackSound": {
-    "vanilla_sound": "minecraft:entity.player.attack.sweep"
+    "vanilla_sound": "minecraft:entity.player.attack.strong"
   },
   "bjcBlackScreen": {
     "wipe": true

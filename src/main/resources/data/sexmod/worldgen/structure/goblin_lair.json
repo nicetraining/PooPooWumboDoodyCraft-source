@@ -1,0 +1,7 @@
+{
+  "type": "sexmod:goblin_lair",
+  "biomes": "#sexmod:has_structure/goblin_lair",
+  "step": "underground_structures",
+  "spawn_overrides": {},
+  "terrain_adaptation": "none"
+}

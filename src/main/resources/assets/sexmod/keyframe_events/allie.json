@@ -368,7 +368,7 @@
     "hud": "show"
   },
   "summon_sandMSG2": {
-    "actionbar": "allie.dialogue.phobia"
+    "raw_chat": "allie.dialogue.phobia"
   },
   "blackscreen": {
     "wipe": true

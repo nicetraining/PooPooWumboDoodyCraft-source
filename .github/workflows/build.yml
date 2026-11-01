@@ -25,12 +25,20 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build with Gradle
-        run: ./gradlew --no-daemon clean build
+        run: ./gradlew --no-daemon build # no clean: it deletes the expanded NeoForge ATs a cache-restored step needs
+
+      - name: Collect jar
+        run: |
+          mkdir -p dist
+          for f in build/libs/*.jar; do
+            case "$f" in *-slim.jar) ;; *) cp "$f" "dist/$(basename "$f" | tr ' ' '-')" ;; esac
+          done
+          ls dist
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: sexmod-neoforge-1.21.1
-          path: build/libs/*.jar
+          path: dist/*.jar
           if-no-files-found: error
           retention-days: 14
