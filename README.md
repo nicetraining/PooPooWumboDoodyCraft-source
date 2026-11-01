@@ -1,7 +1,7 @@
 # FapCraft — NeoForge 1.21.1 port
 
 > [!WARNING]
-> **swag poop masters only.** This project contains awesome.
+> **ADULT ONLY !!!! 18 PLUS !!!!!!!!**
 
 The staged release JAR and its SHA-256 checksum are available under [`dist/`](dist/). For normal public distribution, prefer attaching these files to a tagged release rather than repeatedly committing binaries.
 
