@@ -1855,6 +1855,48 @@ public final class FapCraftGameTests {
         helper.succeed();
     }
 
+    /**
+     * Bug report: a tribe whose Kobolds all died stayed bound to its owner, so the Dragon Staff could not claim another.
+     * A dying Kobold ran her tribe bookkeeping for the 20 ticks of the death animation and wrote herself back in.
+     */
+    @GameTest(template = "empty", timeoutTicks = 200, batch = "b_tribedeath")
+    public static void aWipedOutTribeFreesItsOwnerForANewOne(GameTestHelper helper) {
+        var level = helper.getLevel();
+        forceArena(helper);
+        floor(helper, 7);
+        var server = level.getServer();
+        var data = com.fartypoopy.sexmod.tribe.TribeData.get(server);
+        var tribe = com.fartypoopy.sexmod.tribe.TribeManager.spawnTribe(level, helper.absoluteVec(new Vec3(3.5, 1.0, 3.5)));
+        var members = com.fartypoopy.sexmod.tribe.TribeManager.loadedMembers(server, tribe);
+        UUID player = UUID.randomUUID();
+        if (!com.fartypoopy.sexmod.tribe.TribeManager.claim(server, player, "Tester", members.get(0).position(), tribe.id, "Doomed")) {
+            helper.fail("the tribe could be claimed");
+            return;
+        }
+        // a ghost left behind by the old bug: a member in this loaded area that no longer exists anywhere
+        UUID ghost = UUID.randomUUID();
+        tribe.members.put(ghost, helper.absolutePos(new net.minecraft.core.BlockPos(5, 1, 5)));
+        helper.runAfterDelay(30, () -> members.forEach(m -> m.hurt(level.damageSources().genericKill(), 1000.0F)));
+        helper.runAfterDelay(170, () -> {
+            if (!tribe.members.isEmpty() || data.ofMaster(player) != null) {
+                helper.fail("every member died, so the tribe is empty and no longer bound to its owner (members "
+                        + tribe.members.size() + ", ghost still there " + tribe.members.containsKey(ghost) + ")");
+                return;
+            }
+            var second = com.fartypoopy.sexmod.tribe.TribeManager.spawnTribe(level, helper.absoluteVec(new Vec3(5.5, 1.0, 5.5)));
+            var others = com.fartypoopy.sexmod.tribe.TribeManager.loadedMembers(server, second);
+            if (!com.fartypoopy.sexmod.tribe.TribeManager.claim(server, player, "Tester", others.get(0).position(), second.id, "Again")) {
+                helper.fail("the owner can claim a new tribe with the staff");
+                return;
+            }
+            others.forEach(Entity::discard);
+            second.members.clear();
+            second.master = null;
+            tribe.master = null;
+            helper.succeed();
+        });
+    }
+
     @GameTest(template = "empty", timeoutTicks = 1000, batch = "b_tree")
     public static void koboldFellsAMarkedTree(GameTestHelper helper) {
         var level = helper.getLevel();

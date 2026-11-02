@@ -64,6 +64,9 @@ public final class TribeEvents {
 
     @SubscribeEvent
     public static void onServerTick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+        if (event.getServer().getTickCount() % 100 == 0) {
+            pruneGhosts(event.getServer());
+        }
         PendingTribe next = PENDING.poll();
         if (next == null || !next.level().hasChunk(next.x() >> 4, next.z() >> 4)) {
             return;
@@ -74,6 +77,46 @@ public final class TribeEvents {
             return;
         }
         TribeManager.spawnTribe(next.level(), new net.minecraft.world.phys.Vec3(next.x() + 0.5D, y, next.z() + 0.5D));
+    }
+
+    /**
+     * Not in the original: a tribe member whose last known spot is loaded but who exists nowhere is dropped. Kobolds that
+     * died before this was fixed were written back into their tribe, so a wiped-out tribe never emptied and its owner
+     * could not claim another one with the Dragon Staff. A living member that is only passing by re-adds itself.
+     */
+    public static void pruneGhosts(net.minecraft.server.MinecraftServer server) {
+        TribeData data = TribeData.get(server);
+        for (Tribe tribe : data.all()) {
+            boolean changed = false;
+            for (var entry : new java.util.ArrayList<>(tribe.members.entrySet())) {
+                if (TribeManager.find(server, entry.getKey()) != null || !entitiesLoadedAround(server, entry.getValue())) {
+                    continue;
+                }
+                tribe.members.remove(entry.getKey());
+                tribe.sleeping.remove(entry.getKey());
+                changed = true;
+            }
+            if (changed) {
+                data.touch();
+            }
+        }
+    }
+
+    private static boolean entitiesLoadedAround(net.minecraft.server.MinecraftServer server, BlockPos pos) {
+        int cx = pos.getX() >> 4;
+        int cz = pos.getZ() >> 4;
+        for (ServerLevel level : server.getAllLevels()) {
+            boolean all = true;
+            for (int dx = -1; dx <= 1 && all; dx++) {
+                for (int dz = -1; dz <= 1 && all; dz++) {
+                    all = level.areEntitiesLoaded(net.minecraft.world.level.ChunkPos.asLong(cx + dx, cz + dz));
+                }
+            }
+            if (all) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Original aa: monsters go for owned Kobolds (zombie, skeleton every tick; a spider only in the dark, one check in ten). */

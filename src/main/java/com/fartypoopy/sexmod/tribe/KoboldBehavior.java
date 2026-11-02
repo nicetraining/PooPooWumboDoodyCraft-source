@@ -156,6 +156,9 @@ public final class KoboldBehavior {
     // ------------------------------------------------------------------ tick
 
     public void tick(ServerLevel level) {
+        if (!this.k.isAlive()) {
+            return; // dying: died() already left the tribe, and the bookkeeping would write her back as a member
+        }
         this.tickEgg(level);
         if (this.k.isInScene() || this.k.isBedWalking()) {
             return;
