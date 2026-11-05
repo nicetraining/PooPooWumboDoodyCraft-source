@@ -186,6 +186,11 @@ public final class TribeEvents {
         if (state.getBlock() instanceof BedBlock || state.getBlock() instanceof ChestBlock) {
             event.setCanceled(true);
             event.setCancellationResult(InteractionResult.FAIL);
+            // the cancelled click also skips the staff's own use, which opened the menu: open it here, or beds and
+            // chests could never be registered
+            if (event.getLevel().isClientSide()) {
+                com.fartypoopy.sexmod.client.ClientHooks.openStaffMenu();
+            }
         }
     }
 
