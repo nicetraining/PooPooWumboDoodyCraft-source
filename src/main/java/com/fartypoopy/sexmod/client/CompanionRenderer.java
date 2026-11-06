@@ -59,13 +59,15 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
         if (bone == null) {
             return null;
         }
-        org.joml.Vector3d position = bone.getWorldPosition();
-        double ox = position.x - entity.getX();
-        double oz = position.z - entity.getZ();
+        // local, not world minus her position: the world one holds her position of the frame she was last drawn in,
+        // a tick of her movement off once a tick has passed (in flight the daughter on her head jumped about)
+        org.joml.Vector3d position = bone.getLocalPosition();
+        double ox = position.x;
+        double oz = position.z;
         double angle = Math.toRadians(180.0F - net.minecraft.util.Mth.rotLerp(1.0F, entity.yBodyRotO, entity.yBodyRot));
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
-        return new net.minecraft.world.phys.Vec3(ox * cos + oz * sin, position.y - entity.getY(), -ox * sin + oz * cos);
+        return new net.minecraft.world.phys.Vec3(ox * cos + oz * sin, position.y, -ox * sin + oz * cos);
     }
 
     public CompanionRenderer(EntityRendererProvider.Context context) {
@@ -198,7 +200,12 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
     private static float swayPrevYaw;
     private static float swayPrevPitch;
 
-    private static boolean carryState(int state) {
+    private static boolean carryState(CompanionEntity goblin, int state) {
+        if (state == com.fartypoopy.sexmod.entity.GoblinBehavior.THROWING) {
+            // only until she is let go (phase 15): after that she flies on her own and is drawn where she is,
+            // not still in front of the thrower while her shadow flies off
+            return goblin.goblinPhase() < 15;
+        }
         return state == com.fartypoopy.sexmod.entity.GoblinBehavior.CATCH
                 || state == com.fartypoopy.sexmod.entity.GoblinBehavior.CATCH_BJ
                 || state == com.fartypoopy.sexmod.entity.GoblinBehavior.CATCH_BJ_IDLE
@@ -211,7 +218,7 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
                                         MultiBufferSource bufferSource, int packedLight) {
         int state = goblin.goblinState();
         boolean shoulder = state == com.fartypoopy.sexmod.entity.GoblinBehavior.SHOULDER;
-        if (!carryState(state) && !shoulder) {
+        if (!carryState(goblin, state) && !shoulder) {
             return false;
         }
         java.util.UUID carrierId = goblin.goblinCarrier().get();

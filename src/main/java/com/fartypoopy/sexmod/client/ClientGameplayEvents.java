@@ -163,14 +163,14 @@ public final class ClientGameplayEvents {
             if (bone != null) {
                 org.joml.Vector3d position = bone.getWorldPosition();
                 if (position.lengthSquared() > 1.0E-6D) {
-                    // GeckoLib's world position already includes her yaw; only move it onto her interpolated position
-                    // (rotating it again put the camera off centre in every scene not facing 180 degrees)
+                    // GeckoLib's local position already includes her yaw (rotating it again put the camera off centre in
+                    // every scene not facing 180 degrees); only move it onto her interpolated position. Not world minus
+                    // her position: the world one was taken at her position of the frame she was last drawn in, so after
+                    // each tick the view was a tick of her movement off - in flight it flicked, a boost threw it blocks away
                     float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
                     Vec3 base = companion.getPosition(partial);
-                    position = new org.joml.Vector3d(
-                            position.x - companion.getX() + base.x,
-                            position.y - companion.getY() + base.y,
-                            position.z - companion.getZ() + base.z);
+                    org.joml.Vector3d local = bone.getLocalPosition();
+                    position = new org.joml.Vector3d(local.x + base.x, local.y + base.y, local.z + base.z);
                     cameraPlayer = player;
                     savedPlayerPosition = player.position();
                     savedPreviousPosition = new Vec3(player.xo, player.yo, player.zo);

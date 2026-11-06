@@ -1322,11 +1322,14 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
     private double galathBoostSpeed;
 
     /** Original bk "RequestRiding": she is mounted and flies by the rider's wing-flap impulses. */
-    private boolean startRide(Player player) {
+    public boolean startRide(Player player) {
         if (!player.startRiding(this, true)) {
             return false;
         }
         this.getNavigation().stop();
+        if (this.boss != null) {
+            this.boss.releaseForRide();
+        }
         this.setNoGravity(true);
         this.setDeltaMovement(0.0D, 0.25D, 0.0D);
         return true;
@@ -1365,6 +1368,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         this.getNavigation().stop();
         this.setNoGravity(true);
+        // she flies: a boost dive into the ground was taken as a fall, and vanilla passes that damage to the rider
+        this.fallDistance = 0.0F;
+        rider.fallDistance = 0.0F;
         float yaw = rider.getYHeadRot();
         this.setYRot(yaw);
         this.yBodyRot = yaw;
@@ -3125,6 +3131,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                 return false;
             }
         }
+        if (this.galathRider() != null) {
+            return false; // ridden Galath is flying; vanilla would hand this fall to the rider
+        }
         return this.slimeBehavior == null && super.causeFallDamage(fallDistance, multiplier, source); // original Slime: no fall damage
     }
 
@@ -3377,7 +3386,8 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
                     Vec3 motion = this.getDeltaMovement();
                     this.setDeltaMovement(motion.x, motion.y * 0.4D, motion.z);
                 }
-                if (this.familyId() != null && !this.isInScene()) {
+                if (this.familyId() != null && !this.isInScene() && this.galathRider() == null) {
+                    // not while ridden: her attacks moved her against the rider's flaps (stuck, jittering, falls)
                     this.boss.tickTamedCombat(serverLevel); // original ao(): a mother with a daughter fights near her
                 }
             }

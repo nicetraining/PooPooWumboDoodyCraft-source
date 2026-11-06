@@ -36,7 +36,9 @@ final class ManglelieRide {
             return null;
         }
         List<CompanionEntity> found = daughter.level().getEntitiesOfClass(CompanionEntity.class,
-                daughter.getBoundingBox().inflate(6.0D),
+                // not 6: in flight (a boost moves her mother 6 blocks a tick) her own position trails, the mother was
+                // missed and she was drawn on her own, popping in and out instead of staying hidden
+                daughter.getBoundingBox().inflate(32.0D),
                 c -> c.kind() == CompanionKind.GALATH && daughter.familyId().equals(c.getUUID()));
         return found.isEmpty() ? null : found.get(0);
     }

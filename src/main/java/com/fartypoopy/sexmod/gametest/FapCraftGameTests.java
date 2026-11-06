@@ -973,6 +973,139 @@ public final class FapCraftGameTests {
         });
     }
 
+    /**
+     * Bug report: killed by Galath, her line played again and again. She took the dead player as her target every tick
+     * (her target search let dead players through, her validity check did not), each time with her line and a new attack.
+     */
+    @GameTest(template = "empty", timeoutTicks = 200, batch = "b_galathdead")
+    public static void galathLetsGoOfAPlayerSheKilled(GameTestHelper helper) {
+        forceArena(helper);
+        skyFloor(helper, 30, 318);
+        CompanionEntity galath = spawnKind(helper, CompanionKind.GALATH);
+        galath.moveTo(helper.absoluteVec(new Vec3(8.5, 319.0, 8.5)));
+        var player = serverPlayer(helper);
+        player.moveTo(helper.absoluteVec(new Vec3(8.5, 319.0, 2.5)));
+        player.getAbilities().instabuild = false;
+        int[] retargets = {0};
+        int[] state = {0}; // 0 waiting for her to target the player, 1 player dead
+        helper.onEachTick(() -> {
+            player.moveTo(helper.absoluteVec(new Vec3(8.5, 319.0, 2.5)));
+            if (state[0] == 0 && galath.bossTargetId() == player.getId()) {
+                state[0] = 1;
+                player.setHealth(0.0F); // dead, still in the level (the death screen)
+                galath.setBossTarget(-1);
+            } else if (state[0] == 1 && galath.bossTargetId() == player.getId()) {
+                retargets[0]++;
+            }
+        });
+        helper.runAfterDelay(160, () -> {
+            if (state[0] != 1) {
+                helper.fail("she never targeted the player");
+            } else if (retargets[0] > 0) {
+                helper.fail("she keeps taking the dead player as her target (" + retargets[0] + " ticks), replaying her line each time");
+            } else {
+                galath.discard();
+                helper.succeed();
+            }
+        });
+    }
+
+    /** Bug report: with a daughter her mob fight ran while ridden, so she would not follow the rider's wing beats. */
+    @GameTest(template = "empty", timeoutTicks = 200, batch = "b_galathride")
+    public static void riddenGalathWithADaughterFliesWhereTheRiderSteers(GameTestHelper helper) {
+        forceArena(helper);
+        skyFloor(helper, 30, 250);
+        var level = helper.getLevel();
+        var player = helper.makeMockServerPlayerInLevel(); // a FakePlayer cannot ride and takes no damage
+        player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+        player.getAbilities().instabuild = false;
+        player.moveTo(helper.absoluteVec(new Vec3(8.5, 262.0, 4.5)));
+        CompanionEntity galath = spawnKind(helper, CompanionKind.GALATH);
+        galath.moveTo(helper.absoluteVec(new Vec3(8.5, 262.0, 4.5)));
+        galath.setMaster(player.getUUID());
+        var daughter = com.fartypoopy.sexmod.entity.ManglelieBehavior.spawnDaughter(level, galath);
+        var zombie = net.minecraft.world.entity.EntityType.ZOMBIE.create(level);
+        zombie.moveTo(helper.absoluteVec(new Vec3(12.5, 262.0, 4.5)));
+        zombie.setNoAi(true);
+        zombie.setNoGravity(true);
+        level.addFreshEntity(zombie);
+        if (!galath.startRide(player)) {
+            helper.fail("the owner could not mount her");
+            return;
+        }
+        Vec3 start = galath.position();
+        int[] targeted = {0};
+        helper.onEachTick(() -> {
+            if (galath.galathRider() == player && galath.tickCount % 5 == 0) {
+                galath.applyFlapImpulse(player, new Vec3(0.0D, 0.0D, 0.4D));
+            }
+            if (galath.bossTargetId() != -1) {
+                targeted[0]++;
+            }
+        });
+        helper.runAfterDelay(80, () -> {
+            double moved = galath.position().z - start.z;
+            galath.ejectPassengers();
+            level.getServer().getPlayerList().remove(player);
+            galath.discard();
+            daughter.discard();
+            zombie.discard();
+            if (targeted[0] > 0) {
+                helper.fail("she fought a mob while ridden (" + targeted[0] + " ticks)");
+            } else if (moved < 4.0D) {
+                helper.fail("she did not fly where the rider steered (moved " + moved + ")");
+            } else {
+                helper.succeed();
+            }
+        });
+    }
+
+    /** Bug report: a boost dive into the ground killed the rider; vanilla hands a vehicle's fall to its passengers. */
+    @GameTest(template = "empty", timeoutTicks = 200, batch = "b_galathdive")
+    public static void aBoostDiveDoesNotHurtGalathsRider(GameTestHelper helper) {
+        forceArena(helper);
+        skyFloor(helper, 20, 250);
+        var player = helper.makeMockServerPlayerInLevel(); // a FakePlayer cannot ride and takes no damage
+        player.setGameMode(net.minecraft.world.level.GameType.SURVIVAL);
+        player.getAbilities().instabuild = false;
+        player.getAbilities().invulnerable = false;
+        player.setHealth(player.getMaxHealth());
+        player.moveTo(helper.absoluteVec(new Vec3(8.5, 300.0, 8.5)));
+        CompanionEntity galath = spawnKind(helper, CompanionKind.GALATH);
+        galath.moveTo(helper.absoluteVec(new Vec3(8.5, 300.0, 8.5)));
+        galath.setMaster(player.getUUID());
+        if (!galath.startRide(player)) {
+            helper.fail("the owner could not mount her");
+            return;
+        }
+        long start = helper.getTick();
+        helper.onEachTick(() -> {
+            // a new player cannot be hurt for 60 ticks; she hovers until then
+            if (helper.getTick() - start < 70) {
+                galath.setDeltaMovement(Vec3.ZERO);
+            } else if (!galath.onGround()) {
+                galath.setDeltaMovement(0.0D, -3.0D, 0.0D); // a boost straight down
+            }
+        });
+        helper.runAfterDelay(140, () -> {
+            double floorTop = helper.absoluteVec(new Vec3(0.0D, 251.0D, 0.0D)).y;
+            boolean landed = galath.getY() - floorTop < 0.5D;
+            String where = "y " + (galath.getY() - floorTop) + " above the floor, onGround " + galath.onGround()
+                    + ", rider " + (galath.galathRider() != null);
+            float health = player.getHealth();
+            galath.ejectPassengers();
+            helper.getLevel().getServer().getPlayerList().remove(player);
+            galath.discard();
+            if (!landed) {
+                helper.fail("she never reached the ground (" + where + ")");
+            } else if (health < player.getMaxHealth()) {
+                helper.fail("the rider took the dive as fall damage (health " + health + ")");
+            } else {
+                helper.succeed();
+            }
+        });
+    }
+
     @GameTest(template = "empty", timeoutTicks = 400, batch = "b_galath4")
     public static void wildGalathKeepsChasingAPlayerWhoRunsFar(GameTestHelper helper) {
         var level = helper.getLevel();

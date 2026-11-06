@@ -236,6 +236,19 @@ public final class GalathBoss {
         this.startAttack(level);
     }
 
+    /** A rider took her: whatever fight she was in stops, so only the rider's wing beats move her. */
+    public void releaseForRide() {
+        this.endAttack();
+        this.attack = null;
+        this.locked = false;
+        this.stopPursuit();
+        this.self.setBossTarget(-1);
+        if (!this.knocked()) {
+            this.self.setBossState(S_NONE);
+        }
+        this.self.noPhysics = false;
+    }
+
     private void tickCombat(ServerLevel level, boolean tamed) {
         this.tamed = tamed;
         // original n(), j(), ah(): she flies while she has a target; the summon counter runs during the summon state
@@ -307,7 +320,8 @@ public final class GalathBoss {
         } else {
             AABB box = new AABB(this.self.position().subtract(20.0D, 20.0D, 20.0D), this.self.position().add(20.0D, 20.0D, 20.0D));
             List<Player> players = level.getEntitiesOfClass(Player.class, box,
-                    p -> !p.isCreative() && !p.isSpectator() // original: nor a player in a girl form (ei.e)
+                    p -> p.isAlive() && !p.isCreative() && !p.isSpectator() // a dead one was taken again every tick: her line repeated
+                            // original: nor a player in a girl form (ei.e)
                             && !(p instanceof net.minecraft.server.level.ServerPlayer sp && PlayerForms.formOf(sp) != null));
             target = players.stream().min(Comparator.comparingDouble(p -> p.distanceToSqr(this.self))).orElse(null);
         }
@@ -330,7 +344,7 @@ public final class GalathBoss {
         AABB box = new AABB(this.self.position().subtract(7.0D, 7.0D, 7.0D), this.self.position().add(7.0D, 7.0D, 7.0D));
         Vec3 eye = this.self.position().add(0.0D, this.self.getEyeHeight(), 0.0D);
         for (Monster mob : level.getEntitiesOfClass(Monster.class, box)) {
-            if (!ManglelieBehavior.shootable(mob)) {
+            if (!mob.isAlive() || !ManglelieBehavior.shootable(mob)) {
                 continue;
             }
             var hit = level.clip(new ClipContext(eye, mob.position().add(0.0D, mob.getEyeHeight(), 0.0D),
