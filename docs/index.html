@@ -202,12 +202,14 @@ footer button{font:inherit;background:none;border:0;padding:0;cursor:pointer;tex
   var pb=document.getElementById('pal');function lab(){pb.textContent='palette: '+window.__pal.cur+' (change)'}
   // download counter: GitHub counts each download of the release files itself (all releases added up),
   // so it cannot be raised without really downloading the jar. Cached for 10 minutes per visitor.
-  var dl=document.getElementById('dl'),dlc=document.getElementById('dlc'),CK='pwdc-count';
+  var BEFORE=64; // downloads counted before the switch to GitHub Releases (2026-11-09)
+  var dl=document.getElementById('dl'),dlc=document.getElementById('dlc'),CK='pwdc-count2';
   function show(v){dlc.textContent=v.toLocaleString('en-US');dl.hidden=false}
   try{var c=JSON.parse(sessionStorage.getItem(CK)||'null');if(c&&Date.now()-c.t<6e5)show(c.v)}catch(e){}
   fetch('https://api.github.com/repos/nicetraining/nicetraining.github.io/releases?per_page=100')
     .then(function(r){return r.ok?r.json():null}).then(function(rs){if(!rs)return;var v=0;
       rs.forEach(function(r){(r.assets||[]).forEach(function(a){if(/\.jar$/.test(a.name))v+=a.download_count})});
+      v+=BEFORE;
       show(v);try{sessionStorage.setItem(CK,JSON.stringify({v:v,t:Date.now()}))}catch(e){}})
     .catch(function(){});
   pb.onclick=function(){var L=window.__pal.list,i=(L.indexOf(window.__pal.cur)+1)%L.length;window.__pal.cur=L[i];document.documentElement.setAttribute('data-p',L[i]);try{sessionStorage.setItem('pwdc-p',L[i])}catch(e){}lab()};lab();
