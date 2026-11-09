@@ -1,0 +1,38 @@
+package com.fartypoopy.sexmod;
+
+import net.neoforged.neoforge.common.ModConfigSpec;
+
+/** Client-only look options (config/sexmod-client.toml); NeoForge reloads the file when it changes, so edits apply live. */
+public final class ClientConfig {
+    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+
+    public static final ModConfigSpec.BooleanValue SMOOTH_TEXTURES = BUILDER
+            .comment("Smooth the girls' textures: the blocky pixel-art shading becomes soft gradients (line art and colour",
+                    "edges stay sharp), and the textures are filtered with mipmaps so they no longer flicker and jag at a distance")
+            .define("smoothTextures", true);
+
+    public static final ModConfigSpec.BooleanValue JIGGLE = BUILDER
+            .comment("Jiggle physics: chests, butts, tails and ponytails swing and bounce with the girls' motion")
+            .define("jigglePhysics", true);
+
+    public static final ModConfigSpec.DoubleValue JIGGLE_STRENGTH = BUILDER
+            .comment("How strongly they jiggle (1 = default, 0 = none)")
+            .defineInRange("jiggleStrength", 1.0D, 0.0D, 3.0D);
+
+    public static final ModConfigSpec SPEC = BUILDER.build();
+
+    private ClientConfig() {
+    }
+
+    /** False until the config is loaded (the defaults then apply). */
+    public static boolean smoothTextures() {
+        return !SPEC.isLoaded() || SMOOTH_TEXTURES.get();
+    }
+
+    public static float jiggleStrength() {
+        if (!SPEC.isLoaded()) {
+            return 1.0F;
+        }
+        return JIGGLE.get() ? JIGGLE_STRENGTH.get().floatValue() : 0.0F;
+    }
+}

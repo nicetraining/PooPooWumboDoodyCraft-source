@@ -153,6 +153,9 @@ public final class CompanionModel extends GeoModel<CompanionEntity> {
                 entity.galathBodyScale = body.getScaleY();
             }
         }
+        // last: the soft parts swing on top of the finished pose
+        JigglePhysics.track(this.getAnimationProcessor());
+        JigglePhysics.apply(entity, this.getAnimationProcessor());
     }
 
     /**

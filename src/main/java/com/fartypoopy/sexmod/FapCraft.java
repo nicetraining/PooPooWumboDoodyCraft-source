@@ -55,6 +55,7 @@ public final class FapCraft {
 
     public FapCraft(IEventBus modEventBus, ModContainer modContainer) {
         modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.COMMON, Config.SPEC);
+        modContainer.registerConfig(net.neoforged.fml.config.ModConfig.Type.CLIENT, ClientConfig.SPEC);
         if (net.neoforged.fml.loading.FMLEnvironment.dist.isClient()) {
             registerAnimationVariables();
         }

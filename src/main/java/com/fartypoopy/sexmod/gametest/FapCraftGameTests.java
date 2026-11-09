@@ -1406,6 +1406,69 @@ public final class FapCraftGameTests {
         helper.succeed();
     }
 
+    /** Texture smoothing: flat pixel-art cells blend with similar ones; edges, painted cells and see-through texels stay. */
+    @GameTest(template = "empty", timeoutTicks = 10, batch = "b_smooth")
+    public static void textureSmoothingSoftensOnlyFlatPixelArt(GameTestHelper helper) {
+        int size = 64 * 16; // cells of 16 x 16 texels
+        int cell = size / 64;
+        int[] pixels = new int[size * size];
+        int dark = 0xFF000000 | (100 << 16) | (100 << 8) | 100;
+        int light = 0xFF000000 | (120 << 16) | (120 << 8) | 120;
+        int white = 0xFFFFFFFF;
+        for (int y = 0; y < size; y++) {
+            for (int x = 0; x < size; x++) {
+                int cx = x / cell;
+                int cy = y / cell;
+                int p = 0x00FFFFFF; // transparent
+                if (cy == 1 && cx == 1) p = dark;
+                if (cy == 1 && cx == 2) p = light;       // similar to its left neighbour: blended
+                if (cy == 1 && cx == 3) p = white;       // far from it: an edge
+                if (cy == 1 && cx == 4) p = (x + y) % 2 == 0 ? dark : white; // painted detail
+                if (cy == 1 && x == cell) p = light; // an off-grid strip of another colour along the dark cell's edge
+                pixels[y * size + x] = p;
+            }
+        }
+        int[] before = pixels.clone();
+        com.fartypoopy.sexmod.util.TextureSmoothing.smoothCells(pixels, size, size);
+        java.util.function.IntBinaryOperator red = (x, y) -> pixels[y * size + x] & 0xFF;
+        int row = cell + cell / 2;
+        int edgeLeft = red.applyAsInt(2 * cell - 1, row);   // dark cell, at its border with the light one
+        int edgeRight = red.applyAsInt(2 * cell, row);      // light cell, same border
+        int centreDark = red.applyAsInt(cell + cell / 2, row);
+        int strip = red.applyAsInt(cell, row);
+        int beforeWhite = red.applyAsInt(3 * cell - 1, row);
+        if (!(edgeLeft > 105 && edgeLeft < 115 && edgeRight > 105 && edgeRight < 115)) {
+            helper.fail("similar flat cells meet in a gradient (" + edgeLeft + " / " + edgeRight + ")");
+            return;
+        }
+        if (Math.abs(centreDark - 100) > 4 || Math.abs(strip - 100) > 4) {
+            helper.fail("a cell keeps its colour at its centre and loses an off-grid strip (" + centreDark + ", " + strip + ")");
+            return;
+        }
+        if (beforeWhite > 121 || pixels[row * size + 3 * cell] != white) {
+            helper.fail("a strong colour edge stays sharp (" + beforeWhite + ")");
+            return;
+        }
+        for (int i = 0; i < pixels.length; i++) {
+            int x = i % size;
+            int y = i / size;
+            boolean untouched = y / cell != 1 || x / cell >= 4 || x / cell == 0;
+            if ((pixels[i] >>> 24) != (before[i] >>> 24) || untouched && pixels[i] != before[i]) {
+                helper.fail("painted and see-through texels and every alpha stay as they were (" + x + ", " + y + ")");
+                return;
+            }
+        }
+        // mipmaps: a see-through white texel does not pale its opaque red neighbours, nor open a crack beside them
+        int[] quad = {0xFF0000FF, 0x00FFFFFF, 0xFF0000FF, 0x00FFFFFF};
+        int[][] mips = com.fartypoopy.sexmod.util.TextureSmoothing.mipChain(quad, 2, 2);
+        int mip = mips[0][0];
+        if (mips.length != 1 || (mip & 0xFF) != 255 || ((mip >>> 8) & 0xFF) != 0 || (mip >>> 24) != 255) {
+            helper.fail("mipmaps weight colours by alpha (" + Integer.toHexString(mip) + ")");
+            return;
+        }
+        helper.succeed();
+    }
+
     /** Original br$b: a cfg parses into its fields; bad values report the original messages; names never leave the folder. */
     @GameTest(template = "empty", timeoutTicks = 10, batch = "b_cmcfg")
     public static void customModelCfgParsesAndNamesStayInTheirFolder(GameTestHelper helper) {
