@@ -19,6 +19,10 @@ public final class ClientConfig {
             .comment("How strongly they jiggle (1 = default, 0 = none)")
             .defineInRange("jiggleStrength", 1.0D, 0.0D, 3.0D);
 
+    public static final ModConfigSpec.BooleanValue SHOW_DISCORD_LINK = BUILDER
+            .comment("Show the link to the mod's Discord in the title screen's top-left corner")
+            .define("showDiscordLink", true);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     private ClientConfig() {
@@ -27,6 +31,10 @@ public final class ClientConfig {
     /** False until the config is loaded (the defaults then apply). */
     public static boolean smoothTextures() {
         return !SPEC.isLoaded() || SMOOTH_TEXTURES.get();
+    }
+
+    public static boolean showDiscordLink() {
+        return !SPEC.isLoaded() || SHOW_DISCORD_LINK.get();
     }
 
     public static float jiggleStrength() {

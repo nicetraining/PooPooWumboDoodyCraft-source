@@ -6,6 +6,9 @@
 A port of the Minecraft 1.12.2 Forge mod FapCraft to Minecraft 1.21.1 with NeoForge and
 GeckoLib 4.
 
+Download: [nicetraining.github.io](https://nicetraining.github.io/) · Community: [Discord](https://discord.gg/za6UejgY4y) ·
+What's new: [CHANGELOG.md](CHANGELOG.md)
+
 ## Requirements
 
 - Minecraft 1.21.1
