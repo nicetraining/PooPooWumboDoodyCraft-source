@@ -1406,15 +1406,19 @@ public final class FapCraftGameTests {
         helper.succeed();
     }
 
-    /** Texture smoothing: flat pixel-art cells blend with similar ones; edges, painted cells and see-through texels stay. */
+    /**
+     * Texture smoothing: flat pixel-art cells blend with similar ones, edges between different colours become soft and follow
+     * the shape (a stair step is rounded off); painted cells, see-through texels and every alpha stay as they were.
+     */
     @GameTest(template = "empty", timeoutTicks = 10, batch = "b_smooth")
     public static void textureSmoothingSoftensOnlyFlatPixelArt(GameTestHelper helper) {
         int size = 64 * 16; // cells of 16 x 16 texels
         int cell = size / 64;
         int[] pixels = new int[size * size];
-        int dark = 0xFF000000 | (100 << 16) | (100 << 8) | 100;
-        int light = 0xFF000000 | (120 << 16) | (120 << 8) | 120;
-        int white = 0xFFFFFFFF;
+        int dark = grey(100);
+        int light = grey(120);
+        int white = grey(255);
+        int black = grey(0);
         for (int y = 0; y < size; y++) {
             for (int x = 0; x < size; x++) {
                 int cx = x / cell;
@@ -1424,7 +1428,10 @@ public final class FapCraftGameTests {
                 if (cy == 1 && cx == 2) p = light;       // similar to its left neighbour: blended
                 if (cy == 1 && cx == 3) p = white;       // far from it: an edge
                 if (cy == 1 && cx == 4) p = (x + y) % 2 == 0 ? dark : white; // painted detail
-                if (cy == 1 && x == cell) p = light; // an off-grid strip of another colour along the dark cell's edge
+                if (cy == 1 && x == cell) p = light;     // an off-grid strip of another colour along the dark cell's edge
+                // a stair step: white over black, the step one cell to the right in the lower row
+                if (cy == 5 && cx >= 10 && cx <= 14) p = cx <= 11 ? white : black;
+                if (cy == 6 && cx >= 10 && cx <= 14) p = cx <= 12 ? white : black;
                 pixels[y * size + x] = p;
             }
         }
@@ -1434,26 +1441,37 @@ public final class FapCraftGameTests {
         int row = cell + cell / 2;
         int edgeLeft = red.applyAsInt(2 * cell - 1, row);   // dark cell, at its border with the light one
         int edgeRight = red.applyAsInt(2 * cell, row);      // light cell, same border
-        int centreDark = red.applyAsInt(cell + cell / 2, row);
-        int strip = red.applyAsInt(cell, row);
-        int beforeWhite = red.applyAsInt(3 * cell - 1, row);
         if (!(edgeLeft > 105 && edgeLeft < 115 && edgeRight > 105 && edgeRight < 115)) {
             helper.fail("similar flat cells meet in a gradient (" + edgeLeft + " / " + edgeRight + ")");
             return;
         }
+        int centreDark = red.applyAsInt(cell + cell / 2, row);
+        int strip = red.applyAsInt(cell, row);
         if (Math.abs(centreDark - 100) > 4 || Math.abs(strip - 100) > 4) {
             helper.fail("a cell keeps its colour at its centre and loses an off-grid strip (" + centreDark + ", " + strip + ")");
             return;
         }
-        if (beforeWhite > 121 || pixels[row * size + 3 * cell] != white) {
-            helper.fail("a strong colour edge stays sharp (" + beforeWhite + ")");
+        int lightSide = red.applyAsInt(3 * cell - 1, row);  // light cell beside the white one
+        int whiteSide = red.applyAsInt(3 * cell, row);
+        int whiteCentre = red.applyAsInt(3 * cell + cell / 2, row);
+        if (!(lightSide > 135 && lightSide < 240 && whiteSide > 135 && whiteSide < 240 && whiteCentre > 245)) {
+            helper.fail("a colour edge is soft, not pixel-hard, and the colours stay themselves away from it ("
+                    + lightSide + " / " + whiteSide + " / " + whiteCentre + ")");
+            return;
+        }
+        // the stair step's outer corner (lower row, cell 12, top-right texel) is rounded off towards black...
+        int corner = red.applyAsInt(13 * cell - 1, 6 * cell);
+        // ...and its inner corner (upper row, cell 12, bottom-left texel) is filled in towards white
+        int inner = red.applyAsInt(12 * cell, 6 * cell - 1);
+        if (corner > 128 || inner < 128) {
+            helper.fail("a stair step becomes a smooth diagonal (outer corner " + corner + ", inner corner " + inner + ")");
             return;
         }
         for (int i = 0; i < pixels.length; i++) {
             int x = i % size;
             int y = i / size;
-            boolean untouched = y / cell != 1 || x / cell >= 4 || x / cell == 0;
-            if ((pixels[i] >>> 24) != (before[i] >>> 24) || untouched && pixels[i] != before[i]) {
+            boolean painted = y / cell == 1 && x / cell == 4;
+            if ((pixels[i] >>> 24) != (before[i] >>> 24) || (painted || (before[i] >>> 24) == 0) && pixels[i] != before[i]) {
                 helper.fail("painted and see-through texels and every alpha stay as they were (" + x + ", " + y + ")");
                 return;
             }
@@ -1467,6 +1485,10 @@ public final class FapCraftGameTests {
             return;
         }
         helper.succeed();
+    }
+
+    private static int grey(int v) {
+        return 0xFF000000 | (v << 16) | (v << 8) | v;
     }
 
     /** Original br$b: a cfg parses into its fields; bad values report the original messages; names never leave the folder. */

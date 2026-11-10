@@ -5,11 +5,18 @@ package com.fartypoopy.sexmod.util;
  * resolution (outlines, faces, curves), part is pixel art blown up into flat 64 x 64 texel cells (hair, clothes, shading),
  * which is what makes them look blocky up close.
  * <p>
- * {@link #smoothCells} blends each flat cell with its similar flat neighbours (bilinear between cell centres), so pixel-art
- * shading turns into soft gradients. Painted cells, see-through cells and strong colour edges (hair against skin, a dark
- * line next to a light one) are left as they were, which keeps the line art and the cube faces' outlines sharp. Flatness is
- * judged on a cell's interior: some skins were blown up slightly off the grid, leaving a strip of the neighbouring colour
- * along a cell's edge, which the smoothing replaces too.
+ * {@link #smoothCells} treats those flat cells as the pixels of a 64 x 64 image and upscales it the way pixel-art scalers in
+ * emulators do (xBR / super-xBR: edge-directed where colours differ, linear where they are close):
+ * <ul>
+ * <li>neighbouring cells of similar colour blend into a soft gradient (bilinear between cell centres), so shading has no
+ * steps;</li>
+ * <li>where clearly different colours meet, the edge follows the shape of the region instead of the cell staircase: the
+ * coverage of the cell's own colour is interpolated between cell centres and turned into a soft, anti-aliased edge at the
+ * half-way line, so stair steps become smooth diagonals and rounded corners, and no edge is pixel-hard;</li>
+ * <li>painted cells and see-through texels are left as they were (line art, faces, cut-outs), and so is every alpha.</li>
+ * </ul>
+ * Flatness is judged on a cell's interior: some skins were blown up slightly off the grid, leaving a strip of the
+ * neighbouring colour along a cell's edge, which the smoothing replaces too.
  * <p>
  * {@link #mipChain} builds mipmaps for distance viewing. Colours are averaged by alpha (a see-through texel's white does not
  * pale its neighbours) and a texel is as opaque as the most opaque texel it covers: the faces of a model are separate
@@ -24,8 +31,10 @@ public final class TextureSmoothing {
     static final int FLAT_SPREAD = 8;
     /** Lowest alpha of every interior texel of a flat cell. */
     static final int OPAQUE = 250;
-    /** Colour distance (0-255 per channel, Euclidean) up to which two neighbouring cells are blended. */
-    static final int SIMILAR = 80;
+    /** Colour distance (0-255 per channel, Euclidean) up to which neighbouring cells blend; beyond it they form an edge. */
+    static final int SIMILAR = 110;
+    /** Half-width of an edge's soft ramp, in coverage (0.5 = the whole cell): about a fifth of a model pixel each side. */
+    static final float EDGE_SOFTNESS = 0.2F;
 
     private TextureSmoothing() {
     }
@@ -82,7 +91,12 @@ public final class TextureSmoothing {
             }
         }
 
-        float[] blended = new float[3];
+        float[] own = new float[3];
+        float[] other = new float[3];
+        int[][] around = new int[9][];
+        boolean[] differs = new boolean[9];
+        int[] slots = new int[4];
+        float[] weights = new float[4];
         for (int cy = 0; cy < GRID; cy++) {
             for (int cx = 0; cx < GRID; cx++) {
                 int index = cy * GRID + cx;
@@ -90,18 +104,19 @@ public final class TextureSmoothing {
                     continue;
                 }
                 int[] self = mean[index];
-                // the colour each neighbour contributes: its own if it is flat and similar, else this cell's
-                int[][] around = new int[9][];
+                // each neighbour: a flat one brings its colour (similar: blended, different: an edge); painted or
+                // see-through ones bring this cell's own colour, so nothing is smoothed into or out of them
                 for (int dy = -1; dy <= 1; dy++) {
                     for (int dx = -1; dx <= 1; dx++) {
                         int ny = cy + dy;
                         int nx = cx + dx;
-                        int[] chosen = self;
-                        if (ny >= 0 && nx >= 0 && ny < GRID && nx < GRID && flat[ny * GRID + nx]
-                                && distanceSquared(self, mean[ny * GRID + nx]) <= SIMILAR * SIMILAR) {
-                            chosen = mean[ny * GRID + nx];
+                        int slot = (dy + 1) * 3 + dx + 1;
+                        around[slot] = self;
+                        differs[slot] = false;
+                        if (ny >= 0 && nx >= 0 && ny < GRID && nx < GRID && flat[ny * GRID + nx]) {
+                            around[slot] = mean[ny * GRID + nx];
+                            differs[slot] = distanceSquared(self, around[slot]) > SIMILAR * SIMILAR;
                         }
-                        around[(dy + 1) * 3 + dx + 1] = chosen;
                     }
                 }
                 for (int y = 0; y < cell; y++) {
@@ -113,13 +128,39 @@ public final class TextureSmoothing {
                         float fx = (x + 0.5F) / cell - 0.5F;
                         int sx = fx < 0.0F ? -1 : 1;
                         float wx = Math.abs(fx);
-                        int[] side = around[4 + sx];
-                        int[] vertical = around[4 + sy * 3];
-                        int[] diagonal = around[4 + sy * 3 + sx];
+                        // the four cell centres around this texel and their bilinear weights
+                        slots[0] = 4;
+                        slots[1] = 4 + sx;
+                        slots[2] = 4 + sy * 3;
+                        slots[3] = 4 + sy * 3 + sx;
+                        weights[0] = (1 - wy) * (1 - wx);
+                        weights[1] = (1 - wy) * wx;
+                        weights[2] = wy * (1 - wx);
+                        weights[3] = wy * wx;
+                        float ownWeight = 0.0F;
+                        float otherWeight = 0.0F;
+                        java.util.Arrays.fill(own, 0.0F);
+                        java.util.Arrays.fill(other, 0.0F);
+                        for (int k = 0; k < 4; k++) {
+                            int[] colour = around[slots[k]];
+                            float[] into = differs[slots[k]] ? other : own;
+                            for (int c = 0; c < 3; c++) {
+                                into[c] += weights[k] * colour[c];
+                            }
+                            if (differs[slots[k]]) {
+                                otherWeight += weights[k];
+                            } else {
+                                ownWeight += weights[k];
+                            }
+                        }
+                        // the own colour's interpolated coverage decides which side of the edge the texel is on
+                        float t = Math.max(0.0F, Math.min(1.0F, (ownWeight - 0.5F + EDGE_SOFTNESS) / (2.0F * EDGE_SOFTNESS)));
+                        float keep = otherWeight > 0.0F ? t * t * (3.0F - 2.0F * t) : 1.0F;
                         int out = pixels[row + x] & 0xFF000000;
                         for (int c = 0; c < 3; c++) {
-                            blended[c] = (1 - wy) * ((1 - wx) * self[c] + wx * side[c]) + wy * ((1 - wx) * vertical[c] + wx * diagonal[c]);
-                            out |= Math.max(0, Math.min(255, Math.round(blended[c]))) << (c * 8);
+                            float mine = own[c] / ownWeight;
+                            float theirs = otherWeight > 0.0F ? other[c] / otherWeight : mine;
+                            out |= Math.max(0, Math.min(255, Math.round(keep * mine + (1.0F - keep) * theirs))) << (c * 8);
                         }
                         pixels[row + x] = out;
                     }

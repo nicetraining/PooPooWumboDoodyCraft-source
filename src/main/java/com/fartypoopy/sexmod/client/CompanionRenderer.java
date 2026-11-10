@@ -638,6 +638,7 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
             poseStack.pushPose();
             poseStack.scale(1.0F / size, 1.0F / size, 1.0F / size);
         }
+        Object softBefore = JigglePhysics.enter(entity, bone); // a chest or butt bone: its mesh is bent by the jiggle springs
         try {
             super.renderRecursively(
                     poseStack,
@@ -653,6 +654,7 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
                     renderColor
             );
         } finally {
+            JigglePhysics.leave(softBefore);
             if (unscale) {
                 poseStack.popPose();
             }
@@ -676,6 +678,7 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
     @Override
     public void renderCubesOfBone(PoseStack poseStack, GeoBone bone, VertexConsumer buffer, int packedLight, int packedOverlay,
                                   int colour) {
+        JigglePhysics.posed(bone, poseStack.last().pose()); // before the hide check: a hidden root's children still draw
         if (this.modelHiddenBones.contains(bone.getName()) || this.hidingFormHead) {
             return;
         }
@@ -700,8 +703,20 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
         }
         // original d_: GL_LIGHTING is off while the girl is drawn, so only gx's tint shades her. 1.21's entity shaders
         // light by the vertex normal; an upward (world) normal is fully lit by both level lights
-        super.createVerticesOfQuad(quad, poseState, UNLIT_NORMAL, buffer, packedLight, packedOverlay, colour);
+        if (!JigglePhysics.displacing()) {
+            super.createVerticesOfQuad(quad, poseState, UNLIT_NORMAL, buffer, packedLight, packedOverlay, colour);
+            return;
+        }
+        // GeckoLib's own vertex loop, with each transformed vertex then moved by the soft-part springs
+        for (software.bernie.geckolib.cache.object.GeoVertex vertex : quad.vertices()) {
+            org.joml.Vector4f at = this.softVertex;
+            JigglePhysics.displace(vertex.position(), poseState, at);
+            buffer.addVertex(at.x(), at.y(), at.z(), colour, vertex.texU(), vertex.texV(), packedOverlay, packedLight,
+                    UNLIT_NORMAL.x(), UNLIT_NORMAL.y(), UNLIT_NORMAL.z());
+        }
     }
+
+    private final org.joml.Vector4f softVertex = new org.joml.Vector4f();
 
     /** Original b: the worn custom models, drawn after her with their own textures. */
     @Override
