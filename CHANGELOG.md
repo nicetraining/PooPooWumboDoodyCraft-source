@@ -8,6 +8,8 @@ Newest first. The download is on [nicetraining.github.io](https://nicetraining.g
 - Jiggle physics for every girl: chests, butts, tails and ponytails bounce and swing as they move, in scenes too.
 - Both can be turned off, and the jiggle made stronger or weaker, in `config/sexmod-client.toml` (`smoothTextures`, `jigglePhysics`, `jiggleStrength` 0-3). Changes apply as soon as the file is saved.
 - A small link to the [Discord](https://discord.gg/za6UejgY4y) in the corner of the title screen (hide it with `showDiscordLink = false` in the same file).
+- The mod is now called NeoJenny.
+- The girls' houses no longer sit on a one-block ledge of dirt on gently uneven ground: they stand at the height most of the ground under them has.
 
 ## 2026-11-06: Galath riding and goblin fixes
 

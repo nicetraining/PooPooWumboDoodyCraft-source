@@ -153,7 +153,7 @@
   "command.sexmod.invalid_scene": "Scena sconosciuta o incompatibile: %s",
   "command.sexmod.scene_started": "%1$s ha avviato la scena %2$s",
   "command.sexmod.scene_stopped": "Scena di %s interrotta",
-  "command.sexmod.not_companion": "Il bersaglio non è un personaggio PooPooWumboDoodyCraft",
+  "command.sexmod.not_companion": "Il bersaglio non è un personaggio NeoJenny",
   "scene.sexmod.jenny_wave": "Jenny: Saluto",
   "scene.sexmod.jenny_blowjob": "Jenny: Sesso orale",
   "scene.sexmod.jenny_boobjob": "Jenny: Spagnola",
@@ -183,5 +183,5 @@
   "scene.sexmod.goblin_nelson": "Goblin: Nelson",
   "scene.sexmod.galath_corrupt": "Galath: Corruzione",
   "scene.sexmod.manglelie_bed": "Manglelie: Letto",
-  "itemGroup.sexmod": "PooPooWumboDoodyCraft"
+  "itemGroup.sexmod": "NeoJenny"
 }

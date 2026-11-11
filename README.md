@@ -1,4 +1,4 @@
-# PooPooWumboDoodyCraft — NeoForge 1.21.1
+# NeoJenny — NeoForge 1.21.1
 
 > [!WARNING]
 > **ADULT ONLY !!!! 18 PLUS !!!!!!!!**
@@ -37,7 +37,7 @@ Everything the original had, as the original had it, including:
 - the original world generation (the girls' houses and goblin lairs, now as 1.21 structures) and natural spawns
   (Slime, Bee, Manglelie, Pyrocinical).
 
-A PooPooWumboDoodyCraft creative tab holds every item and spawn egg (not in the original, kept for convenience); the lamp, tribe
+A NeoJenny creative tab holds every item and spawn egg (not in the original, kept for convenience); the lamp, tribe
 egg, girl wand and staff are also in Tools & Utilities and the spawn eggs with the other spawn eggs, as in 1.12.
 
 `/fapcraft home|scene|stopscene` is not from the original; it is an operator-only test aid.

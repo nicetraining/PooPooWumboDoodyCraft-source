@@ -171,7 +171,7 @@
   "command.sexmod.invalid_scene": "Unknown or incompatible scene: %s",
   "command.sexmod.scene_started": "%1$s started scene %2$s",
   "command.sexmod.scene_stopped": "Stopped %s's scene",
-  "command.sexmod.not_companion": "The target is not a PooPooWumboDoodyCraft companion",
+  "command.sexmod.not_companion": "The target is not a NeoJenny companion",
   "message.sexmod.cannot_afford": "<%s> you cannot afford that...",
   "scene.sexmod.jenny_wave": "Jenny: Wave",
   "scene.sexmod.jenny_strip": "Strip",
@@ -238,7 +238,7 @@
   "message.sexmod.morning_space.wake": "wake you up with a blowjob",
   "message.sexmod.morning_space.side": "right side",
   "message.sexmod.morning_space.halves": "top and bottom half",
-  "itemGroup.sexmod": "PooPooWumboDoodyCraft",
+  "itemGroup.sexmod": "NeoJenny",
   "scene.sexmod.kobold_payment": "Payment",
   "scene.sexmod.galath_wild_rape": "Caught",
   "scene.sexmod.galath_wild_corrupt": "Corrupt",
@@ -246,5 +246,5 @@
   "scene.sexmod.galath_morning": "Morning",
   "scene.sexmod.goblin_use_her": "use her",
   "scene.sexmod.goblin_take_back": "take ur stuff back",
-  "menu.sexmod.discord": "Join the PooPooWumboDoodyCraft Discord"
+  "menu.sexmod.discord": "Join the NeoJenny Discord"
 }

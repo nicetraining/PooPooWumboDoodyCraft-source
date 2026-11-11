@@ -24,9 +24,10 @@ import java.util.Optional;
 
 /**
  * A girl's house (original g3 surface structures: ellie, jenny, bia, luna) as a 1.21 structure. The site rules are the
- * original's: the template centred on the chunk, standing on the highest top block of its footprint, refused when the
- * footprint is more than {@code max_height_diff} uneven or (land houses) has water on top. The original's dirt skirt
- * below the house is replaced by the structure's terrain adaptation (beard_thin in the JSON).
+ * original's: the template centred on the chunk, refused when the footprint is more than {@code max_height_diff} uneven
+ * or (land houses) has water on top. It stands at the height most of its footprint has (the original took the highest
+ * point, which raised houses on a ledge on gently uneven ground). The original's dirt skirt below the house is replaced
+ * by the structure's terrain adaptation (beard_thin in the JSON), which also cuts away ground rising into it.
  */
 public final class GirlHouseStructure extends Structure {
     public static final MapCodec<GirlHouseStructure> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
@@ -85,18 +86,29 @@ public final class GirlHouseStructure extends Structure {
                 context.randomState()) - 1 < max) {
             return Optional.empty(); // original: a land house never stands on water
         }
+        // the footprint on a 3 x 3 grid (corners, edge middles, centre). Not the original's highest point: on gently
+        // uneven ground one high corner lifted the whole house, and the terrain adaptation built a one-block ledge of
+        // dirt under it. The median is the height most of the footprint has; beard_thin fills in below the house and
+        // cuts away ground that rises into it, as for villages
+        int[] heights = new int[9];
+        int n = 0;
         int min = max;
-        // the corners; the terrain adaptation (beard_thin) smooths the rest
-        for (int[] corner : new int[][]{{x0, z0}, {x0 + this.sizeX - 1, z0}, {x0, z0 + this.sizeZ - 1},
-                {x0 + this.sizeX - 1, z0 + this.sizeZ - 1}}) {
-            int top = this.top(context, corner[0], corner[1]);
-            max = Math.max(max, top);
-            min = Math.min(min, top);
-            if (max - min > this.maxHeightDiff) {
-                return Optional.empty();
+        for (int gx = 0; gx < 3; gx++) {
+            for (int gz = 0; gz < 3; gz++) {
+                int x = x0 + gx * (this.sizeX - 1) / 2;
+                int z = z0 + gz * (this.sizeZ - 1) / 2;
+                int top = gx == 1 && gz == 1 ? max : this.top(context, x, z); // the centre was sampled above
+                heights[n++] = top;
+                min = Math.min(min, top);
+                if (Math.max(max, top) - min > this.maxHeightDiff) {
+                    return Optional.empty(); // original: refused when the footprint is too uneven
+                }
+                max = Math.max(max, top);
             }
         }
-        BlockPos pos = new BlockPos(x0, max, z0);
+        java.util.Arrays.sort(heights);
+        int ground = heights[4];
+        BlockPos pos = new BlockPos(x0, ground, z0);
         var template = context.structureTemplateManager().get(id(this.template));
         if (template.isEmpty()) {
             return Optional.empty();

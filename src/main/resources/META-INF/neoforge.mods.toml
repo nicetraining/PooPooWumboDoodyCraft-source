@@ -46,7 +46,7 @@ authors="nicetraining"
 
 # The description text for the mod (multi line!) (#mandatory)
 description='''
-PooPooWumboDoodyCraft is a full rewrite of 1.12.2's fapcraft for modern versions of the game. It aims to be a faithful reconstruction of the original wherever possible. Minor tweaks have been made in order to bring it into the modern era. More info in the github readme
+NeoJenny is a full rewrite of 1.12.2's fapcraft for modern versions of the game. It aims to be a faithful reconstruction of the original wherever possible. Minor tweaks have been made in order to bring it into the modern era. More info in the github readme
 
 Homage to the original FapCraft developers: ShnurriTV, who created it, and Trolmastercard, who carried it on.
 '''
