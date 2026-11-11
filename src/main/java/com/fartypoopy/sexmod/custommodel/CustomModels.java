@@ -82,7 +82,7 @@ public final class CustomModels {
 
     /** Original br.c(boolean): register every model folder; stops at the first broken one. */
     public static int load(boolean withAssets) {
-        report(Level.INFO, "loading up custom models...");
+        FapCraft.LOGGER.info("loading up custom models..."); // the log only: not in chat every time the game starts
         String root = folder();
         File rootFolder = new File(root);
         rootFolder.mkdirs();
@@ -91,7 +91,7 @@ public final class CustomModels {
             report(Level.ERROR, String.format("Something is wrong with the custom models folder at '%s'. Check if it exists, if not - make the directory yourself because Minecraft cannot do it itself for some reason", rootFolder.getAbsolutePath()));
             return -1;
         }
-        report(Level.INFO, String.format("found %s custom model(s)", names.length));
+        FapCraft.LOGGER.info(String.format("found %s custom model(s)", names.length));
         int count = 0;
         for (String name : names) {
             String error = checkFiles(name, root);
