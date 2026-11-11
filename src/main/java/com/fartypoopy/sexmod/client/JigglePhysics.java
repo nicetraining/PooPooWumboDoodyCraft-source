@@ -3,7 +3,10 @@ package com.fartypoopy.sexmod.client;
 import com.fartypoopy.sexmod.ClientConfig;
 import com.fartypoopy.sexmod.entity.CompanionEntity;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
@@ -13,11 +16,17 @@ import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
+import software.bernie.geckolib.animation.Animation;
+import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.AnimationProcessor;
+import software.bernie.geckolib.animation.keyframe.BoneAnimation;
+import software.bernie.geckolib.animation.keyframe.Keyframe;
+import software.bernie.geckolib.animation.keyframe.KeyframeStack;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.cache.object.GeoCube;
 import software.bernie.geckolib.cache.object.GeoQuad;
 import software.bernie.geckolib.cache.object.GeoVertex;
+import software.bernie.geckolib.loading.math.MathValue;
 
 /**
  * Jiggle physics for every girl, built like the body-physics mods of other games (CBP / CBPC, PhysBones).
@@ -69,10 +78,38 @@ final class JigglePhysics {
 
     /** Integration step (seconds); a frame is split into steps no longer than this. */
     private static final double STEP = 1.0D / 240.0D;
-    /** Drive accelerations above this (blocks / s^2) are clipped: teleports, model swaps and hitches are not motion. */
-    private static final double MAX_DRIVE = 120.0D;
+    /**
+     * Drive accelerations are eased towards this (blocks / s^2) instead of growing past it: a scene's hardest thrusts would
+     * otherwise pin the parts at their stretch limit, where they stop moving like flesh and start twitching against it.
+     */
+    private static final double MAX_DRIVE = 40.0D;
+    /**
+     * Automatic gain: over about {@link #LEVEL_TIME} seconds the drive is measured, and when its typical size is above
+     * this (blocks / s^2) the drive is turned down to it. Scenes range from gentle rocking to the whole body thrown about
+     * by a block or more; springs tuned for the one swing from end to end on the other. Slow enough not to flatten a
+     * single bounce, so the jiggle keeps its shape and only its size is evened out.
+     */
+    private static final double LEVEL = 12.0D;
+    private static final double LEVEL_TIME = 1.0D;
+    /**
+     * The drive is a second difference of positions sampled once a frame, which turns the smallest unevenness between
+     * frames into a kick that flips sign every frame; the springs then flip with it (a twitch). Above this frequency (Hz)
+     * the drive is filtered out: flesh does not follow motion that fast anyway.
+     */
+    private static final double DRIVE_CUTOFF = 4.0D;
+    /**
+     * What is drawn follows the springs through this (Hz): fast enough to keep a bounce's shape, slow enough that no part
+     * reverses within a frame however hard the animation turns or throws the body under it.
+     */
+    private static final double SHOWN_CUTOFF = 7.0D;
     /** A sampled point that moved more than this (blocks) since the last frame jumped; its springs start again at rest. */
     private static final double JUMP = 2.0D;
+    /**
+     * Within the model, a point moving faster than this (blocks / s) was snapped, not moved: the girls' animations start
+     * without blending (a scene's next phase, a loop starting over, an idle swapped in), so a part can jump to a new pose
+     * in one frame. Such a frame drives nothing; the springs carry on from where they were.
+     */
+    private static final double SNAP_SPEED = 8.0D;
     /** Shortest lever (blocks) used to turn a chain link's lag into an angle. */
     private static final float MIN_LEVER = 1.5F / 16.0F;
     /** Lags beyond this (world blocks) are clipped. */
@@ -119,22 +156,50 @@ final class JigglePhysics {
     /** Where a point is sampled and how fast it moved, to turn its motion into a drive. */
     private static final class Anchor {
         final Vector3d at = new Vector3d();
+        final Vector3d local = new Vector3d();
         final Vector3d velocity = new Vector3d();
+        /** Running mean of the squared drive, for the automatic gain. */
+        double level;
+        /** The filtered drive. */
+        final Vector3d smooth = new Vector3d();
         boolean primed;
 
-        /** The point's acceleration since the last sample, or null when it is (re)starting. */
-        Vector3d sample(Vector3d now, double dt, boolean restart, Vector3d out) {
+        /**
+         * The point's acceleration since the last sample, or null when it is (re)starting. {@code inModel} is the same point
+         * relative to the girl, to tell a snapped pose from motion.
+         */
+        Vector3d sample(Vector3d now, Vector3d inModel, double dt, boolean restart, Vector3d out) {
             if (restart || !this.primed || now.distance(this.at) > JUMP) {
                 this.at.set(now);
+                this.local.set(inModel);
                 this.velocity.zero();
+                this.level = 0.0D;
+                this.smooth.zero();
                 this.primed = true;
                 return null;
             }
+            boolean snapped = inModel.distance(this.local) > SNAP_SPEED * dt;
+            this.local.set(inModel);
+            if (snapped) {
+                // a new pose, not motion: measure again from it, without a kick (the girl's own motion carries on)
+                this.at.set(now);
+                this.smooth.mul(Math.exp(-2.0D * Math.PI * DRIVE_CUTOFF * dt));
+                return out.set(this.smooth);
+            }
             Vector3d velocity = new Vector3d(now).sub(this.at).div(dt);
             out.set(velocity).sub(this.velocity).div(dt);
-            if (out.length() > MAX_DRIVE) {
-                out.normalize(MAX_DRIVE);
+            double size = out.length();
+            this.level += (size * size - this.level) * Math.min(1.0D, dt / LEVEL_TIME);
+            double typical = Math.sqrt(this.level);
+            if (typical > LEVEL) {
+                out.mul(LEVEL / typical);
+                size *= LEVEL / typical;
             }
+            if (size > 1.0E-9D) {
+                out.mul(MAX_DRIVE * Math.tanh(size / MAX_DRIVE) / size);
+            }
+            this.smooth.lerp(out, 1.0D - Math.exp(-2.0D * Math.PI * DRIVE_CUTOFF * dt));
+            out.set(this.smooth);
             this.at.set(now);
             this.velocity.set(velocity);
             return out;
@@ -151,6 +216,8 @@ final class JigglePhysics {
         /** Displacement of the main mass and of the tip, per side (0 = +x, 1 = -x), rest-frame blocks. */
         final Vector3f[] mainShift = {new Vector3f(), new Vector3f()};
         final Vector3f[] tipShift = {new Vector3f(), new Vector3f()};
+        /** How much of the physics is shown: eased to 0 while the animation moves the part itself (see {@link #authored}). */
+        float own = 1.0F;
         boolean placed;
 
         void rest() {
@@ -191,6 +258,57 @@ final class JigglePhysics {
     private static float strength(State state) {
         float base = ClientConfig.jiggleStrength();
         return state == null || Float.isNaN(state.context) ? 0.0F : base * state.context;
+    }
+
+    /** Per animation, the soft parts it moves itself (keyframes that change, or Molang). */
+    private static final Map<Animation, Set<String>> AUTHORED = new WeakHashMap<>();
+
+    /** The soft parts one of the girl's playing animations moves itself. */
+    private static Set<String> authored(CompanionEntity entity) {
+        Set<String> parts = new HashSet<>();
+        try {
+            for (AnimationController<?> controller : entity.getAnimatableInstanceCache().getManagerForId(entity.getId())
+                    .getAnimationControllers().values()) {
+                AnimationProcessor.QueuedAnimation playing = controller.getCurrentAnimation();
+                if (playing != null && playing.animation() != null) {
+                    parts.addAll(AUTHORED.computeIfAbsent(playing.animation(), JigglePhysics::moves));
+                }
+            }
+        } catch (RuntimeException ignored) {
+            // no manager yet: nothing is authored
+        }
+        return parts;
+    }
+
+    private static Set<String> moves(Animation animation) {
+        Set<String> parts = new HashSet<>();
+        for (BoneAnimation bone : animation.boneAnimations()) {
+            if (SOFT.containsKey(bone.boneName()) && (changes(bone.rotationKeyFrames()) || changes(bone.positionKeyFrames())
+                    || changes(bone.scaleKeyFrames()))) {
+                parts.add(bone.boneName());
+            }
+        }
+        return parts;
+    }
+
+    private static boolean changes(KeyframeStack<Keyframe<MathValue>> stack) {
+        for (List<Keyframe<MathValue>> axis : List.of(stack.xKeyframes(), stack.yKeyframes(), stack.zKeyframes())) {
+            Double first = null;
+            for (Keyframe<MathValue> frame : axis) {
+                for (MathValue value : List.of(frame.startValue(), frame.endValue())) {
+                    if (value.isMutable()) {
+                        return true;
+                    }
+                    double v = value.get();
+                    if (first == null) {
+                        first = v;
+                    } else if (Math.abs(v - first) > 1.0E-4D) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     /** The rest shape of a soft part (per model, since bones are): where it is attached, its length axis and length. */
@@ -299,8 +417,9 @@ final class JigglePhysics {
         State state = STATES.get(entity.getId());
         float strength = strength(state);
         SoftState soft = state == null ? null : state.soft.get(bone.getName());
-        active = strength > 0.0F && soft != null && soft.placed && !Minecraft.getInstance().isPaused()
-                ? new Active(soft, shape(bone, SOFT.get(bone.getName()).twoSided()), strength, bone) : null;
+        float shown = soft == null ? 0.0F : strength * soft.own;
+        active = shown > 0.001F && soft.placed && !Minecraft.getInstance().isPaused()
+                ? new Active(soft, shape(bone, SOFT.get(bone.getName()).twoSided()), shown, bone) : null;
         return before;
     }
 
@@ -389,8 +508,10 @@ final class JigglePhysics {
         float target = entity.isInScene() ? 1.0F : ClientConfig.jiggleOutsideScenes();
         state.context = restart || Float.isNaN(state.context) ? target
                 : state.context + (target - state.context) * Math.min(1.0F, (float) dt * CONTEXT_RATE);
+        Set<String> authored = authored(entity);
         Vec3 at = entity.getPosition(partialTick);
         Vector3d point = new Vector3d();
+        Vector3d inModel = new Vector3d();
         Vector3d drive = new Vector3d();
         Matrix3f frame = new Matrix3f();
         Vector4f centre = new Vector4f();
@@ -411,11 +532,18 @@ final class JigglePhysics {
             Shape shape = shape(bone, entry.getValue().twoSided());
             // the mass centre, not the pivot: turning in place swings it too
             matrix.transform(centre.set(shape.centre(), 1.0F));
+            inModel.set(centre.x, centre.y, centre.z);
             point.set(centre.x + at.x, centre.y + at.y, centre.z + at.z);
-            Vector3d acceleration = soft.anchor.sample(point, dt, restart || bone.isHidden(), drive);
+            Vector3d acceleration = soft.anchor.sample(point, inModel, dt, restart || bone.isHidden(), drive);
             if (acceleration == null) {
                 soft.rest();
                 continue;
+            }
+            // the animation's own jiggle is the artist's: the physics hands the part over to it instead of adding to it
+            boolean keyed = authored.contains(entry.getKey());
+            soft.own += ((keyed ? 0.0F : 1.0F) - soft.own) * Math.min(1.0F, (float) dt * CONTEXT_RATE);
+            if (keyed) {
+                acceleration.zero(); // let the springs settle, so they come back calm when the animation lets go
             }
             stepSoft(soft, entry.getValue(), shape, acceleration, dt);
         }
@@ -434,7 +562,7 @@ final class JigglePhysics {
             link.placed = true;
             Vector3d local = bone.getLocalPosition();
             point.set(local.x + at.x, local.y + at.y, local.z + at.z);
-            Vector3d acceleration = link.anchor.sample(point, dt, restart || bone.isHidden(), drive);
+            Vector3d acceleration = link.anchor.sample(point, local, dt, restart || bone.isHidden(), drive);
             if (acceleration == null) {
                 link.spring.rest();
                 continue;
@@ -471,16 +599,25 @@ final class JigglePhysics {
             soft.tip[1].lag.set(soft.tip[0].lag);
         }
         float limit = shape.length() * MAX_STRETCH;
+        float follow = (float) (1.0D - Math.exp(-2.0D * Math.PI * SHOWN_CUTOFF * dt));
+        Vector3f before = new Vector3f();
+        Vector3f tipBefore = new Vector3f();
         for (int side = 0; side < 2; side++) {
+            before.set(soft.mainShift[side]);
+            tipBefore.set(soft.tipShift[side]);
             toRest(soft, soft.main[side].lag, part.gain(), soft.mainShift[side]);
             toRest(soft, soft.tip[side].lag, part.tipGain(), soft.tipShift[side]);
             keepLength(soft.mainShift[side], shape);
             keepLength(soft.tipShift[side], shape);
+            // eased into the limit, never stopped against it: a part that hits a wall twitches
             float total = soft.mainShift[side].length() + soft.tipShift[side].length();
-            if (total > limit && total > 0.0F) {
-                soft.mainShift[side].mul(limit / total);
-                soft.tipShift[side].mul(limit / total);
+            if (total > 1.0E-6F) {
+                float eased = limit * (float) Math.tanh(total / limit) / total;
+                soft.mainShift[side].mul(eased);
+                soft.tipShift[side].mul(eased);
             }
+            soft.mainShift[side].set(before.lerp(soft.mainShift[side], follow));
+            soft.tipShift[side].set(tipBefore.lerp(soft.tipShift[side], follow));
         }
     }
 

@@ -5,8 +5,9 @@ Newest first. The download is on [nicetraining.github.io](https://nicetraining.g
 ## In testing (not in the download yet): smoother textures and jiggle physics
 
 - Smoother textures: the blocky pixel shading on hair and clothes becomes soft gradients, while faces, outlines and colour edges stay sharp. The girls no longer flicker and look jagged from a distance.
-- Jiggle physics for every girl: chests and butts move like soft flesh (each side on its own), tails and ponytails swing. On during scenes; outside scenes it is off by default (`jiggleOutsideScenes`, 0-1, turns it on to a chosen share).
+- Jiggle physics for every girl: chests and butts move like soft flesh (each side on its own), tails and ponytails swing. On during scenes; outside scenes it is off by default (`jiggleOutsideScenes`, 0-1, turns it on to a chosen share). Where a scene's animation already moves the chest or butt by hand, the physics hands it over to the animation instead of adding to it; on hard, fast scenes the bounce is evened out so nothing twitches or snaps.
 - Both can be turned off, and the jiggle made stronger or weaker, in `config/sexmod-client.toml` (`smoothTextures`, `jigglePhysics`, `jiggleStrength` 0-3). Changes apply as soon as the file is saved.
+- The "loading up custom models" messages no longer appear in chat every time the game starts (they go to the log; errors still show in chat).
 - A small link to the [Discord](https://discord.gg/za6UejgY4y) in the corner of the title screen (hide it with `showDiscordLink = false` in the same file).
 - The mod is now called NeoJenny.
 - The girls' houses no longer sit on a one-block ledge of dirt on gently uneven ground: they stand at the height most of the ground under them has.
