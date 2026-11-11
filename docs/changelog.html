@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NeoJenny changelog</title>
+<meta name="description" content="Everything that changed in NeoJenny, newest first. Adults only.">
+<meta name="theme-color" content="#458588">
+<link rel="icon" href="logo.png">
+<style>
+@font-face{font-family:Unifont;font-display:swap;src:url(https://cdn.jsdelivr.net/npm/@fontsource/unifont/files/unifont-latin-400-normal.woff2) format("woff2")}
+:root{--page:#458588;--frame:#a89984;--ink:#282828;--accent:#cc241d;--cream:#fbf1c7;--muted:#d5c4a1;--beige:#ebdbb2;--font:Unifont,ui-monospace,Menlo,Consolas,monospace}
+html[data-p="teal"]{--page:#458588;--frame:#a89984;--ink:#282828;--accent:#cc241d;--cream:#fbf1c7;--muted:#d5c4a1;--beige:#ebdbb2}
+html[data-p="midnight"]{--page:#1f3a5f;--frame:#8aa1b8;--ink:#0e1b2c;--accent:#e8a33d;--cream:#eaf0f6;--muted:#b9c8d6;--beige:#dce6ef}
+html[data-p="mint"]{--page:#5fb59a;--frame:#e3d3b6;--ink:#23313a;--accent:#e0577b;--cream:#fff8ec;--muted:#f2dfc4;--beige:#fff1dc}
+html[data-p="plum"]{--page:#5b4b8a;--frame:#b7a6c9;--ink:#241a3a;--accent:#f08a24;--cream:#f6eefc;--muted:#d8c8e8;--beige:#ece0f6}
+html[data-p="moss"]{--page:#6a7f4a;--frame:#b5a98a;--ink:#2a2f1b;--accent:#b8481c;--cream:#f4efd8;--muted:#d9d0a9;--beige:#ece6c8}
+html[data-p="rose"]{--page:#c9728a;--frame:#d8b4a6;--ink:#3a1f2b;--accent:#2f7f86;--cream:#fff0e8;--muted:#f0cbbd;--beige:#fde1d6}
+html[data-p="sand"]{--page:#c58a3d;--frame:#c9b79c;--ink:#2f2417;--accent:#3a6ea5;--cream:#fbf0d9;--muted:#e6d3ac;--beige:#f4e4c1}
+html[data-p="slate"]{--page:#5f7480;--frame:#a9b0b4;--ink:#1f272d;--accent:#d0453a;--cream:#f1f3f2;--muted:#cfd5d8;--beige:#e4e8ea}
+html[data-p="ember"]{--page:#b5523b;--frame:#c9a58f;--ink:#2d1710;--accent:#2e8b8b;--cream:#fbeadb;--muted:#e5c0a5;--beige:#f3d6c0}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.35 var(--font);-webkit-font-smoothing:none;min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--ink)}a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+::selection{background:var(--accent);color:var(--cream)}
+p{margin:0 0 8px}h1,h2{margin:0}ul,ol{margin:0;padding-left:24px}li{margin-bottom:3px}li::marker{color:var(--accent)}
+code{background:var(--ink);color:var(--cream);padding:0 5px}
+.bar{display:flex;flex-wrap:wrap;align-items:center;background:var(--ink);color:var(--muted);min-height:30px;padding:0 4px}
+.bar b{padding:0 10px;margin-right:auto;line-height:30px;background:var(--accent);color:var(--cream)}
+.bar a{color:var(--muted);text-decoration:none;padding:0 12px;line-height:30px}
+.bar a:hover{background:#ffffff22;color:var(--cream)}
+main{flex:1;padding:.5rem}
+.frame{position:relative;width:min(920px,calc(100% - 1rem));margin:44px auto 30px;background:var(--frame);box-shadow:11px 14px 0 var(--ink);padding:42px 18px 18px;display:flex;flex-direction:column;gap:16px}
+.tab{position:absolute;top:5px;left:50%;transform:translateX(-50%);background:var(--frame);color:var(--ink);border:solid var(--ink);border-width:0 1px;padding:2px 10px;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis}
+.box{position:relative;border:2px solid var(--ink);background:var(--cream);box-shadow:3px 3px 0 var(--ink);min-width:0}
+.box>h2{font-size:16px;padding:8px 12px;background:var(--ink);color:var(--cream);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.box>h2 .t{margin-right:auto}
+.box>.in{padding:12px 14px 14px}
+.tag{font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding:1px 7px;border:1px solid var(--ink);background:var(--muted);color:var(--ink)}
+.hero{display:grid;grid-template-columns:128px 1fr;gap:20px;align-items:center;padding:16px 18px;background:linear-gradient(135deg,var(--beige),var(--muted) 60%,var(--frame))}
+.hero img{width:128px;height:128px;border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);object-fit:cover;background:#000}
+.hero h1{font-size:clamp(22px,4.6vw,34px);line-height:1.1;margin-bottom:8px;word-break:break-word}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.btn{font:inherit;display:inline-block;padding:6px 14px;min-height:34px;color:var(--cream);background:var(--accent);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);text-decoration:none;cursor:pointer;text-align:center}
+.btn:hover{filter:brightness(.82)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.p{background:var(--muted);color:var(--ink)}.btn.p:hover{background:var(--page);color:var(--cream);filter:none}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.hero{grid-template-columns:1fr}}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.shot{margin:0;border:2px solid var(--ink);background:var(--ink)}
+.shot a{display:block;aspect-ratio:16/9}
+.shot img{width:100%;height:100%;object-fit:cover;display:block}
+.shot figcaption{padding:4px 8px;font-size:13px;color:#e1e1e1}
+.ok{color:var(--accent);font-weight:700}
+.dl{margin:10px 0 0}.dl b{color:var(--accent)}
+.log h3{font-size:16px;margin:14px 0 5px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}.log h3:first-child{margin-top:0}
+.log .d{color:var(--accent)}
+footer{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;align-items:center;padding:2px 8px;min-height:24px;background:var(--ink);color:#e1e1e1}
+footer a,footer button{color:#e1e1e1}
+footer button{font:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+.modal{position:fixed;inset:0;background:rgba(20,20,20,.75);display:none;align-items:center;justify-content:center;z-index:20;padding:12px}.modal.on{display:flex}
+.modal .box{max-width:480px;width:100%;box-shadow:8px 10px 0 var(--ink)}
+.modal .btns{justify-content:center;margin-top:12px}
+</style>
+<script>
+(function(){
+  var P=["teal", "midnight", "mint", "plum", "moss", "rose", "sand", "slate", "ember"],q=(location.search.match(/[?&]p=([a-z]+)/)||[])[1],h=document.documentElement,k;
+  try{k=q&&P.indexOf(q)>=0?q:null;if(!k){var last=sessionStorage.getItem('pwdc-p');do{k=P[Math.floor(Math.random()*P.length)]}while(k===last&&P.length>1)}sessionStorage.setItem('pwdc-p',k)}catch(e){k=k||P[Math.floor(Math.random()*P.length)]}
+  h.setAttribute('data-p',k);
+  window.__pal={list:P,cur:k};
+})();
+</script>
+</head>
+<body>
+
+<div class="bar" role="navigation" aria-label="Pages">
+  <b>NeoJenny</b>
+  <a href="./">Home</a><a href="https://github.com/nicetraining/nicetraining.github.io/releases/latest/download/NeoJenny-neoforge-1.21.1.jar">Download</a><a href="https://discord.gg/za6UejgY4y">Discord</a><a href="https://github.com/nicetraining/PooPooWumboDoodyCraft-source">GitHub</a>
+</div>
+
+<main>
+<div class="frame" id="top">
+  <div class="tab">NeoJenny changelog</div>
+
+  <section class="box" id="changelog">
+    <h2><span class="t">Changelog</span><span class="tag">Newest first</span></h2>
+    <div class="in log">
+      <h3><span class="d">2026-11-11</span><span class="tag">v1.1.0</span>NeoJenny: smoother textures and jiggle physics</h3>
+      <ul>
+        <li>The mod is now called NeoJenny.</li>
+        <li>Smoother textures: the blocky pixel shading on hair and clothes becomes soft gradients, while faces, outlines and colour edges stay sharp. The girls no longer flicker and look jagged from a distance.</li>
+        <li>Jiggle physics for every girl: chests and butts move like soft flesh (each side on its own), tails and ponytails swing. On during scenes; outside scenes it is off by default, and can be turned on to a chosen share.</li>
+        <li>In scenes, wherever the animation already moves the chest or butt by hand, the physics leaves it to the animation; on hard, fast scenes the bounce is evened out so nothing twitches or snaps.</li>
+        <li>Both can be turned off, and the jiggle made stronger or weaker, in <code>config/sexmod-client.toml</code>.</li>
+        <li>A small link to the <a href="https://discord.gg/za6UejgY4y">Discord</a> in the corner of the title screen (can be hidden in the same config file).</li>
+        <li>The "loading up custom models" messages no longer show up in chat every time the game starts.</li>
+        <li>The girls' houses no longer sit on a one-block ledge of dirt on gently uneven ground: they stand at the height most of the ground under them has.</li>
+        <li>Trees no longer grow through the girls' houses: world generation keeps them a few blocks away.</li>
+      </ul>
+      <h3><span class="d">2026-11-06</span>Galath riding and goblin fixes</h3>
+      <ul>
+        <li>Galath no longer repeats her kill line over and over after she kills you.</li>
+        <li>Riding Galath when she has Manglelie: you can steer from the start (no boost needed first), and she no longer fights mobs while you ride her.</li>
+        <li>Boosting into the ground no longer kills you with fall damage.</li>
+        <li>No more camera flicker while flying on Galath, and Manglelie no longer pops in and out during a boost.</li>
+        <li>A thrown goblin now flies off from your hands instead of hanging in front of you and then teleporting to where she landed.</li>
+      </ul>
+      <h3><span class="d">2026-11-05</span>Dragon Staff</h3>
+      <ul>
+        <li>Beds and chests can be assigned to Kobold tribes with the Dragon Staff again.</li>
+      </ul>
+      <h3><span class="d">2026-11-02</span>Dragon Staff</h3>
+      <ul>
+        <li>The staff no longer stays bound to a tribe whose Kobolds have all died, so you can start a new tribe.</li>
+      </ul>
+      <h3><span class="d">2026-11-01</span>First public release</h3>
+      <ul>
+        <li>A full rewrite of FapCraft 1.12.2 for Minecraft 1.21.1 on NeoForge: all eleven companions with their AI, menus, scenes, dialogue and sounds; Kobold tribes, goblin lairs and the Galath boss fight; player-as-girl forms, custom models and clothing, Allie's lamp and the Dragon Staff; the original houses and lairs as real 1.21 structures.</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="btns"><a class="btn" href="https://github.com/nicetraining/nicetraining.github.io/releases/latest/download/NeoJenny-neoforge-1.21.1.jar">Download the latest jar</a><a class="btn p" href="./">Back to the home page</a></div>
+</div>
+</main>
+
+<footer><span>NeoJenny</span><a href="https://discord.gg/za6UejgY4y">Discord</a><span>Not affiliated with Mojang or Microsoft.</span><button type="button" id="pal" title="Pick another palette"></button><a href="https://github.com/nicetraining/PooPooWumboDoodyCraft-source">GitHub</a></footer>
+
+<div class="modal" id="gate" role="dialog" aria-modal="true" aria-labelledby="gt">
+  <section class="box">
+    <h2><span class="t" id="gt">Adult content warning</span><span class="tag">18+</span></h2>
+    <div class="in">
+      <p>This site and mod contain adult content and are for people aged 18 or over.</p>
+      <p>Are you 18 or older?</p>
+      <div class="btns"><button class="btn" id="yes">I am 18 or older</button><button class="btn p" id="no">I am under 18</button></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var gate=document.getElementById('gate'),KEY='pwdc-18';
+  function ok(){try{return localStorage.getItem(KEY)==='1'}catch(e){return false}}
+  if(!ok()){gate.classList.add('on');document.getElementById('yes').focus()}
+  document.getElementById('yes').onclick=function(){try{localStorage.setItem(KEY,'1')}catch(e){}gate.classList.remove('on')};
+  document.getElementById('no').onclick=function(){location.href='https://www.google.com/'};
+  var pb=document.getElementById('pal');function lab(){pb.textContent='palette: '+window.__pal.cur+' (change)'}
+  pb.onclick=function(){var L=window.__pal.list,i=(L.indexOf(window.__pal.cur)+1)%L.length;window.__pal.cur=L[i];document.documentElement.setAttribute('data-p',L[i]);try{sessionStorage.setItem('pwdc-p',L[i])}catch(e){}lab()};lab();
+})();
+</script>
+</body>
+</html>

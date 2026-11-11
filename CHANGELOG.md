@@ -1,8 +1,8 @@
 # Changelog
 
-Newest first. The download is on [nicetraining.github.io](https://nicetraining.github.io/). Join the [Discord](https://discord.gg/za6UejgY4y) for news and help.
+Newest first. The download is on [nicetraining.github.io](https://nicetraining.github.io/) (changelog page: [nicetraining.github.io/changelog.html](https://nicetraining.github.io/changelog.html)). Join the [Discord](https://discord.gg/za6UejgY4y) for news and help.
 
-## In testing (not in the download yet): smoother textures and jiggle physics
+## 2026-11-11: v1.1.0, NeoJenny: smoother textures and jiggle physics
 
 - Smoother textures: the blocky pixel shading on hair and clothes becomes soft gradients, while faces, outlines and colour edges stay sharp. The girls no longer flicker and look jagged from a distance.
 - Jiggle physics for every girl: chests and butts move like soft flesh (each side on its own), tails and ponytails swing. On during scenes; outside scenes it is off by default (`jiggleOutsideScenes`, 0-1, turns it on to a chosen share). Where a scene's animation already moves the chest or butt by hand, the physics hands it over to the animation instead of adding to it; on hard, fast scenes the bounce is evened out so nothing twitches or snaps.
