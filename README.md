@@ -75,7 +75,7 @@ only shows a quit button until the mod is removed.
 
 ## Credits
 
-By fartypoopy: a full rewrite of 1.12.2's FapCraft, which was created by ShnurriTV and later carried on by
+By nicetraining: a full rewrite of 1.12.2's FapCraft, which was created by ShnurriTV and later carried on by
 Trolmastercard.
 
 ## Adult-content notice
