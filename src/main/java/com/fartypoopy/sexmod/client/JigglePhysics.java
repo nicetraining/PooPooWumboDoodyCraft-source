@@ -176,6 +176,21 @@ final class JigglePhysics {
         final Map<String, LinkState> links = new HashMap<>();
         double time = Double.NaN;
         long seen;
+        /** How much of the jiggle is shown: 1 in a scene, the outside-scene share otherwise, eased between the two. */
+        float context = Float.NaN;
+    }
+
+    /** How fast the shown share follows a scene starting or ending (per second): about a third of a second. */
+    private static final float CONTEXT_RATE = 6.0F;
+
+    /**
+     * Like the games it is modelled on, the jiggle is tuned to the moment: scenes are hand-animated, mostly unclothed, and
+     * where the motion is expected; walking around dressed, a supported chest barely moves, and everyday bounce tuned to
+     * be visible looks wrong (the classic over-tuning). Outside scenes only the configured share is shown, none by default.
+     */
+    private static float strength(State state) {
+        float base = ClientConfig.jiggleStrength();
+        return state == null || Float.isNaN(state.context) ? 0.0F : base * state.context;
     }
 
     /** The rest shape of a soft part (per model, since bones are): where it is attached, its length axis and length. */
@@ -231,9 +246,9 @@ final class JigglePhysics {
 
     /** Turns each chain link by its spring's lag, on top of the pose the animation just set. */
     static void apply(CompanionEntity entity, AnimationProcessor<?> processor) {
-        float strength = ClientConfig.jiggleStrength();
         State state = STATES.get(entity.getId());
-        if (strength <= 0.0F || state == null || Minecraft.getInstance().isPaused()) {
+        float strength = strength(state);
+        if (strength <= 0.0F || Minecraft.getInstance().isPaused()) {
             return;
         }
         Vector3f lag = new Vector3f();
@@ -281,8 +296,8 @@ final class JigglePhysics {
         if (!SOFT.containsKey(bone.getName())) {
             return before;
         }
-        float strength = ClientConfig.jiggleStrength();
         State state = STATES.get(entity.getId());
+        float strength = strength(state);
         SoftState soft = state == null ? null : state.soft.get(bone.getName());
         active = strength > 0.0F && soft != null && soft.placed && !Minecraft.getInstance().isPaused()
                 ? new Active(soft, shape(bone, SOFT.get(bone.getName()).twoSided()), strength, bone) : null;
@@ -371,6 +386,9 @@ final class JigglePhysics {
         if (!restart && dt < 1.0E-4D) {
             return; // drawn again this frame (an inventory preview): the springs already stepped
         }
+        float target = entity.isInScene() ? 1.0F : ClientConfig.jiggleOutsideScenes();
+        state.context = restart || Float.isNaN(state.context) ? target
+                : state.context + (target - state.context) * Math.min(1.0F, (float) dt * CONTEXT_RATE);
         Vec3 at = entity.getPosition(partialTick);
         Vector3d point = new Vector3d();
         Vector3d drive = new Vector3d();

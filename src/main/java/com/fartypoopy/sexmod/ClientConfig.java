@@ -16,8 +16,13 @@ public final class ClientConfig {
             .define("jigglePhysics", true);
 
     public static final ModConfigSpec.DoubleValue JIGGLE_STRENGTH = BUILDER
-            .comment("How strongly they jiggle (1 = default, 0 = none)")
+            .comment("How strongly they jiggle during scenes (1 = default, 0 = none)")
             .defineInRange("jiggleStrength", 1.0D, 0.0D, 3.0D);
+
+    public static final ModConfigSpec.DoubleValue JIGGLE_OUTSIDE_SCENES = BUILDER
+            .comment("How much of that they jiggle outside scenes, walking and standing around dressed (0 = not at all,",
+                    "1 = as much as in scenes)")
+            .defineInRange("jiggleOutsideScenes", 0.0D, 0.0D, 1.0D);
 
     public static final ModConfigSpec.BooleanValue SHOW_DISCORD_LINK = BUILDER
             .comment("Show the link to the mod's Discord in the title screen's top-left corner")
@@ -42,5 +47,10 @@ public final class ClientConfig {
             return 1.0F;
         }
         return JIGGLE.get() ? JIGGLE_STRENGTH.get().floatValue() : 0.0F;
+    }
+
+    /** Share of {@link #jiggleStrength()} used outside scenes. */
+    public static float jiggleOutsideScenes() {
+        return SPEC.isLoaded() ? JIGGLE_OUTSIDE_SCENES.get().floatValue() : 0.0F;
     }
 }

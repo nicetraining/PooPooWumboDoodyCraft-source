@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.fartypoopy.sexmod.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "TreeFeatureMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
