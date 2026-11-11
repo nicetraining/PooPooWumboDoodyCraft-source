@@ -45,8 +45,9 @@ final class JigglePhysics {
                         float firmAt, boolean twoSided) {
     }
 
-    private static final Soft CHEST = new Soft(2.4F, 0.11F, 4.4F, 0.14F, 3.0F, 1.6F, 0.06F, true);
-    private static final Soft BUTT = new Soft(2.9F, 0.14F, 5.0F, 0.18F, 2.2F, 1.0F, 0.05F, false);
+    // tuned on a walking Jenny: enough damping that a stride's bounce settles instead of flailing, a light tip
+    private static final Soft CHEST = new Soft(2.2F, 0.18F, 4.0F, 0.25F, 1.9F, 0.5F, 0.05F, true);
+    private static final Soft BUTT = new Soft(2.7F, 0.20F, 4.6F, 0.28F, 1.5F, 0.4F, 0.04F, false);
     private static final Map<String, Soft> SOFT = Map.of("boobs", CHEST, "cheekL", BUTT, "cheekR", BUTT);
 
     /** A chain link: spring frequency (Hz), damping ratio, how much it swings, and its largest swing (degrees). */
@@ -79,7 +80,15 @@ final class JigglePhysics {
     /** Width (rest blocks) over which the two sides of a one-bone chest blend into each other at the middle. */
     private static final float SIDE_BLEND = 0.9F / 16.0F;
     /** Largest displacement of a soft part's tip, as a share of its length: keeps a hard landing from tearing it apart. */
-    private static final float MAX_STRETCH = 0.45F;
+    private static final float MAX_STRETCH = 0.28F;
+    /**
+     * Along its own length a soft part mostly keeps its shape: of a lag in that direction only this share is used, and it
+     * may stretch out by at most {@link #MAX_OUT} and be pushed in by at most {@link #MAX_IN} of its length (flesh does not
+     * fold back into the body; letting it do so read as the part collapsing inwards and popping back out).
+     */
+    private static final float ALONG = 0.3F;
+    private static final float MAX_OUT = 0.08F;
+    private static final float MAX_IN = 0.03F;
     /** How much each side's spring is detuned from the other's, so the two do not move in lockstep. */
     private static final float DETUNE = 1.07F;
 
@@ -447,12 +456,21 @@ final class JigglePhysics {
         for (int side = 0; side < 2; side++) {
             toRest(soft, soft.main[side].lag, part.gain(), soft.mainShift[side]);
             toRest(soft, soft.tip[side].lag, part.tipGain(), soft.tipShift[side]);
+            keepLength(soft.mainShift[side], shape);
+            keepLength(soft.tipShift[side], shape);
             float total = soft.mainShift[side].length() + soft.tipShift[side].length();
             if (total > limit && total > 0.0F) {
                 soft.mainShift[side].mul(limit / total);
                 soft.tipShift[side].mul(limit / total);
             }
         }
+    }
+
+    /** Takes most of a displacement's component along the part's length away, and caps what is left, more so inwards. */
+    private static void keepLength(Vector3f shift, Shape shape) {
+        float along = shift.dot(shape.axis());
+        float kept = Math.max(-MAX_IN * shape.length(), Math.min(MAX_OUT * shape.length(), along * ALONG));
+        shift.fma(kept - along, shape.axis());
     }
 
     private static void toRest(SoftState soft, Vector3d lag, float gain, Vector3f out) {
