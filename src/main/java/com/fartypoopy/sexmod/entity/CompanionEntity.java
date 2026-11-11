@@ -3134,6 +3134,10 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         if (this.galathRider() != null) {
             return false; // ridden Galath is flying; vanilla would hand this fall to the rider
         }
+        if (this.beeBehavior != null) {
+            this.fallDistance = 0.0F;
+            return false; // original fz.fall(): empty, the bee never takes fall damage (she can drop when a world loads)
+        }
         return this.slimeBehavior == null && super.causeFallDamage(fallDistance, multiplier, source); // original Slime: no fall damage
     }
 

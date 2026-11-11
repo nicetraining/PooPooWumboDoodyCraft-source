@@ -859,6 +859,34 @@ public final class FapCraftGameTests {
         helper.succeed();
     }
 
+    /** Bug report: a bee sometimes died of fall damage when a world was loaded. The original bee (fz.fall) takes none. */
+    @GameTest(template = "empty", timeoutTicks = 200, batch = "b_beefall")
+    public static void aBeeTakesNoFallDamage(GameTestHelper helper) {
+        forceArena(helper);
+        skyFloor(helper, 20, 250);
+        CompanionEntity bee = spawnKind(helper, CompanionKind.BEE);
+        bee.moveTo(helper.absoluteVec(new Vec3(8.5, 262.0, 8.5)));
+        bee.setHealth(bee.getMaxHealth());
+        bee.fallDistance = 60.0F; // as if she was saved mid-drop and the world loaded with her still falling
+        helper.onEachTick(() -> {
+            if (!bee.onGround()) {
+                bee.setDeltaMovement(0.0D, -1.5D, 0.0D);
+            }
+        });
+        helper.runAfterDelay(80, () -> {
+            if (!bee.onGround()) {
+                helper.fail("the bee never reached the floor (y " + bee.getY() + ")");
+                return;
+            }
+            if (!bee.isAlive() || bee.getHealth() < bee.getMaxHealth()) {
+                helper.fail("a bee was hurt by a fall: health " + bee.getHealth() + " of " + bee.getMaxHealth());
+                return;
+            }
+            bee.discard();
+            helper.succeed();
+        });
+    }
+
     // ---------------------------------------------------------------- Kobold tribes
 
     /** Keeps the arena chunks entity-ticking so the AI tests do not depend on where the structure lands. */

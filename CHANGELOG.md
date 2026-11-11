@@ -2,6 +2,10 @@
 
 Newest first. The download is on [nicetraining.github.io](https://nicetraining.github.io/) (changelog page: [nicetraining.github.io/changelog.html](https://nicetraining.github.io/changelog.html)). Join the [Discord](https://discord.gg/za6UejgY4y) for news and help.
 
+## In testing (not in the download yet)
+
+- Bees no longer die of fall damage, for example when a world is loaded while one is in the air. Like the original bee, they take no fall damage at all.
+
 ## 2026-11-11: v1.1.0, NeoJenny: smoother textures and jiggle physics
 
 - Smoother textures: the blocky pixel shading on hair and clothes becomes soft gradients, while faces, outlines and colour edges stay sharp. The girls no longer flicker and look jagged from a distance.
