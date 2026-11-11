@@ -104,7 +104,7 @@ public final class CustomModels {
             }
             count++;
         }
-        report(Level.DEBUG, String.format("successfully registered %s custom models", count));
+        FapCraft.LOGGER.info(String.format("successfully registered %s custom models", count)); // the log only, like the lines above
         return 0;
     }
 
@@ -156,7 +156,7 @@ public final class CustomModels {
             }
         }
         MODELS.put(name, config);
-        report(Level.DEBUG, String.format("successfully registered custom model '%s'", name));
+        FapCraft.LOGGER.info(String.format("successfully registered custom model '%s'", name)); // the log only
         return "";
     }
 

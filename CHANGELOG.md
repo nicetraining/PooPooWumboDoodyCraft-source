@@ -5,6 +5,9 @@ Newest first. The download is on [nicetraining.github.io](https://nicetraining.g
 ## In testing (not in the download yet)
 
 - Bees no longer die of fall damage, for example when a world is loaded while one is in the air. Like the original bee, they take no fall damage at all.
+- Update check: when a newer version of NeoJenny is out, a message in chat says so when you join a world (with a link to the download), and the Mods menu marks the mod. Turn the chat message off with `updateNotice = false` in `config/sexmod-client.toml`; NeoForge's `versionCheck` in `config/fml.toml` turns the check off entirely.
+- The last "successfully registered custom models" chat message at startup is gone too.
+- The mod now has a proper version number (1.1.1), which the update check needs.
 
 ## 2026-11-11: v1.1.0, NeoJenny: smoother textures and jiggle physics
 

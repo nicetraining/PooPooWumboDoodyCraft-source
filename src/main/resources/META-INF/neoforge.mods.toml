@@ -34,6 +34,8 @@ displayName="${mod_name}" #mandatory
 
 # A URL for the "homepage" for this mod, displayed in the mod UI
 displayURL="https://nicetraining.github.io/"
+# NeoForge checks this at startup: the Mods menu marks the mod when a newer version is out, and UpdateNotice says so in chat
+updateJSONURL="https://nicetraining.github.io/update.json"
 
 # A file name (in the root of the mod JAR) containing a logo for display
 logoFile="logo.png"

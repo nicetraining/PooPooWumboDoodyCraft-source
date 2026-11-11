@@ -28,6 +28,11 @@ public final class ClientConfig {
             .comment("Show the link to the mod's Discord in the title screen's top-left corner")
             .define("showDiscordLink", true);
 
+    public static final ModConfigSpec.BooleanValue UPDATE_NOTICE = BUILDER
+            .comment("Say in chat, once per game, when a newer version of the mod is out (the Mods menu marks it either way;",
+                    "NeoForge's own versionCheck setting in config/fml.toml turns the check off completely)")
+            .define("updateNotice", true);
+
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     private ClientConfig() {
@@ -40,6 +45,10 @@ public final class ClientConfig {
 
     public static boolean showDiscordLink() {
         return !SPEC.isLoaded() || SHOW_DISCORD_LINK.get();
+    }
+
+    public static boolean updateNotice() {
+        return !SPEC.isLoaded() || UPDATE_NOTICE.get();
     }
 
     public static float jiggleStrength() {

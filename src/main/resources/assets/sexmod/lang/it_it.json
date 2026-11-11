@@ -183,5 +183,7 @@
   "scene.sexmod.goblin_nelson": "Goblin: Nelson",
   "scene.sexmod.galath_corrupt": "Galath: Corruzione",
   "scene.sexmod.manglelie_bed": "Manglelie: Letto",
-  "itemGroup.sexmod": "NeoJenny"
+  "itemGroup.sexmod": "NeoJenny",
+  "chat.sexmod.update": "È uscita una nuova versione di NeoJenny: %s (hai la %s). %s",
+  "chat.sexmod.update.download": "Scaricala"
 }

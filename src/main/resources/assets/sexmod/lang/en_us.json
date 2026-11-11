@@ -246,5 +246,7 @@
   "scene.sexmod.galath_morning": "Morning",
   "scene.sexmod.goblin_use_her": "use her",
   "scene.sexmod.goblin_take_back": "take ur stuff back",
-  "menu.sexmod.discord": "Join the NeoJenny Discord"
+  "menu.sexmod.discord": "Join the NeoJenny Discord",
+  "chat.sexmod.update": "A new version of NeoJenny is out: %s (you have %s). %s",
+  "chat.sexmod.update.download": "Download it"
 }
