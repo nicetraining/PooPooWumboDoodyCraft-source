@@ -81,7 +81,6 @@ public final class CompanionRenderer extends GeoEntityRenderer<CompanionEntity> 
     @Override
     public void render(CompanionEntity entity, float entityYaw, float partialTick, PoseStack poseStack,
                        MultiBufferSource bufferSource, int packedLight) {
-        SmoothTextures.ensureAll();
         if (entity.isPlayerForm() && !PlayerFormClient.drawingForm
                 && !com.fartypoopy.sexmod.entity.PlayerForms.goblinCarried(entity)) {
             return; // original e_: a form is drawn in place of its player, never on its own (a carried goblin: on her carrier)

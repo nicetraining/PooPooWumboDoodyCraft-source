@@ -2,8 +2,9 @@
 
 Newest first. The download is on [nicetraining.github.io](https://nicetraining.github.io/) (changelog page: [nicetraining.github.io/changelog.html](https://nicetraining.github.io/changelog.html)). Join the [Discord](https://discord.gg/za6UejgY4y) for news and help.
 
-## In testing (not in the download yet)
+## 2026-11-12: v1.1.1, textures back to normal
 
+- Texture smoothing is gone: on some girls it streaked the hair with what looked like cobwebs. The textures look exactly as they did before v1.1.0 again (the `smoothTextures` setting no longer exists and can be deleted from the config).
 - Bees no longer die of fall damage, for example when a world is loaded while one is in the air. Like the original bee, they take no fall damage at all.
 - Update check: when a newer version of NeoJenny is out, a message in chat says so when you join a world (with a link to the download), and the Mods menu marks the mod. Turn the chat message off with `updateNotice = false` in `config/sexmod-client.toml`; NeoForge's `versionCheck` in `config/fml.toml` turns the check off entirely.
 - The last "successfully registered custom models" chat message at startup is gone too.

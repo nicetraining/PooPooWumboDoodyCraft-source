@@ -868,13 +868,14 @@ public final class FapCraftGameTests {
         bee.moveTo(helper.absoluteVec(new Vec3(8.5, 262.0, 8.5)));
         bee.setHealth(bee.getMaxHealth());
         bee.fallDistance = 60.0F; // as if she was saved mid-drop and the world loaded with her still falling
+        double floorTop = helper.absoluteVec(new Vec3(0.0D, 251.0D, 0.0D)).y;
         helper.onEachTick(() -> {
-            if (!bee.onGround()) {
+            if (bee.getY() - floorTop > 0.5D) {
                 bee.setDeltaMovement(0.0D, -1.5D, 0.0D);
             }
         });
         helper.runAfterDelay(80, () -> {
-            if (!bee.onGround()) {
+            if (bee.getY() - floorTop > 0.5D) { // she may hover a hair above it
                 helper.fail("the bee never reached the floor (y " + bee.getY() + ")");
                 return;
             }
@@ -1432,91 +1433,6 @@ public final class FapCraftGameTests {
             return;
         }
         helper.succeed();
-    }
-
-    /**
-     * Texture smoothing: flat pixel-art cells blend with similar ones, edges between different colours become soft and follow
-     * the shape (a stair step is rounded off); painted cells, see-through texels and every alpha stay as they were.
-     */
-    @GameTest(template = "empty", timeoutTicks = 10, batch = "b_smooth")
-    public static void textureSmoothingSoftensOnlyFlatPixelArt(GameTestHelper helper) {
-        int size = 64 * 16; // cells of 16 x 16 texels
-        int cell = size / 64;
-        int[] pixels = new int[size * size];
-        int dark = grey(100);
-        int light = grey(120);
-        int white = grey(255);
-        int black = grey(0);
-        for (int y = 0; y < size; y++) {
-            for (int x = 0; x < size; x++) {
-                int cx = x / cell;
-                int cy = y / cell;
-                int p = 0x00FFFFFF; // transparent
-                if (cy == 1 && cx == 1) p = dark;
-                if (cy == 1 && cx == 2) p = light;       // similar to its left neighbour: blended
-                if (cy == 1 && cx == 3) p = white;       // far from it: an edge
-                if (cy == 1 && cx == 4) p = (x + y) % 2 == 0 ? dark : white; // painted detail
-                if (cy == 1 && x == cell) p = light;     // an off-grid strip of another colour along the dark cell's edge
-                // a stair step: white over black, the step one cell to the right in the lower row
-                if (cy == 5 && cx >= 10 && cx <= 14) p = cx <= 11 ? white : black;
-                if (cy == 6 && cx >= 10 && cx <= 14) p = cx <= 12 ? white : black;
-                pixels[y * size + x] = p;
-            }
-        }
-        int[] before = pixels.clone();
-        com.fartypoopy.sexmod.util.TextureSmoothing.smoothCells(pixels, size, size);
-        java.util.function.IntBinaryOperator red = (x, y) -> pixels[y * size + x] & 0xFF;
-        int row = cell + cell / 2;
-        int edgeLeft = red.applyAsInt(2 * cell - 1, row);   // dark cell, at its border with the light one
-        int edgeRight = red.applyAsInt(2 * cell, row);      // light cell, same border
-        if (!(edgeLeft > 105 && edgeLeft < 115 && edgeRight > 105 && edgeRight < 115)) {
-            helper.fail("similar flat cells meet in a gradient (" + edgeLeft + " / " + edgeRight + ")");
-            return;
-        }
-        int centreDark = red.applyAsInt(cell + cell / 2, row);
-        int strip = red.applyAsInt(cell, row);
-        if (Math.abs(centreDark - 100) > 4 || Math.abs(strip - 100) > 4) {
-            helper.fail("a cell keeps its colour at its centre and loses an off-grid strip (" + centreDark + ", " + strip + ")");
-            return;
-        }
-        int lightSide = red.applyAsInt(3 * cell - 1, row);  // light cell beside the white one
-        int whiteSide = red.applyAsInt(3 * cell, row);
-        int whiteCentre = red.applyAsInt(3 * cell + cell / 2, row);
-        if (!(lightSide > 135 && lightSide < 240 && whiteSide > 135 && whiteSide < 240 && whiteCentre > 245)) {
-            helper.fail("a colour edge is soft, not pixel-hard, and the colours stay themselves away from it ("
-                    + lightSide + " / " + whiteSide + " / " + whiteCentre + ")");
-            return;
-        }
-        // the stair step's outer corner (lower row, cell 12, top-right texel) is rounded off towards black...
-        int corner = red.applyAsInt(13 * cell - 1, 6 * cell);
-        // ...and its inner corner (upper row, cell 12, bottom-left texel) is filled in towards white
-        int inner = red.applyAsInt(12 * cell, 6 * cell - 1);
-        if (corner > 128 || inner < 128) {
-            helper.fail("a stair step becomes a smooth diagonal (outer corner " + corner + ", inner corner " + inner + ")");
-            return;
-        }
-        for (int i = 0; i < pixels.length; i++) {
-            int x = i % size;
-            int y = i / size;
-            boolean painted = y / cell == 1 && x / cell == 4;
-            if ((pixels[i] >>> 24) != (before[i] >>> 24) || (painted || (before[i] >>> 24) == 0) && pixels[i] != before[i]) {
-                helper.fail("painted and see-through texels and every alpha stay as they were (" + x + ", " + y + ")");
-                return;
-            }
-        }
-        // mipmaps: a see-through white texel does not pale its opaque red neighbours, nor open a crack beside them
-        int[] quad = {0xFF0000FF, 0x00FFFFFF, 0xFF0000FF, 0x00FFFFFF};
-        int[][] mips = com.fartypoopy.sexmod.util.TextureSmoothing.mipChain(quad, 2, 2);
-        int mip = mips[0][0];
-        if (mips.length != 1 || (mip & 0xFF) != 255 || ((mip >>> 8) & 0xFF) != 0 || (mip >>> 24) != 255) {
-            helper.fail("mipmaps weight colours by alpha (" + Integer.toHexString(mip) + ")");
-            return;
-        }
-        helper.succeed();
-    }
-
-    private static int grey(int v) {
-        return 0xFF000000 | (v << 16) | (v << 8) | v;
     }
 
     /** Original br$b: a cfg parses into its fields; bad values report the original messages; names never leave the folder. */

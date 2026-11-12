@@ -6,11 +6,6 @@ import net.neoforged.neoforge.common.ModConfigSpec;
 public final class ClientConfig {
     private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
 
-    public static final ModConfigSpec.BooleanValue SMOOTH_TEXTURES = BUILDER
-            .comment("Smooth the girls' textures: the blocky pixel-art shading becomes soft gradients (line art and colour",
-                    "edges stay sharp), and the textures are filtered with mipmaps so they no longer flicker and jag at a distance")
-            .define("smoothTextures", true);
-
     public static final ModConfigSpec.BooleanValue JIGGLE = BUILDER
             .comment("Jiggle physics: chests, butts, tails and ponytails swing and bounce with the girls' motion")
             .define("jigglePhysics", true);
@@ -36,11 +31,6 @@ public final class ClientConfig {
     public static final ModConfigSpec SPEC = BUILDER.build();
 
     private ClientConfig() {
-    }
-
-    /** False until the config is loaded (the defaults then apply). */
-    public static boolean smoothTextures() {
-        return !SPEC.isLoaded() || SMOOTH_TEXTURES.get();
     }
 
     public static boolean showDiscordLink() {
