@@ -334,8 +334,9 @@ public final class CompanionEntity extends PathfinderMob implements GeoEntity {
         }
         if (!technicalProxy && (kind == CompanionKind.JENNY || kind == CompanionKind.ELLIE
                 || kind == CompanionKind.BIA || kind == CompanionKind.LUNA)) {
-            // Original e2 constructor: iron sword in slot 0, bow in slot 1 (Luna also a fishing rod in slot 6).
-            this.equipment.setItem(0, new ItemStack(kind == CompanionKind.LUNA ? Items.IRON_AXE : Items.IRON_SWORD));
+            // Original e2 constructor: iron sword in slot 0, bow in slot 1 (Luna also a fishing rod in slot 6). Luna's own
+            // constructor (eb) offers an iron axe for slot 0 only if it is empty, which it never is after e2: she has the sword.
+            this.equipment.setItem(0, new ItemStack(Items.IRON_SWORD));
             this.equipment.setItem(1, new ItemStack(Items.BOW));
             if (kind == CompanionKind.LUNA) {
                 this.equipment.setItem(6, new ItemStack(Items.FISHING_ROD));

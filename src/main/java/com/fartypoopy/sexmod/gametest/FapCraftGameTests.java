@@ -859,6 +859,25 @@ public final class FapCraftGameTests {
         helper.succeed();
     }
 
+    /** Bug report: Luna should spawn with an iron sword, a bow and a fishing rod, like in the original (e2 and eb). */
+    @GameTest(template = "empty")
+    public static void armedGirlsSpawnWithTheOriginalGear(GameTestHelper helper) {
+        for (CompanionKind kind : new CompanionKind[] {CompanionKind.JENNY, CompanionKind.ELLIE, CompanionKind.BIA, CompanionKind.LUNA}) {
+            CompanionEntity girl = spawnKind(helper, kind);
+            var gear = girl.equipment();
+            boolean rod = gear.getItem(6).is(net.minecraft.world.item.Items.FISHING_ROD);
+            if (!gear.getItem(0).is(net.minecraft.world.item.Items.IRON_SWORD)
+                    || !gear.getItem(1).is(net.minecraft.world.item.Items.BOW)
+                    || rod != (kind == CompanionKind.LUNA)) {
+                helper.fail(kind + " spawned with " + gear.getItem(0) + ", " + gear.getItem(1) + ", " + gear.getItem(6)
+                        + " (original: iron sword, bow, and for Luna a fishing rod)");
+                return;
+            }
+            girl.discard();
+        }
+        helper.succeed();
+    }
+
     /** Bug report: a bee sometimes died of fall damage when a world was loaded. The original bee (fz.fall) takes none. */
     @GameTest(template = "empty", timeoutTicks = 200, batch = "b_beefall")
     public static void aBeeTakesNoFallDamage(GameTestHelper helper) {
