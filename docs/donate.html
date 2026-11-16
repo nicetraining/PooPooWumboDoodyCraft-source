@@ -101,15 +101,15 @@ footer button{font:inherit;background:none;border:0;padding:0;cursor:pointer;tex
     <img src="logo.png" alt="NeoJenny logo">
     <div>
       <p>Funding goal</p>
-      <p class="goal">$10,000,000,000</p>
-      <p>NeoJenny is free and has no ads, and it stays that way. If you'd like to chip in anyway, every bit helps us get to ten billion dollars.</p>
+      <p class="goal">$11,036,917</p>
+      <p>NeoJenny is free and has no ads, and it stays that way. If you'd like to chip in anyway, every bit helps us get to eleven million, thirty-six thousand, nine hundred and seventeen dollars.</p>
     </div>
   </section>
 
   <section class="box">
     <h2><span class="t">Progress</span><span class="tag">Going great</span></h2>
     <div class="in">
-      <div class="meter" role="progressbar" aria-label="Raised towards the $10 billion goal" aria-valuemin="0" aria-valuemax="10000000000" id="meter"><i id="fill"></i><span id="pct"></span></div>
+      <div class="meter" role="progressbar" aria-label="Raised towards the $11,036,917 goal" aria-valuemin="0" aria-valuemax="11036917" id="meter"><i id="fill"></i><span id="pct"></span></div>
       <div class="stats"><span>Raised: <b id="raised"></b></span><span>To go: <b id="togo"></b></span><span>Estimated arrival: <b>the heat death of the universe</b></span></div>
     </div>
   </section>
@@ -141,7 +141,7 @@ footer button{font:inherit;background:none;border:0;padding:0;cursor:pointer;tex
         <li><b>$100</b><span>I abandon the mod right now.</span></li>
         <li><b>$10,000</b><span>Enough to purchase a moped and a very long stick so I can revolutionize historical reenactment jousting.</span></li>
         <li><b>$1,000,000</b><span>Jenny gets a second house.</span></li>
-        <li><b>$10,000,000,000</b><span>Make an offer to Microsoft.</span></li>
+        <li><b>$11,036,917</b><span>Make an offer to Microsoft.</span></li>
       </ul>
     </div>
   </section>
@@ -174,7 +174,7 @@ footer button{font:inherit;background:none;border:0;padding:0;cursor:pointer;tex
   pb.onclick=function(){var L=window.__pal.list,i=(L.indexOf(window.__pal.cur)+1)%L.length;window.__pal.cur=L[i];document.documentElement.setAttribute('data-p',L[i]);try{sessionStorage.setItem('pwdc-p',L[i])}catch(e){}lab()};lab();
 
   // The amount raised so far, in US dollars: update it by hand when donations come in.
-  var RAISED=0, GOAL=1e10;
+  var RAISED=0, GOAL=11036917;
   var usd=function(v){return '$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})};
   var share=RAISED/GOAL*100;
   document.getElementById('fill').style.width=Math.min(100,share)+'%';
