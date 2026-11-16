@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Donate to NeoJenny</title>
+<meta name="description" content="NeoJenny is free with no ads. If you want to support it, you can donate in Bitcoin, Litecoin or Monero.">
+<meta name="theme-color" content="#458588">
+<link rel="icon" href="logo.png">
+<style>
+@font-face{font-family:Unifont;font-display:swap;src:url(https://cdn.jsdelivr.net/npm/@fontsource/unifont/files/unifont-latin-400-normal.woff2) format("woff2")}
+:root{--page:#458588;--frame:#a89984;--ink:#282828;--accent:#cc241d;--cream:#fbf1c7;--muted:#d5c4a1;--beige:#ebdbb2;--font:Unifont,ui-monospace,Menlo,Consolas,monospace}
+html[data-p="teal"]{--page:#458588;--frame:#a89984;--ink:#282828;--accent:#cc241d;--cream:#fbf1c7;--muted:#d5c4a1;--beige:#ebdbb2}
+html[data-p="midnight"]{--page:#1f3a5f;--frame:#8aa1b8;--ink:#0e1b2c;--accent:#e8a33d;--cream:#eaf0f6;--muted:#b9c8d6;--beige:#dce6ef}
+html[data-p="mint"]{--page:#5fb59a;--frame:#e3d3b6;--ink:#23313a;--accent:#e0577b;--cream:#fff8ec;--muted:#f2dfc4;--beige:#fff1dc}
+html[data-p="plum"]{--page:#5b4b8a;--frame:#b7a6c9;--ink:#241a3a;--accent:#f08a24;--cream:#f6eefc;--muted:#d8c8e8;--beige:#ece0f6}
+html[data-p="moss"]{--page:#6a7f4a;--frame:#b5a98a;--ink:#2a2f1b;--accent:#b8481c;--cream:#f4efd8;--muted:#d9d0a9;--beige:#ece6c8}
+html[data-p="rose"]{--page:#c9728a;--frame:#d8b4a6;--ink:#3a1f2b;--accent:#2f7f86;--cream:#fff0e8;--muted:#f0cbbd;--beige:#fde1d6}
+html[data-p="sand"]{--page:#c58a3d;--frame:#c9b79c;--ink:#2f2417;--accent:#3a6ea5;--cream:#fbf0d9;--muted:#e6d3ac;--beige:#f4e4c1}
+html[data-p="slate"]{--page:#5f7480;--frame:#a9b0b4;--ink:#1f272d;--accent:#d0453a;--cream:#f1f3f2;--muted:#cfd5d8;--beige:#e4e8ea}
+html[data-p="ember"]{--page:#b5523b;--frame:#c9a58f;--ink:#2d1710;--accent:#2e8b8b;--cream:#fbeadb;--muted:#e5c0a5;--beige:#f3d6c0}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--page);color:var(--ink);font:16px/1.35 var(--font);-webkit-font-smoothing:none;min-height:100vh;display:flex;flex-direction:column}
+a{color:var(--ink)}a:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+::selection{background:var(--accent);color:var(--cream)}
+p{margin:0 0 8px}h1,h2{margin:0}ul,ol{margin:0;padding-left:24px}li{margin-bottom:3px}li::marker{color:var(--accent)}
+code{background:var(--ink);color:var(--cream);padding:0 5px}
+.bar{display:flex;flex-wrap:wrap;align-items:center;background:var(--ink);color:var(--muted);min-height:30px;padding:0 4px}
+.bar b{padding:0 10px;margin-right:auto;line-height:30px;background:var(--accent);color:var(--cream)}
+.bar a{color:var(--muted);text-decoration:none;padding:0 12px;line-height:30px}
+.bar a:hover{background:#ffffff22;color:var(--cream)}
+main{flex:1;padding:.5rem}
+.frame{position:relative;width:min(920px,calc(100% - 1rem));margin:44px auto 30px;background:var(--frame);box-shadow:11px 14px 0 var(--ink);padding:42px 18px 18px;display:flex;flex-direction:column;gap:16px}
+.tab{position:absolute;top:5px;left:50%;transform:translateX(-50%);background:var(--frame);color:var(--ink);border:solid var(--ink);border-width:0 1px;padding:2px 10px;white-space:nowrap;max-width:94%;overflow:hidden;text-overflow:ellipsis}
+.box{position:relative;border:2px solid var(--ink);background:var(--cream);box-shadow:3px 3px 0 var(--ink);min-width:0}
+.box>h2{font-size:16px;padding:8px 12px;background:var(--ink);color:var(--cream);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.box>h2 .t{margin-right:auto}
+.box>.in{padding:12px 14px 14px}
+.tag{font-size:12px;text-transform:uppercase;letter-spacing:.03em;padding:1px 7px;border:1px solid var(--ink);background:var(--muted);color:var(--ink)}
+.hero{display:grid;grid-template-columns:128px 1fr;gap:20px;align-items:center;padding:16px 18px;background:linear-gradient(135deg,var(--beige),var(--muted) 60%,var(--frame))}
+.hero img{width:128px;height:128px;border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);object-fit:cover;background:#000}
+.hero h1{font-size:clamp(22px,4.6vw,34px);line-height:1.1;margin-bottom:8px;word-break:break-word}
+.btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.btn{font:inherit;display:inline-block;padding:6px 14px;min-height:34px;color:var(--cream);background:var(--accent);border:2px solid var(--ink);box-shadow:3px 3px 0 var(--ink);text-decoration:none;cursor:pointer;text-align:center}
+.btn:hover{filter:brightness(.82)}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.p{background:var(--muted);color:var(--ink)}.btn.p:hover{background:var(--page);color:var(--cream);filter:none}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.hero{grid-template-columns:1fr}}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.shot{margin:0;border:2px solid var(--ink);background:var(--ink)}
+.shot a{display:block;aspect-ratio:16/9}
+.shot img{width:100%;height:100%;object-fit:cover;display:block}
+.shot figcaption{padding:4px 8px;font-size:13px;color:#e1e1e1}
+.ok{color:var(--accent);font-weight:700}
+.dl{margin:10px 0 0}.dl b{color:var(--accent)}
+.log h3{font-size:16px;margin:14px 0 5px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center}.log h3:first-child{margin-top:0}
+.log .d{color:var(--accent)}
+footer{display:flex;flex-wrap:wrap;gap:6px 18px;justify-content:space-between;align-items:center;padding:2px 8px;min-height:24px;background:var(--ink);color:#e1e1e1}
+footer a,footer button{color:#e1e1e1}
+footer button{font:inherit;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+.modal{position:fixed;inset:0;background:rgba(20,20,20,.75);display:none;align-items:center;justify-content:center;z-index:20;padding:12px}.modal.on{display:flex}
+.modal .box{max-width:480px;width:100%;box-shadow:8px 10px 0 var(--ink)}
+.modal .btns{justify-content:center;margin-top:12px}
+.goal{font-size:clamp(26px,6vw,44px);line-height:1.05;margin:2px 0 6px;word-break:break-word}
+.meter{position:relative;height:30px;border:2px solid var(--ink);background:var(--muted);box-shadow:3px 3px 0 var(--ink);margin:14px 0 8px;overflow:hidden}
+.meter i{position:absolute;inset:0 auto 0 0;min-width:3px;background:repeating-linear-gradient(45deg,var(--accent) 0 8px,var(--page) 8px 16px)}
+.meter span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--ink);text-shadow:0 0 3px var(--cream),0 0 3px var(--cream)}
+.stats{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px}.stats b{color:var(--accent)}
+.coins{display:grid;gap:12px}
+.coin{border:2px solid var(--ink);background:var(--beige);padding:10px 12px;box-shadow:3px 3px 0 var(--ink)}
+.coin h3{margin:0 0 6px;font-size:16px;display:flex;gap:8px;align-items:center}
+.addr{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+.addr code{flex:1 1 260px;min-width:0;word-break:break-all;padding:6px 8px;font-size:14px;line-height:1.3}
+.addr .btn{min-height:0;padding:4px 12px}
+.miles{list-style:none;padding:0}.miles li{display:flex;gap:10px}.miles li b{min-width:150px;color:var(--accent)}
+@media(max-width:520px){.miles li{flex-direction:column;gap:0}.miles li b{min-width:0}}
+</style>
+<script>
+(function(){
+  var P=["teal", "midnight", "mint", "plum", "moss", "rose", "sand", "slate", "ember"],q=(location.search.match(/[?&]p=([a-z]+)/)||[])[1],h=document.documentElement,k;
+  try{k=q&&P.indexOf(q)>=0?q:null;if(!k){var last=sessionStorage.getItem('pwdc-p');do{k=P[Math.floor(Math.random()*P.length)]}while(k===last&&P.length>1)}sessionStorage.setItem('pwdc-p',k)}catch(e){k=k||P[Math.floor(Math.random()*P.length)]}
+  h.setAttribute('data-p',k);
+  window.__pal={list:P,cur:k};
+})();
+</script>
+</head>
+<body>
+
+<div class="bar" role="navigation" aria-label="Pages">
+  <b>NeoJenny</b>
+  <a href="./">Home</a><a href="changelog.html">Changelog</a><a href="https://discord.gg/za6UejgY4y">Discord</a><a href="https://github.com/nicetraining/PooPooWumboDoodyCraft-source">GitHub</a>
+</div>
+
+<main>
+<div class="frame" id="top">
+  <div class="tab">Donate Now</div>
+
+  <section class="box hero">
+    <img src="logo.png" alt="NeoJenny logo">
+    <div>
+      <p>Funding goal</p>
+      <p class="goal">$10,000,000,000</p>
+      <p>NeoJenny is free and has no ads, and it stays that way. If you'd like to chip in anyway, every bit helps us get to ten billion dollars.</p>
+    </div>
+  </section>
+
+  <section class="box">
+    <h2><span class="t">Progress</span><span class="tag">Going great</span></h2>
+    <div class="in">
+      <div class="meter" role="progressbar" aria-label="Raised towards the $10 billion goal" aria-valuemin="0" aria-valuemax="10000000000" id="meter"><i id="fill"></i><span id="pct"></span></div>
+      <div class="stats"><span>Raised: <b id="raised"></b></span><span>To go: <b id="togo"></b></span><span>Estimated arrival: <b>the heat death of the universe</b></span></div>
+    </div>
+  </section>
+
+  <section class="box">
+    <h2><span class="t">Send crypto</span><span class="tag">3 coins</span></h2>
+    <div class="in coins">
+      <div class="coin">
+        <h3>Bitcoin <span class="tag">BTC</span></h3>
+        <div class="addr"><code id="a-btc">bc1pt0jta7yndn38ykalj3smttm4ydjzus4ytvdxt7ljcvmsqp38maxq7g5rek</code><button class="btn p copy" type="button" data-for="a-btc">Copy</button></div>
+      </div>
+      <div class="coin">
+        <h3>Litecoin <span class="tag">LTC</span></h3>
+        <div class="addr"><code id="a-ltc">LUF4A7Wfp9YN1suqTugfEhA4JqbWpUYDt8</code><button class="btn p copy" type="button" data-for="a-ltc">Copy</button></div>
+      </div>
+      <div class="coin">
+        <h3>Monero <span class="tag">XMR</span></h3>
+        <div class="addr"><code id="a-xmr">43c4Qoxomb9LsCEQyXyaEdaLKSKsiLac4CCZgmJjnaL6jZ13EaKFyiqi1twzMgPXdjQcTpABKm6kGja3293ErjPQQqJQT4J</code><button class="btn p copy" type="button" data-for="a-xmr">Copy</button></div>
+      </div>
+      <p>Double-check the address before you send: crypto payments can't be undone. Donations are entirely optional and don't unlock anything in the mod.</p>
+    </div>
+  </section>
+
+  <section class="box">
+    <h2><span class="t">Stretch goals</span></h2>
+    <div class="in">
+      <ul class="miles">
+        <li><b>$5</b><span>A coffee. Thank you.</span></li>
+        <li><b>$100</b><span>A Fabric port feels a lot closer.</span></li>
+        <li><b>$10,000</b><span>We stop pretending this is a joke.</span></li>
+        <li><b>$1,000,000</b><span>Jenny gets a second house.</span></li>
+        <li><b>$10,000,000,000</b><span>Make an offer to Microsoft.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="btns"><a class="btn p" href="./">Back to the home page</a></div>
+</div>
+</main>
+
+<footer><span>NeoJenny</span><a href="https://discord.gg/za6UejgY4y">Discord</a><a href="donate.html">Donate</a><span>Not affiliated with Mojang or Microsoft.</span><button type="button" id="pal" title="Pick another palette"></button><a href="https://github.com/nicetraining/PooPooWumboDoodyCraft-source">GitHub</a></footer>
+
+<div class="modal" id="gate" role="dialog" aria-modal="true" aria-labelledby="gt">
+  <section class="box">
+    <h2><span class="t" id="gt">Adult content warning</span><span class="tag">18+</span></h2>
+    <div class="in">
+      <p>This site and mod contain adult content and are for people aged 18 or over.</p>
+      <p>Are you 18 or older?</p>
+      <div class="btns"><button class="btn" id="yes">I am 18 or older</button><button class="btn p" id="no">I am under 18</button></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+  var gate=document.getElementById('gate'),KEY='pwdc-18';
+  function ok(){try{return localStorage.getItem(KEY)==='1'}catch(e){return false}}
+  if(!ok()){gate.classList.add('on');document.getElementById('yes').focus()}
+  document.getElementById('yes').onclick=function(){try{localStorage.setItem(KEY,'1')}catch(e){}gate.classList.remove('on')};
+  document.getElementById('no').onclick=function(){location.href='https://www.google.com/'};
+  var pb=document.getElementById('pal');function lab(){pb.textContent='palette: '+window.__pal.cur+' (change)'}
+  pb.onclick=function(){var L=window.__pal.list,i=(L.indexOf(window.__pal.cur)+1)%L.length;window.__pal.cur=L[i];document.documentElement.setAttribute('data-p',L[i]);try{sessionStorage.setItem('pwdc-p',L[i])}catch(e){}lab()};lab();
+
+  // The amount raised so far, in US dollars: update it by hand when donations come in.
+  var RAISED=0, GOAL=1e10;
+  var usd=function(v){return '$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})};
+  var share=RAISED/GOAL*100;
+  document.getElementById('fill').style.width=Math.min(100,share)+'%';
+  document.getElementById('pct').textContent=share.toFixed(8)+'%';
+  document.getElementById('meter').setAttribute('aria-valuenow',RAISED);
+  document.getElementById('raised').textContent=usd(RAISED);
+  document.getElementById('togo').textContent=usd(Math.max(0,GOAL-RAISED));
+
+  Array.prototype.forEach.call(document.querySelectorAll('.copy'),function(b){
+    b.onclick=function(){
+      var text=document.getElementById(b.getAttribute('data-for')).textContent.trim();
+      var done=function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500)};
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(done,function(){b.textContent='Select it'})}
+      else{b.textContent='Select it'}
+    };
+  });
+})();
+</script>
+</body>
+</html>
