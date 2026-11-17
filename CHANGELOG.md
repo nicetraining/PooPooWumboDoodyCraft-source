@@ -2,6 +2,11 @@
 
 Newest first. The download is on [nicetraining.github.io](https://nicetraining.github.io/) (changelog page: [nicetraining.github.io/changelog.html](https://nicetraining.github.io/changelog.html)). Join the [Discord](https://discord.gg/za6UejgY4y) for news and help.
 
+## 2026-11-17: v1.1.2
+
+- Luna spawns with an iron sword, a bow and a fishing rod, like in the original (she had an iron axe instead of the sword).
+- Custom models: when a server sends an updated model, chat shows the download progress properly instead of "Successfully downloaded" once per file.
+
 ## 2026-11-12: v1.1.1, textures back to normal
 
 - Texture smoothing is gone: on some girls it streaked the hair with what looked like cobwebs. The textures look exactly as they did before v1.1.0 again (the `smoothTextures` setting no longer exists and can be deleted from the config).

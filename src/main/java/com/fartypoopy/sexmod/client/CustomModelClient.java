@@ -49,6 +49,8 @@ public final class CustomModelClient implements CustomModels.ClientSide {
     private static int textureCounter;
     /** Original cu$a.a: files of the running download received so far. */
     private static int received;
+    /** Files of each model received in the running download. */
+    private static final Map<String, Integer> THIS_DOWNLOAD = new java.util.HashMap<>();
 
     private CustomModelClient() {
     }
@@ -188,10 +190,9 @@ public final class CustomModelClient implements CustomModels.ClientSide {
         } catch (IOException exception) {
             FapCraft.LOGGER.warn("Could not write a downloaded custom model file", exception);
         }
-        boolean complete = true;
-        for (CustomModelNetwork.FileType each : CustomModelNetwork.FileType.values()) {
-            complete &= new File(folder, name + each.ending).exists();
-        }
+        // done once all of this model's files arrived in this download (an update overwrites files that already
+        // exist, so their presence says nothing)
+        boolean complete = THIS_DOWNLOAD.merge(name, 1, Integer::sum) >= CustomModelNetwork.FileType.values().length;
         if (minecraft.player != null) {
             minecraft.player.displayClientMessage(Component.literal(complete
                     ? String.format("%sSuccessfully downloaded the custom model '%s%s%s'!", ChatFormatting.GREEN, ChatFormatting.YELLOW, name, ChatFormatting.GREEN)
@@ -199,6 +200,7 @@ public final class CustomModelClient implements CustomModels.ClientSide {
         }
         if (++received >= payload.total()) {
             received = 0;
+            THIS_DOWNLOAD.clear();
             CustomModels.loadFailed = CustomModels.reload(true) != 0;
         }
     }
@@ -207,6 +209,7 @@ public final class CustomModelClient implements CustomModels.ClientSide {
     @SubscribeEvent
     public static void onLogin(ClientPlayerNetworkEvent.LoggingIn event) {
         received = 0;
+        THIS_DOWNLOAD.clear();
         CustomModels.loadFailed = CustomModels.reload(true) != 0;
         if (serverWhitelisted()) {
             requestServerModels();
